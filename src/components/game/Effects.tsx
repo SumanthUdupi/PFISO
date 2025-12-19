@@ -10,8 +10,7 @@ const Effects = () => {
         intensity={0.4}
         radius={0.4}
       />
-      {/* Noise and Sepia removed for a cleaner look */}
-      <Vignette eskil={false} offset={0.1} darkness={0.3} />
+      {/* Noise, Sepia, and Vignette removed for a cleaner look */}
       <HueSaturation saturation={0.1} />
     </EffectComposer>
   )

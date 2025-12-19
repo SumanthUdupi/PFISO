@@ -121,14 +121,14 @@ const Lobby = () => {
         />
 
         {/* Lights - Cozy Setup */}
-        <ambientLight intensity={0.5} color="#fff0d4" />
+        <ambientLight intensity={0.5} color="#4b3b60" />
         <directionalLight
             position={[-5, 10, -5]}
             intensity={0.8}
             castShadow
             shadow-mapSize={[2048, 2048]}
             shadow-bias={-0.0001}
-            color="#fffcf0"
+            color="#ff9966"
         />
         <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffaa55" distance={15} decay={2} />
 
@@ -158,6 +158,7 @@ const Lobby = () => {
             playerPosition={playerPosition.current}
             visibleMesh={false}
             isFocused={closestObject === 'projects'}
+            castShadow={false}
         />
 
         {/* About Bookshelf */}
@@ -168,6 +169,7 @@ const Lobby = () => {
             onClick={() => handleInteraction('about', 'About Me')}
             playerPosition={playerPosition.current}
             isFocused={closestObject === 'about'}
+            castShadow={false}
         />
 
         {/* Contact Computer */}
@@ -180,6 +182,7 @@ const Lobby = () => {
             playerPosition={playerPosition.current}
             visibleMesh={false}
             isFocused={closestObject === 'contact'}
+            castShadow={false}
         />
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>

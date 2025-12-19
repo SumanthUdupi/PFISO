@@ -4,7 +4,6 @@ import { Canvas } from '@react-three/fiber'
 import { Loader, OrbitControls } from '@react-three/drei'
 import Lobby from './scenes/Lobby'
 import UIOverlay from './components/ui/UIOverlay'
-import Scanlines from './components/ui/Scanlines'
 
 function App() {
   return (
