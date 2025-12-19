@@ -4,7 +4,7 @@
     "title": "Pixel Dungeon",
     "description": "A rogue-like dungeon crawler made with Unity. Features procedural generation and turn-based combat.",
     "techStack": ["Unity", "C#", "Pixel Art"],
-    "images": ["./assets/sprites/dungeon_thumb.png"],
+    "images": ["./assets/sprites/dungeon_thumb.webp"],
     "links": {
       "demo": "https://example.com",
       "code": "https://github.com"
@@ -15,7 +15,7 @@
     "title": "Space Shooter",
     "description": "Retro arcade shooter built with Phaser. High score system and particle effects.",
     "techStack": ["Phaser", "JavaScript"],
-    "images": ["./assets/sprites/space_thumb.png"],
+    "images": ["./assets/sprites/space_thumb.webp"],
     "links": {
       "demo": "https://example.com",
       "code": "https://github.com"
