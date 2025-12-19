@@ -3,10 +3,12 @@ import { Canvas } from '@react-three/fiber'
 import { Loader } from '@react-three/drei'
 import Lobby from './scenes/Lobby'
 import UIOverlay from './components/ui/UIOverlay'
+import Scanlines from './components/ui/Scanlines'
 
 function App() {
   return (
     <>
+      <Scanlines />
       <Canvas
         shadows
         orthographic
