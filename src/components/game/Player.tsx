@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
+import TeleportSparkle from './TeleportSparkle'
 
 // Constants for physics and animation
 const SPEED = 5
@@ -95,6 +96,14 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     const [interactionLabel, setInteractionLabel] = useState<string | null>(null)
     const interactionTimer = useRef<number>(0)
 
+    // AN-02: Speed Trails
+    // We use imperative rendering via a group and manual mesh management for performance and to avoid React render cycle latency
+    const trailsGroup = useRef<THREE.Group>(null)
+    const trailsRef = useRef<{ mesh: THREE.Mesh, life: number }[]>([])
+
+    // AN-01: Teleport Sparkle trigger
+    const [sparkleTrigger, setSparkleTrigger] = useState(false)
+
     useImperativeHandle(ref, () => ({
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
@@ -102,6 +111,8 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             // Reset velocities
             velocity.current.set(0, 0, 0)
             isMoving.current = false
+            // Trigger sparkle
+            setSparkleTrigger(true)
         }
     }))
 
@@ -220,6 +231,35 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
         mesh.current.position.set(currentPosition.current.x, currentY, currentPosition.current.z)
 
+        // Update Trails (AN-02)
+        if (trailsGroup.current) {
+            // Spawn new trail segment
+            if (isMoving.current && state.clock.getElapsedTime() % 0.1 < delta) {
+                const trailMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.6, 0.3),
+                    new THREE.MeshBasicMaterial({ color: "#E74C3C", transparent: true, opacity: 0.5 })
+                )
+                trailMesh.position.copy(mesh.current.position)
+                trailMesh.rotation.copy(mesh.current.rotation)
+                trailsGroup.current.add(trailMesh)
+                trailsRef.current.push({ mesh: trailMesh, life: 1.0 })
+            }
+
+            // Update existing trails
+            for (let i = trailsRef.current.length - 1; i >= 0; i--) {
+                const trail = trailsRef.current[i]
+                trail.life -= delta * 3 // Fade out speed
+                trail.mesh.material.opacity = trail.life * 0.5
+
+                if (trail.life <= 0) {
+                    trailsGroup.current.remove(trail.mesh)
+                    trail.mesh.geometry.dispose()
+                    trail.mesh.material.dispose()
+                    trailsRef.current.splice(i, 1)
+                }
+            }
+        }
+
         // Notify parent
         if (onPositionChange) onPositionChange(currentPosition.current)
 
@@ -287,6 +327,15 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
     return (
         <>
+            <TeleportSparkle
+                position={mesh.current ? mesh.current.position : new THREE.Vector3(...initialPosition)}
+                trigger={sparkleTrigger}
+                onComplete={() => setSparkleTrigger(false)}
+            />
+
+            {/* AN-02: Speed Trails Container */}
+            <group ref={trailsGroup} />
+
             <group ref={mesh} position={initialPosition}>
                 {/* Got Item Icon */}
                 {interactionLabel && (

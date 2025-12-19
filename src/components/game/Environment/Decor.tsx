@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
+import { WobbleMaterial } from './WobbleMaterial'
 
 interface DecorProps {
   width: number
@@ -13,7 +15,8 @@ interface DecorProps {
 const ScatterItem = ({ position, color, scale }: { position: [number, number, number], color: string, scale: [number, number, number] }) => (
     <mesh position={position} rotation={[0, Math.random() * Math.PI, 0]} castShadow receiveShadow>
         <boxGeometry args={scale} />
-        <meshStandardMaterial color={color} />
+        {/* AN-03: Environmental Wobble */}
+        <WobbleMaterial color={color} strength={0.1} speed={2} frequency={3} />
     </mesh>
 )
 

@@ -20,10 +20,15 @@ import Decor from '../components/game/Environment/Decor'
 import Background from '../components/game/Environment/Background'
 import Vignette from '../components/game/Environment/Vignette'
 import DeskGroup from '../components/game/Environment/DeskGroup'
+import Effects from '../components/game/Effects'
+import Motes from '../components/game/Environment/Motes'
+import FlickeringLight from '../components/game/Environment/FlickeringLight'
+import FlashOverlay from '../components/ui/FlashOverlay'
 
 const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
   const [clickMarkers, setClickMarkers] = useState<{ id: number, position: THREE.Vector3 }[]>([])
+  const [flashTrigger, setFlashTrigger] = useState(false)
 
   // Track player position for interactions
   const playerPosition = useRef(new THREE.Vector3(0, 0.5, 0))
@@ -43,9 +48,11 @@ const Lobby = () => {
       if (playerRef.current) {
           playerRef.current.triggerInteraction(label)
           setTimeout(() => {
+             setFlashTrigger(true)
              setActiveModal(type)
           }, 1500)
       } else {
+          setFlashTrigger(true)
           setActiveModal(type)
       }
   }
@@ -67,6 +74,7 @@ const Lobby = () => {
         <Floor width={15} depth={15} onFloorClick={handleFloorClick} theme={floorTheme} />
         <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
         <Decor width={15} depth={15} />
+        <Motes count={150} area={[20, 10, 20]} />
         <Vignette />
 
         {clickMarkers.map(marker => (
@@ -81,14 +89,16 @@ const Lobby = () => {
 
         {/* Lights */}
         <ambientLight intensity={0.7} color="#ccccff" />
-        <directionalLight
+        <FlickeringLight
             position={[10, 20, 10]}
             intensity={1.2}
+            flickerStrength={0.2}
+            flickerSpeed={0.05}
             castShadow
-            shadow-mapSize={[1024, 1024]}
-        >
-            <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
-        </directionalLight>
+            shadowMapSize={[2048, 2048]}
+        />
+
+        <Effects />
 
         {/* Floating Text Instructions */}
         <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5} position={[0, 3, -2]}>
@@ -137,6 +147,7 @@ const Lobby = () => {
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'none', width: '100%', height: '100%' }}>
+                <FlashOverlay trigger={flashTrigger} onComplete={() => setFlashTrigger(false)} />
                 <KeyboardGuide />
                 <SkillInventory skills={bioData.skills} />
                 <Modal

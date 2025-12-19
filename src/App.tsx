@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react'
+import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { Loader } from '@react-three/drei'
 import Lobby from './scenes/Lobby'
@@ -11,6 +12,7 @@ function App() {
       <Scanlines />
       <Canvas
         shadows
+        gl={{ shadowMap: { type: THREE.SoftShadowMap } }}
         orthographic
         camera={{ position: [20, 20, 20], zoom: 40, near: 0.1, far: 1000 }}
       >
