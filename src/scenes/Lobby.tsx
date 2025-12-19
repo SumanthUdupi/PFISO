@@ -18,7 +18,6 @@ import Walls from '../components/game/Environment/Walls'
 import Floor from '../components/game/Environment/Floor'
 import Decor from '../components/game/Environment/Decor'
 import Background from '../components/game/Environment/Background'
-import Vignette from '../components/game/Environment/Vignette'
 import DeskGroup from '../components/game/Environment/DeskGroup'
 import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
@@ -111,7 +110,6 @@ const Lobby = () => {
         <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
         <Decor width={15} depth={15} />
         <Motes count={100} area={[20, 10, 20]} />
-        <Vignette />
 
         <Player
             ref={playerRef}
