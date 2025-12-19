@@ -1,48 +1,176 @@
 import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Html, useTexture } from '@react-three/drei'
-import TeleportSparkle from './TeleportSparkle'
-import { useSpriteSheet } from '../../hooks/useSpriteSheet'
-import atlasData from '../../assets/atlas/sprites.json'
+import { Html } from '@react-three/drei'
+import TeleportSparkle from './TeleportSparkle' // Assuming you still have this
 
-// Constants for physics and animation
-const SPEED = 5
-const ACCELERATION = 20
-const FRICTION = 10
-const ROTATION_SPEED = 15
-const HEAD_TRACKING_LIMIT = Math.PI / 4
-const BORED_TIMEOUT = 10000
-const JUMP_FORCE = 8
-const GRAVITY = 20
+// --- CONFIGURATION ---
+const SPEED = 6
+const ACCELERATION = 40
+const FRICTION = 12
+const JUMP_FORCE = 9
+const GRAVITY = 25
+const ROTATION_SMOOTHING = 15
 
-const DustParticles = ({ position, isMoving }: { position: THREE.Vector3, isMoving: boolean }) => {
-    const particles = useRef<{ mesh: THREE.Mesh, life: number, velocity: THREE.Vector3 }[]>([])
+// --- 1. THE ART: Procedural Lego Avatar ---
+const LegoMaterial = new THREE.MeshStandardMaterial({
+    roughness: 0.2,
+    metalness: 0.05, // Plastic feel
+})
+
+const LegoAvatar = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
     const group = useRef<THREE.Group>(null)
-    const geometry = useMemo(() => new THREE.CircleGeometry(0.05, 8), [])
-    const material = useMemo(() => new THREE.MeshBasicMaterial({ color: 'white', transparent: true, opacity: 0.6 }), [])
+    const leftArm = useRef<THREE.Group>(null)
+    const rightArm = useRef<THREE.Group>(null)
+    const leftLeg = useRef<THREE.Group>(null)
+    const rightLeg = useRef<THREE.Group>(null)
+    const head = useRef<THREE.Group>(null)
 
     useFrame((state, delta) => {
         if (!group.current) return
-        if (isMoving && Math.random() < 0.2) {
+
+        const t = state.clock.getElapsedTime() * 10 // Animation speed
+
+        // 1. Walking Animation (Limb Swing)
+        if (isMoving && !isJumping) {
+            // Legs (Contra-lateral movement)
+            if(leftLeg.current) leftLeg.current.rotation.x = Math.sin(t) * 0.8
+            if(rightLeg.current) rightLeg.current.rotation.x = Math.cos(t) * 0.8
+
+            // Arms (Opposite to legs)
+            if(leftArm.current) leftArm.current.rotation.x = Math.cos(t) * 0.6
+            if(rightArm.current) rightArm.current.rotation.x = Math.sin(t) * 0.6
+            
+            // Bobbing effect
+            group.current.position.y = Math.abs(Math.sin(t)) * 0.05
+        } else if (isJumping) {
+            // Jump Pose: Arms up, legs split slightly
+            if(leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, -2.5, 0.1)
+            if(rightArm.current) rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, -2.5, 0.1)
+            if(leftLeg.current) leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, 0.5, 0.1)
+            if(rightLeg.current) rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, -0.2, 0.1)
+        } else {
+            // Idle: Breathing
+            if(leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, 0, 0.1)
+            if(rightArm.current) rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, 0, 0.1)
+            if(leftLeg.current) leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, 0, 0.1)
+            if(rightLeg.current) rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, 0, 0.1)
+            group.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.02
+        }
+
+        // 2. Lean into turns (Artistic Polish)
+        // Calculate lean based on horizontal velocity interaction
+        const leanAmount = -velocity.x * 0.05
+        group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, leanAmount, 0.1)
+    })
+
+    return (
+        <group ref={group}>
+            {/* HEAD */}
+            <group position={[0, 0.75, 0]} ref={head}>
+                <mesh material={LegoMaterial} castShadow receiveShadow>
+                    <cylinderGeometry args={[0.18, 0.18, 0.25, 16]} />
+                    <meshStandardMaterial color="#FFD700" roughness={0.2} /> {/* Classic Yellow */}
+                </mesh>
+                {/* Knob on head */}
+                <mesh position={[0, 0.15, 0]} castShadow>
+                    <cylinderGeometry args={[0.08, 0.08, 0.1, 16]} />
+                    <meshStandardMaterial color="#FFD700" roughness={0.2} />
+                </mesh>
+            </group>
+
+            {/* TORSO */}
+            <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+                {/* Trapezoid approximation via simple box for now */}
+                <boxGeometry args={[0.3, 0.45, 0.2]} />
+                <meshStandardMaterial color="#0055BF" roughness={0.2} /> {/* Blue Shirt */}
+            </mesh>
+
+            {/* HIPS */}
+            <mesh position={[0, 0.15, 0]} castShadow>
+                <boxGeometry args={[0.32, 0.1, 0.2]} />
+                <meshStandardMaterial color="#808080" roughness={0.2} /> 
+            </mesh>
+
+            {/* ARMS - Pivoted at top */}
+            <group position={[-0.22, 0.55, 0]} ref={leftArm}>
+                <mesh position={[0, -0.2, 0]} castShadow>
+                    <boxGeometry args={[0.1, 0.35, 0.1]} />
+                    <meshStandardMaterial color="#0055BF" />
+                </mesh>
+                <mesh position={[0, -0.4, 0]}> {/* Hand */}
+                     <boxGeometry args={[0.08, 0.08, 0.08]} />
+                     <meshStandardMaterial color="#FFD700" />
+                </mesh>
+            </group>
+
+            <group position={[0.22, 0.55, 0]} ref={rightArm}>
+                 <mesh position={[0, -0.2, 0]} castShadow>
+                    <boxGeometry args={[0.1, 0.35, 0.1]} />
+                    <meshStandardMaterial color="#0055BF" />
+                </mesh>
+                <mesh position={[0, -0.4, 0]}> {/* Hand */}
+                     <boxGeometry args={[0.08, 0.08, 0.08]} />
+                     <meshStandardMaterial color="#FFD700" />
+                </mesh>
+            </group>
+
+            {/* LEGS - Pivoted at hip */}
+            <group position={[-0.08, 0.1, 0]} ref={leftLeg}>
+                <mesh position={[0, -0.2, 0]} castShadow>
+                    <boxGeometry args={[0.13, 0.4, 0.18]} />
+                    <meshStandardMaterial color="#808080" /> {/* Grey Pants */}
+                </mesh>
+            </group>
+
+            <group position={[0.08, 0.1, 0]} ref={rightLeg}>
+                <mesh position={[0, -0.2, 0]} castShadow>
+                     <boxGeometry args={[0.13, 0.4, 0.18]} />
+                     <meshStandardMaterial color="#808080" />
+                </mesh>
+            </group>
+        </group>
+    )
+}
+
+// --- 2. Voxel Particles (Cubes instead of circles) ---
+const VoxelDust = ({ position, isMoving }: { position: THREE.Vector3, isMoving: boolean }) => {
+    const particles = useRef<{ mesh: THREE.Mesh, life: number, velocity: THREE.Vector3, rotSpeed: THREE.Vector3 }[]>([])
+    const group = useRef<THREE.Group>(null)
+    const geometry = useMemo(() => new THREE.BoxGeometry(0.08, 0.08, 0.08), [])
+    const material = useMemo(() => new THREE.MeshBasicMaterial({ color: '#cccccc', transparent: true, opacity: 0.6 }), [])
+
+    useFrame((state, delta) => {
+        if (!group.current) return
+        if (isMoving && Math.random() < 0.3) { // Higher spawn rate
             const mesh = new THREE.Mesh(geometry, material.clone())
-            mesh.rotation.x = -Math.PI / 2
-            mesh.position.set(position.x + (Math.random() - 0.5) * 0.4, 0.05, position.z + (Math.random() - 0.5) * 0.4)
+            // Spawn at feet
+            mesh.position.set(
+                position.x + (Math.random() - 0.5) * 0.4, 
+                0.1, 
+                position.z + (Math.random() - 0.5) * 0.4
+            )
             group.current.add(mesh)
             particles.current.push({
                 mesh,
                 life: 1.0,
-                velocity: new THREE.Vector3((Math.random() - 0.5) * 0.5, Math.random() * 0.5, (Math.random() - 0.5) * 0.5)
+                velocity: new THREE.Vector3((Math.random() - 0.5) * 1, Math.random() * 2, (Math.random() - 0.5) * 1),
+                rotSpeed: new THREE.Vector3(Math.random(), Math.random(), Math.random())
             })
         }
         for (let i = particles.current.length - 1; i >= 0; i--) {
             const p = particles.current[i]
-            p.life -= delta * 2
+            p.life -= delta * 2.5
+            p.velocity.y -= delta * 5 // Heavy gravity on cubes
             p.mesh.position.addScaledVector(p.velocity, delta)
+            p.mesh.rotation.x += p.rotSpeed.x * delta * 5
+            p.mesh.rotation.y += p.rotSpeed.y * delta * 5
+            
             p.mesh.scale.setScalar(p.life)
             // @ts-ignore
-            p.mesh.material.opacity = p.life * 0.6
-            if (p.life <= 0) {
+            p.mesh.material.opacity = p.life
+            
+            if (p.life <= 0 || p.mesh.position.y < 0) {
                 group.current.remove(p.mesh)
                 p.mesh.geometry.dispose()
                 // @ts-ignore
@@ -53,7 +181,6 @@ const DustParticles = ({ position, isMoving }: { position: THREE.Vector3, isMovi
     })
     return <group ref={group} />
 }
-
 
 export interface PlayerHandle {
     triggerInteraction: (label: string) => void
@@ -66,59 +193,23 @@ interface PlayerProps {
 }
 
 const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0.5, 0], bounds }, ref) => {
-    const mesh = useRef<THREE.Group>(null)
-    const shadowMesh = useRef<THREE.Mesh>(null)
-
-    // Load Texture Atlas
-    const atlasTexture = useTexture('assets/atlas/sprites.webp')
-
-    // Prepare textures for animation
-    const idleData = (atlasData as any)['player-idle.webp']
-    const walkData = (atlasData as any)['player-walk.webp']
-
-    // We must clone the texture because useSpriteSheet modifies offset/repeat
-    // and we need different offsets for idle vs walk
-    const idleTex = useMemo(() => atlasTexture.clone(), [atlasTexture])
-    const walkTex = useMemo(() => atlasTexture.clone(), [atlasTexture])
-
-    // Map atlas data to our hook's expected format (uv coordinates)
-    // atlasData has { uv: [x, y, w, h] }
-    const idleRegion = useMemo(() => {
-        if (!idleData) return undefined
-        const [x, y, w, h] = idleData.uv
-        return { x, y, w, h }
-    }, [idleData])
-
-    const walkRegion = useMemo(() => {
-        if (!walkData) return undefined
-        const [x, y, w, h] = walkData.uv
-        return { x, y, w, h }
-    }, [walkData])
-
-    const idleTexture = useSpriteSheet(idleTex, 1, 1, 0.2, idleRegion)
-    const walkTexture = useSpriteSheet(walkTex, 1, 1, 0.1, walkRegion)
-
-    // Physics state
+    const group = useRef<THREE.Group>(null)
+    
+    // Physics Logic
     const velocity = useRef(new THREE.Vector3(0, 0, 0))
     const verticalVelocity = useRef(0)
     const currentPosition = useRef(new THREE.Vector3(...initialPosition))
-    const targetRotation = useRef(0)
+    const isMoving = useRef(false)
+    const isJumping = useRef(false)
+    const facingAngle = useRef(0)
+
+    // React State for passing to visual components
+    const [visualState, setVisualState] = useState({ moving: false, jumping: false })
 
     // Input state
     const keys = useRef<{ [key: string]: boolean }>({})
-    const lastInputTime = useRef(Date.now())
-    const [isBored, setIsBored] = useState(false)
-    const isMoving = useRef(false)
-    const isJumping = useRef(false)
-
-    // Interaction State
     const [interactionLabel, setInteractionLabel] = useState<string | null>(null)
     const interactionTimer = useRef<number>(0)
-
-    // AN-02: Speed Trails
-    const trailsGroup = useRef<THREE.Group>(null)
-    const trailsRef = useRef<{ mesh: THREE.Mesh, life: number, material: THREE.Material }[]>([])
-
     const [sparkleTrigger, setSparkleTrigger] = useState(false)
 
     useImperativeHandle(ref, () => ({
@@ -131,22 +222,15 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
     }))
 
-    // Setup Input Listeners
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             keys.current[e.key] = true
-            // Space for Jump
             if (e.code === 'Space' && !isJumping.current && interactionTimer.current <= 0) {
                 verticalVelocity.current = JUMP_FORCE
                 isJumping.current = true
             }
-            lastInputTime.current = Date.now()
-            setIsBored(false)
         }
-        const handleKeyUp = (e: KeyboardEvent) => {
-            keys.current[e.key] = false
-        }
-
+        const handleKeyUp = (e: KeyboardEvent) => keys.current[e.key] = false
         window.addEventListener('keydown', handleKeyDown)
         window.addEventListener('keyup', handleKeyUp)
         return () => {
@@ -156,27 +240,18 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     }, [])
 
     useFrame((state, delta) => {
-        if (!mesh.current) return
+        if (!group.current) return
 
-        // Handle Interaction Timer
+        // Interaction freeze
         if (interactionTimer.current > 0) {
             interactionTimer.current -= delta
-            if (interactionTimer.current <= 0) {
-                setInteractionLabel(null)
-            }
-            // "Got Item" visual feedback
-            // Spin and hover
-            mesh.current.rotation.y += 10 * delta
-            mesh.current.position.y = 1.0 + Math.sin(state.clock.elapsedTime * 10) * 0.1
+            if (interactionTimer.current <= 0) setInteractionLabel(null)
+            // Celebration Spin
+            group.current.rotation.y += 15 * delta
             return
         }
 
-        // --- Boredom Check ---
-        if (!isMoving.current && !isJumping.current && Date.now() - lastInputTime.current > BORED_TIMEOUT) {
-            if (!isBored) setIsBored(true)
-        }
-
-        // --- Movement Logic ---
+        // --- Movement Physics ---
         const inputVector = new THREE.Vector3(0, 0, 0)
         if (keys.current['w'] || keys.current['ArrowUp']) inputVector.z -= 1
         if (keys.current['s'] || keys.current['ArrowDown']) inputVector.z += 1
@@ -186,159 +261,113 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (inputVector.length() > 0) {
             inputVector.normalize()
             isMoving.current = true
-            lastInputTime.current = Date.now()
-            setIsBored(false)
+            // Calculate target rotation based on movement direction
+            facingAngle.current = Math.atan2(inputVector.x, inputVector.z)
         } else {
             isMoving.current = false
         }
 
+        // Apply Velocity
         if (isMoving.current) {
             velocity.current.addScaledVector(inputVector, ACCELERATION * delta)
         }
+        
+        // Cap Speed
+        if (velocity.current.length() > SPEED) velocity.current.setLength(SPEED)
 
-        if (velocity.current.length() > SPEED) {
-            velocity.current.setLength(SPEED)
-        }
-
+        // Friction
         const frictionForce = velocity.current.clone().multiplyScalar(-1).normalize().multiplyScalar(FRICTION * delta)
-        if (velocity.current.length() < frictionForce.length()) {
-            velocity.current.set(0, 0, 0)
-        } else {
-            velocity.current.add(frictionForce)
-        }
+        if (velocity.current.length() < frictionForce.length()) velocity.current.set(0, 0, 0)
+        else velocity.current.add(frictionForce)
 
+        // Apply Movement
         currentPosition.current.addScaledVector(velocity.current, delta)
 
+        // Bounds
         if (bounds) {
             const halfW = bounds.width / 2 - 0.5
             const halfD = bounds.depth / 2 - 0.5
-            currentPosition.current.x = Math.max(-halfW, Math.min(halfW, currentPosition.current.x))
-            currentPosition.current.z = Math.max(-halfD, Math.min(halfD, currentPosition.current.z))
+            currentPosition.current.x = THREE.MathUtils.clamp(currentPosition.current.x, -halfW, halfW)
+            currentPosition.current.z = THREE.MathUtils.clamp(currentPosition.current.z, -halfD, halfD)
         }
 
+        // Gravity & Jump
         verticalVelocity.current -= GRAVITY * delta
-        let currentY = mesh.current.position.y + verticalVelocity.current * delta
+        let currentY = group.current.position.y + verticalVelocity.current * delta
 
-        if (currentY <= 0.5) {
-            currentY = 0.5
+        if (currentY <= 0) { // Ground level is 0
+            currentY = 0
             verticalVelocity.current = 0
             isJumping.current = false
         } else {
             isJumping.current = true
         }
 
-        mesh.current.position.set(currentPosition.current.x, currentY, currentPosition.current.z)
+        // Sync State to Ref (for React re-renders only when state changes significantly could optimize, but this is fine)
+        if (visualState.moving !== isMoving.current || visualState.jumping !== isJumping.current) {
+            setVisualState({ moving: isMoving.current, jumping: isJumping.current })
+        }
 
-        // Update Trails (AN-02)
-        if (trailsGroup.current) {
-            if (isMoving.current && state.clock.getElapsedTime() % 0.1 < delta) {
-                // Clone texture to freeze the frame for the trail
-                const trailTex = walkTexture.clone()
-                trailTex.offset.copy(walkTexture.offset)
-                trailTex.repeat.copy(walkTexture.repeat)
-
-                const trailMat = new THREE.MeshStandardMaterial({
-                    map: trailTex,
-                    transparent: true,
-                    opacity: 0.5,
-                    side: THREE.DoubleSide
-                })
-
-                const trailMesh = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.8, 0.8),
-                    trailMat
-                )
-                trailMesh.position.copy(mesh.current.position)
-                trailMesh.rotation.copy(mesh.current.rotation) // Copy billboard rotation at spawn time
-
-                trailsGroup.current.add(trailMesh)
-                trailsRef.current.push({ mesh: trailMesh, life: 1.0, material: trailMat })
-            }
-
-            for (let i = trailsRef.current.length - 1; i >= 0; i--) {
-                const trail = trailsRef.current[i]
-                trail.life -= delta * 3
-                // @ts-ignore
-                trail.mesh.material.opacity = trail.life * 0.5
-
-                if (trail.life <= 0) {
-                    trailsGroup.current.remove(trail.mesh)
-                    trail.mesh.geometry.dispose()
-                    trail.material.dispose()
-                    // Dispose texture clone
-                    // @ts-ignore
-                    if (trail.material.map) trail.material.map.dispose()
-                    trailsRef.current.splice(i, 1)
-                }
-            }
+        // Update Group Transforms
+        group.current.position.set(currentPosition.current.x, currentY, currentPosition.current.z)
+        
+        // Smooth Rotation Logic (The Artist's touch: smooth turns, not snapping)
+        if (isMoving.current) {
+            const q = new THREE.Quaternion()
+            q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), facingAngle.current)
+            group.current.quaternion.slerp(q, ROTATION_SMOOTHING * delta)
         }
 
         if (onPositionChange) onPositionChange(currentPosition.current)
-
-        mesh.current.lookAt(state.camera.position)
-
-        if (shadowMesh.current) {
-             const height = mesh.current.position.y - 0.5
-             const shadowScale = 1 - height * 0.5
-             shadowMesh.current.scale.setScalar(Math.max(0.1, shadowScale))
-             // @ts-ignore
-             shadowMesh.current.material.opacity = Math.max(0, 0.3 - height * 0.5)
-             shadowMesh.current.rotation.set(-Math.PI/2, 0, 0)
-        }
-
     })
-
-    const activeTexture = isMoving.current ? walkTexture : idleTexture
 
     return (
         <>
             <TeleportSparkle
-                position={mesh.current ? mesh.current.position : new THREE.Vector3(...initialPosition)}
+                position={group.current ? group.current.position : new THREE.Vector3(...initialPosition)}
                 trigger={sparkleTrigger}
                 onComplete={() => setSparkleTrigger(false)}
             />
 
-            <group ref={trailsGroup} />
+            {/* Interaction UI */}
+            {interactionLabel && (
+                <Html position={[currentPosition.current.x, currentPosition.current.y + 2, currentPosition.current.z]} center>
+                    <div style={{
+                        fontFamily: '"Press Start 2P", monospace',
+                        color: '#FFF',
+                        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        border: '3px solid white',
+                        boxShadow: '0 4px 0 rgba(0,0,0,0.2)',
+                        transform: 'scale(1.0)',
+                        animation: 'popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    }}>
+                        <div style={{ fontSize: '24px', marginBottom: '2px', textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>★</div>
+                        <div style={{ fontSize: '12px', fontWeight: 'bold', textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>{interactionLabel}</div>
+                    </div>
+                </Html>
+            )}
 
-            <group ref={mesh} position={initialPosition}>
-                {interactionLabel && (
-                     <Html position={[0, 1, 0]} center>
-                         <div style={{
-                             fontFamily: '"Press Start 2P", cursive',
-                             color: 'white',
-                             background: 'rgba(0,0,0,0.7)',
-                             padding: '5px',
-                             borderRadius: '5px',
-                             textAlign: 'center',
-                             border: '2px solid white'
-                         }}>
-                             <div style={{fontSize: '24px', marginBottom: '5px'}}>★</div>
-                             <div style={{fontSize: '10px'}}>{interactionLabel}</div>
-                         </div>
-                     </Html>
-                )}
-
-                <mesh position={[0, 0.4, 0]} castShadow>
-                    <planeGeometry args={[1, 1]} />
-                    <meshStandardMaterial
-                        map={activeTexture}
-                        transparent
-                        alphaTest={0.5}
-                        side={THREE.DoubleSide}
-                    />
-                </mesh>
+            <group ref={group} position={initialPosition}>
+                <LegoAvatar 
+                    isMoving={visualState.moving} 
+                    isJumping={visualState.jumping} 
+                    velocity={velocity.current} // Pass velocity for the lean effect
+                />
             </group>
 
-            <mesh
-                ref={shadowMesh}
-                position={[currentPosition.current.x, 0.05, currentPosition.current.z]}
+            {/* Blob Shadow - Simple but effective for Lego */}
+            <mesh 
+                position={[currentPosition.current.x, 0.02, currentPosition.current.z]} 
                 rotation={[-Math.PI / 2, 0, 0]}
             >
-                <circleGeometry args={[0.3, 16]} />
-                <meshBasicMaterial color="black" transparent opacity={0.3} />
+                <circleGeometry args={[0.35, 32]} />
+                <meshBasicMaterial color="black" transparent opacity={0.25} />
             </mesh>
 
-            <DustParticles position={currentPosition.current} isMoving={isMoving.current && !isJumping.current} />
+            <VoxelDust position={currentPosition.current} isMoving={visualState.moving && !visualState.jumping} />
         </>
     )
 })
