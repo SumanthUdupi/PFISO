@@ -14,6 +14,7 @@ function App() {
         orthographic
         camera={{ position: [20, 20, 20], zoom: 40, near: 0.1, far: 1000 }}
       >
+        <fog attach="fog" args={['#2c3e50', 10, 50]} />
         <Suspense fallback={null}>
           <Lobby />
         </Suspense>

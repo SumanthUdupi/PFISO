@@ -13,38 +13,13 @@ import Player, { PlayerHandle } from '../components/game/Player'
 import projectsData from '../assets/data/projects.json'
 import bioData from '../assets/data/bio.json'
 
-// Enhanced Floor with Checkerboard Pattern
-const Floor = ({ onFloorClick }: { onFloorClick: (point: THREE.Vector3) => void }) => {
-  const geometry = useMemo(() => new THREE.PlaneGeometry(0.95, 0.95), [])
-  const material1 = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2C3E50', roughness: 0.8 }), [])
-  const material2 = useMemo(() => new THREE.MeshStandardMaterial({ color: '#34495E', roughness: 0.8 }), [])
-
-  return (
-    <group position={[0, -0.5, 0]}>
-      {Array.from({ length: 15 }).map((_, x) =>
-        Array.from({ length: 15 }).map((_, z) => (
-          <mesh
-            key={`${x}-${z}`}
-            position={[x - 7, 0, z - 7]}
-            rotation={[-Math.PI / 2, 0, 0]}
-            receiveShadow
-            geometry={geometry}
-            material={(x + z) % 2 === 0 ? material1 : material2}
-            onClick={(e) => {
-                e.stopPropagation()
-                onFloorClick(e.point)
-            }}
-          />
-        ))
-      )}
-      {/* Decorative border */}
-       <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[16, 16]} />
-          <meshStandardMaterial color="#1a1a1a" />
-       </mesh>
-    </group>
-  )
-}
+// Environment Components
+import Walls from '../components/game/Environment/Walls'
+import Floor from '../components/game/Environment/Floor'
+import Decor from '../components/game/Environment/Decor'
+import Background from '../components/game/Environment/Background'
+import Vignette from '../components/game/Environment/Vignette'
+import DeskGroup from '../components/game/Environment/DeskGroup'
 
 const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
@@ -67,12 +42,6 @@ const Lobby = () => {
   const handleInteraction = (type: 'projects' | 'about' | 'contact', label: string) => {
       if (playerRef.current) {
           playerRef.current.triggerInteraction(label)
-          // Delay modal opening slightly to show animation?
-          // Requirement: "pause input briefly and play a 'Hold Up' animation frame ... rendering the clicked project's icon above"
-          // We can open modal after animation or during?
-          // Usually "Got Item" stops gameplay.
-          // Let's open modal after a short delay or immediately but player is paused.
-          // The Player component pauses its own movement input for 1.5s.
           setTimeout(() => {
              setActiveModal(type)
           }, 1500)
@@ -83,7 +52,14 @@ const Lobby = () => {
 
   return (
     <group>
-        <Floor onFloorClick={handleFloorClick} />
+        <Background />
+
+        {/* Environment */}
+        <Floor width={15} depth={15} onFloorClick={handleFloorClick} theme="lobby" />
+        <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
+        <Decor width={15} depth={15} />
+        <Vignette />
+
         {clickMarkers.map(marker => (
             <ClickMarker key={marker.id} position={marker.position} onComplete={() => removeMarker(marker.id)} />
         ))}
@@ -119,13 +95,15 @@ const Lobby = () => {
             </Text>
         </Float>
 
-        {/* Project Desk */}
+        {/* Project Desk Group */}
+        <DeskGroup position={[4, 0, -3]} rotation={[0, -Math.PI/2, 0]} />
         <InteractiveObject
             position={[4, 0.5, -3]}
             label="Projects"
             color="#2ECC71"
             onClick={() => handleInteraction('projects', 'Projects')}
             playerPosition={playerPosition.current}
+            visibleMesh={false}
         />
 
         {/* About Bookshelf */}
@@ -138,19 +116,15 @@ const Lobby = () => {
         />
 
         {/* Contact Computer */}
+        <DeskGroup position={[0, 0, -5]} rotation={[0, 0, 0]} />
         <InteractiveObject
             position={[0, 0.5, -5]}
             label="Contact"
             color="#E74C3C"
             onClick={() => handleInteraction('contact', 'Contact')}
             playerPosition={playerPosition.current}
+            visibleMesh={false}
         />
-
-        {/* Decor */}
-        <mesh position={[6, 1, 6]} castShadow>
-             <boxGeometry args={[1, 2, 1]} />
-             <meshStandardMaterial color="#95A5A6" />
-        </mesh>
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'none', width: '100%', height: '100%' }}>
