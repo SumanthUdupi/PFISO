@@ -78,8 +78,8 @@ const Decor: React.FC<DecorProps> = ({ width, depth }) => {
             <Rug position={[0, 0, 6]} size={[3, 2]} color="#c0392b" />
 
             {/* Scatter */}
-            {scatterItems.map(item => (
-                <ScatterItem key={item.key} {...item} />
+            {scatterItems.map(({ key, ...item }) => (
+                <ScatterItem key={key} {...item} />
             ))}
         </group>
     )

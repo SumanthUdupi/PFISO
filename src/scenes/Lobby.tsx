@@ -50,12 +50,21 @@ const Lobby = () => {
       }
   }
 
+  const floorTheme = useMemo(() => {
+    switch (activeModal) {
+        case 'projects': return 'project'
+        case 'about': return 'about'
+        case 'contact': return 'contact'
+        default: return 'lobby'
+    }
+  }, [activeModal])
+
   return (
     <group>
         <Background />
 
         {/* Environment */}
-        <Floor width={15} depth={15} onFloorClick={handleFloorClick} theme="lobby" />
+        <Floor width={15} depth={15} onFloorClick={handleFloorClick} theme={floorTheme} />
         <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
         <Decor width={15} depth={15} />
         <Vignette />
