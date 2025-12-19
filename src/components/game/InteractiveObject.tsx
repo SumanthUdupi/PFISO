@@ -13,11 +13,12 @@ interface InteractiveObjectProps {
   visibleMesh?: boolean
   // New prop to indicate if this is the active focus
   isFocused?: boolean
+  castShadow?: boolean
 }
 
 const INTERACTION_RADIUS = 2.5
 
-const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true, isFocused = false }) => {
+const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true, isFocused = false, castShadow = true }) => {
   const [hovered, setHovered] = useState(false)
   // We can still track local inRange for visuals if needed, but isFocused is passed from parent
   const [inRange, setInRange] = useState(false)
@@ -52,7 +53,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
       {visibleMesh ? (
          <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
             <mesh
-                castShadow
+                castShadow={castShadow}
                 onPointerOver={() => {
                 document.body.style.cursor = 'pointer'
                 setHovered(true)

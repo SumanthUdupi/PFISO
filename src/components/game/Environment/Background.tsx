@@ -2,56 +2,61 @@ import React, { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-// 3.1 Animated Decorative Backgrounds
-// "Add visual interest to the background layer."
-// "Place a large plane behind the room geometry."
-
 const Background: React.FC = () => {
   const meshRef = useRef<THREE.Mesh>(null)
 
   // Vertex Shader
   const vertexShader = `
     varying vec2 vUv;
+    varying vec3 vPosition;
     void main() {
       vUv = uv;
+      vPosition = position;
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
   `
 
-  // Fragment Shader for Day/Night cycle
+  // Fragment Shader for Twilight
   const fragmentShader = `
     uniform float time;
     varying vec2 vUv;
+    varying vec3 vPosition;
 
     void main() {
-      // Simple gradient
-      float t = time * 0.05; // Slow cycle
+      // Twilight Gradient
+      // Normalizing Y to -1 to 1 range
+      float y = normalize(vPosition).y;
 
-      // Cycle between Day (Blue/Cyan) and Night (Purple/Black)
-      vec3 dayTop = vec3(0.4, 0.7, 1.0);
-      vec3 dayBot = vec3(0.7, 0.9, 1.0);
+      // Colors
+      vec3 skyTop = vec3(0.17, 0.24, 0.31); // Dark Blue #2c3e50
+      vec3 horizon = vec3(1.0, 0.49, 0.37); // Orange/Pink #ff7e5f
+      vec3 abyss = vec3(0.1, 0.08, 0.15); // Dark Purple/Black
 
-      vec3 nightTop = vec3(0.05, 0.05, 0.2);
-      vec3 nightBot = vec3(0.2, 0.1, 0.4);
+      vec3 color;
 
-      float cycle = 0.5 + 0.5 * sin(t); // 0 to 1
-
-      vec3 top = mix(nightTop, dayTop, cycle);
-      vec3 bot = mix(nightBot, dayBot, cycle);
-
-      vec3 color = mix(bot, top, vUv.y);
-
-      // Stars (only at night)
-      float noise = fract(sin(dot(vUv * 50.0, vec2(12.9898, 78.233))) * 43758.5453);
-      if (cycle < 0.3 && noise > 0.99) {
-          float twinkle = 0.5 + 0.5 * sin(time * 5.0 + noise * 10.0);
-          color += vec3(twinkle);
+      // Mix based on elevation
+      if (y > 0.0) {
+          // Sky: Horizon -> Top
+          // pow(y, 0.6) pushes the horizon color up a bit for a softer glow
+          color = mix(horizon, skyTop, pow(y, 0.6));
+      } else {
+          // Void: Horizon -> Abyss
+          // pow(abs(y), 0.6) pushes the horizon color down a bit
+          color = mix(horizon, abyss, pow(abs(y), 0.6));
       }
 
-      // Clouds (scrolling)
-      float cloudNoise = fract(sin(dot((vUv + vec2(time * 0.01, 0.0)) * 5.0, vec2(12.9898, 78.233))) * 43758.5453);
-      if (cloudNoise > 0.6) {
-          color += vec3(0.1) * cycle;
+      // Extra Horizon Glow
+      float horizonGlow = 1.0 - abs(y);
+      horizonGlow = pow(horizonGlow, 8.0);
+      color += vec3(0.2, 0.1, 0.05) * horizonGlow;
+
+      // Stars
+      // Visible mostly in the dark areas (top and bottom)
+      float noise = fract(sin(dot(vUv * 100.0, vec2(12.9898, 78.233))) * 43758.5453);
+      float starThreshold = 0.995;
+      if (abs(y) > 0.3 && noise > starThreshold) {
+          float twinkle = 0.5 + 0.5 * sin(time * 2.0 + noise * 20.0);
+          color += vec3(twinkle) * (abs(y) - 0.3);
       }
 
       gl_FragColor = vec4(color, 1.0);
@@ -67,20 +72,13 @@ const Background: React.FC = () => {
   })
 
   return (
-    // Place far behind. Camera at 20,20,20 looking at 0,0,0.
-    // Direction (-1,-1,-1).
-    // Place at -50, -50, -50 relative to origin?
-    // Or just a huge sphere surrounding? Or a plane facing camera.
-    // Since it's orthographic, a plane perpendicular to camera vector is best.
-    // Camera rotation is looked at 0,0,0.
-    // We can just use LookAt on the mesh.
-    <mesh ref={meshRef} position={[-20, -10, -20]} rotation={[0, Math.PI / 4, 0]} scale={[2, 2, 2]}>
-       <planeGeometry args={[200, 100]} />
+    <mesh ref={meshRef} position={[0, 0, 0]} scale={[1, 1, 1]}>
+       <sphereGeometry args={[60, 32, 32]} />
        <shaderMaterial
           vertexShader={vertexShader}
           fragmentShader={fragmentShader}
           uniforms={uniforms.current}
-          side={THREE.DoubleSide}
+          side={THREE.BackSide}
        />
     </mesh>
   )
