@@ -2,8 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Interactive Portfolio</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,7 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
     <style>
-      /* Removed @import to improve page load speed */
       body {
         margin: 0;
         padding: 0;
@@ -19,17 +20,37 @@
         height: 100vh;
         overflow: hidden;
         background-color: #1a1a1a;
-        /* 'cursive' is the standard fallback for novelty fonts like this */
         font-family: 'Press Start 2P', cursive;
+        
+        /* --- GAME/CANVAS OPTIMIZATIONS --- */
+        
+        /* Prevents pull-to-refresh and pinch-zoom on mobile */
+        touch-action: none;
+        
+        /* Prevents accidental text highlighting while playing */
+        user-select: none;
+        -webkit-user-select: none;
+        
+        /* Keeps pixel fonts crisp instead of anti-aliased/blurry */
+        -webkit-font-smoothing: none;
+        -moz-osx-font-smoothing: grayscale;
       }
+
       #root {
         width: 100%;
         height: 100%;
+        /* Ensures no stray scrollbars from canvas vertical alignment */
+        display: block; 
+      }
+      
+      /* Optional: Hide scrollbars completely if they appear */
+      ::-webkit-scrollbar {
+        display: none;
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
