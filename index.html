@@ -5,8 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Interactive Portfolio</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+      /* Removed @import to improve page load speed */
       body {
         margin: 0;
         padding: 0;
@@ -14,7 +19,8 @@
         height: 100vh;
         overflow: hidden;
         background-color: #1a1a1a;
-        font-family: 'Press Start 2P', cursive, sans-serif;
+        /* 'cursive' is the standard fallback for novelty fonts like this */
+        font-family: 'Press Start 2P', cursive;
       }
       #root {
         width: 100%;
@@ -24,6 +30,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="main.tsx"></script>
   </body>
 </html>
