@@ -5,11 +5,16 @@ import * as THREE from 'three'
 import InteractiveObject from '../components/game/InteractiveObject'
 import Modal from '../components/ui/Modal'
 import ContactForm from '../components/ui/ContactForm'
+import KeyboardGuide from '../components/ui/KeyboardGuide'
+import SkillInventory from '../components/ui/SkillInventory'
+import Typewriter from '../components/ui/Typewriter'
+import PixelTransition from '../components/ui/PixelTransition'
+import ClickMarker from '../components/game/ClickMarker'
 import projectsData from '../assets/data/projects.json'
 import bioData from '../assets/data/bio.json'
 
 // Enhanced Floor with Checkerboard Pattern
-const Floor = () => {
+const Floor = ({ onFloorClick }: { onFloorClick: (point: THREE.Vector3) => void }) => {
   const geometry = useMemo(() => new THREE.PlaneGeometry(0.95, 0.95), [])
   const material1 = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2C3E50', roughness: 0.8 }), [])
   const material2 = useMemo(() => new THREE.MeshStandardMaterial({ color: '#34495E', roughness: 0.8 }), [])
@@ -25,6 +30,10 @@ const Floor = () => {
             receiveShadow
             geometry={geometry}
             material={(x + z) % 2 === 0 ? material1 : material2}
+            onClick={(e) => {
+                e.stopPropagation()
+                onFloorClick(e.point)
+            }}
           />
         ))
       )}
@@ -121,10 +130,24 @@ const Player = () => {
 
 const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
+  const [clickMarkers, setClickMarkers] = useState<{ id: number, position: THREE.Vector3 }[]>([])
+
+  const handleFloorClick = (point: THREE.Vector3) => {
+      const id = Date.now()
+      setClickMarkers(prev => [...prev, { id, position: point }])
+  }
+
+  const removeMarker = (id: number) => {
+      setClickMarkers(prev => prev.filter(m => m.id !== id))
+  }
 
   return (
     <group>
-        <Floor />
+        <Floor onFloorClick={handleFloorClick} />
+        {clickMarkers.map(marker => (
+            <ClickMarker key={marker.id} position={marker.position} onComplete={() => removeMarker(marker.id)} />
+        ))}
+
         <Player />
 
         {/* Lights */}
@@ -184,16 +207,19 @@ const Lobby = () => {
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'none', width: '100%', height: '100%' }}>
+                <KeyboardGuide />
+                <SkillInventory skills={bioData.skills} />
                 <Modal
                     title="My Projects"
                     isOpen={activeModal === 'projects'}
                     onClose={() => setActiveModal(null)}
                 >
+                    <PixelTransition>
                     <div style={{ display: 'grid', gap: '20px' }}>
                         {projectsData.map((project) => (
                             <div key={project.id} style={{ border: '2px solid #ccc', padding: '10px', background: 'white' }}>
                                 <h3 style={{marginTop: 0}}>{project.title}</h3>
-                                <p>{project.description}</p>
+                                <p><Typewriter text={project.description} speed={10} /></p>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                     {project.techStack.map(tech => (
                                         <span key={tech} style={{ background: '#eee', padding: '2px 5px', fontSize: '0.8em', border: '1px solid #aaa' }}>{tech}</span>
@@ -202,6 +228,7 @@ const Lobby = () => {
                             </div>
                         ))}
                     </div>
+                    </PixelTransition>
                 </Modal>
 
                 <Modal
@@ -209,19 +236,15 @@ const Lobby = () => {
                     isOpen={activeModal === 'about'}
                     onClose={() => setActiveModal(null)}
                 >
-                    <p>{bioData.summary}</p>
-                    <h3>Skills</h3>
-                    <ul style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', listStyle: 'none', padding: 0 }}>
-                        {bioData.skills.map(skill => (
-                            <li key={skill} style={{ background: '#3498DB', color: 'white', padding: '5px 10px', border: '1px solid #2980B9' }}>{skill}</li>
-                        ))}
-                    </ul>
+                    <PixelTransition>
+                    <p><Typewriter text={bioData.summary} speed={15} /></p>
                     <h3>Experience</h3>
                     {bioData.experience.map((exp, i) => (
                         <div key={i} style={{ marginBottom: '10px', padding: '10px', background: '#ecf0f1' }}>
                             <strong>{exp.role}</strong> at {exp.company} ({exp.years})
                         </div>
                     ))}
+                    </PixelTransition>
                 </Modal>
 
                 <Modal
@@ -229,8 +252,10 @@ const Lobby = () => {
                     isOpen={activeModal === 'contact'}
                     onClose={() => setActiveModal(null)}
                 >
-                    <p>Send me a message and let's work together!</p>
+                    <PixelTransition>
+                    <p><Typewriter text="Send me a message and let's work together!" speed={30} /></p>
                     <ContactForm />
+                    </PixelTransition>
                 </Modal>
             </div>
         </Html>

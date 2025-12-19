@@ -11,4 +11,30 @@ body {
   background: #111;
   color: white;
   user-select: none;
+  cursor: crosshair; /* Fallback retro cursor */
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2c3e50;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #e74c3c;
+  border: 4px solid #2c3e50;
+  box-shadow: inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(255,255,255,0.5);
+}
+
+::-webkit-scrollbar-corner {
+  background: #2c3e50;
+}
+
+/* Interactive Elements Cursor */
+a, button, [role="button"] {
+  cursor: pointer; /* Can be replaced with a custom hand cursor image if available */
 }

@@ -12,7 +12,6 @@ const UIOverlay = () => {
       padding: '20px'
     }}>
       <h1 style={{ margin: 0, textShadow: '2px 2px 0px #000' }}>Interactive Portfolio</h1>
-      <p style={{ textShadow: '1px 1px 0px #000' }}>Use W, A, S, D to move</p>
     </div>
   )
 }

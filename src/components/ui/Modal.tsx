@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import NineSlicePanel from './NineSlicePanel'
 
 interface ModalProps {
   title: string
@@ -24,46 +25,51 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
       pointerEvents: 'all',
       zIndex: 1000
     }}>
-      <div style={{
-        backgroundColor: '#F0F0F0',
-        padding: '4px',
+      <NineSlicePanel style={{
         width: '80%',
         maxWidth: '600px',
         maxHeight: '80%',
-        overflowY: 'auto',
-        border: '4px solid #333',
-        boxShadow: '8px 8px 0px #000',
-        color: '#333'
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 0, // Reset padding as NineSlicePanel handles the border/padding via slice
+        backgroundColor: '#C0C0C0', // Match the NineSlice face
+        color: '#333',
+        boxShadow: '8px 8px 0px rgba(0,0,0,0.5)',
       }}>
         <div style={{
-          backgroundColor: '#4A90E2',
-          padding: '10px',
+          background: 'linear-gradient(to right, #000080, #1084d0)',
+          padding: '8px 12px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           color: 'white',
-          borderBottom: '4px solid #333',
-          marginBottom: '20px'
+          fontFamily: '"Press Start 2P", cursive',
         }}>
-          <h2 style={{ margin: 0, fontSize: '18px' }}>{title}</h2>
+          <h2 style={{ margin: 0, fontSize: '14px', textShadow: '2px 2px #000' }}>{title}</h2>
           <button
             onClick={onClose}
             style={{
-              background: '#D0021B',
-              border: '2px solid white',
-              color: 'white',
+              background: '#C0C0C0',
+              border: '2px outset #eee',
+              color: 'black',
               fontFamily: '"Press Start 2P", cursive',
               cursor: 'pointer',
-              padding: '5px 10px'
+              padding: '2px 6px',
+              fontSize: '12px',
+              boxShadow: '1px 1px 0px #000'
             }}
           >
             X
           </button>
         </div>
-        <div style={{ padding: '20px' }}>
+        <div style={{
+          padding: '20px',
+          overflowY: 'auto',
+          flex: 1
+        }}>
           {children}
         </div>
-      </div>
+      </NineSlicePanel>
     </div>
   )
 }
