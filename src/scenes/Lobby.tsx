@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
 import { Html, Text, Float } from '@react-three/drei'
 import * as THREE from 'three'
 import InteractiveObject from '../components/game/InteractiveObject'
@@ -10,6 +9,7 @@ import SkillInventory from '../components/ui/SkillInventory'
 import Typewriter from '../components/ui/Typewriter'
 import PixelTransition from '../components/ui/PixelTransition'
 import ClickMarker from '../components/game/ClickMarker'
+import Player, { PlayerHandle } from '../components/game/Player'
 import projectsData from '../assets/data/projects.json'
 import bioData from '../assets/data/bio.json'
 
@@ -46,91 +46,14 @@ const Floor = ({ onFloorClick }: { onFloorClick: (point: THREE.Vector3) => void 
   )
 }
 
-const Player = () => {
-  const mesh = useRef<THREE.Group>(null)
-
-  // Use refs for state to avoid re-renders
-  const position = useRef(new THREE.Vector3(0, 0.5, 0))
-  const facing = useRef(0)
-  const keys = useRef<{ [key: string]: boolean }>({})
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { keys.current[e.key] = true }
-    const handleKeyUp = (e: KeyboardEvent) => { keys.current[e.key] = false }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    return () => {
-        window.removeEventListener('keydown', handleKeyDown)
-        window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [])
-
-  useFrame((state, delta) => {
-    if (mesh.current) {
-        // Movement Logic
-        const speed = 5 * delta
-        let moved = false
-
-        if (keys.current['w'] || keys.current['ArrowUp']) {
-             position.current.z -= speed
-             facing.current = Math.PI
-             moved = true
-        }
-        if (keys.current['s'] || keys.current['ArrowDown']) {
-             position.current.z += speed
-             facing.current = 0
-             moved = true
-        }
-        if (keys.current['a'] || keys.current['ArrowLeft']) {
-             position.current.x -= speed
-             facing.current = -Math.PI / 2
-             moved = true
-        }
-        if (keys.current['d'] || keys.current['ArrowRight']) {
-             position.current.x += speed
-             facing.current = Math.PI / 2
-             moved = true
-        }
-
-        // Apply smooth visuals
-        // Bobbing
-        mesh.current.position.y = 0.5 + Math.sin(state.clock.elapsedTime * (moved ? 10 : 2)) * 0.1
-
-        // Smooth rotation
-        // We use a simple lerp for rotation, handling the PI/-PI wrap could be better but sufficient for isometric
-        mesh.current.rotation.y = THREE.MathUtils.lerp(mesh.current.rotation.y, facing.current, 0.1)
-
-        // Lerp position for smoothness (or direct assignment)
-        mesh.current.position.x = THREE.MathUtils.lerp(mesh.current.position.x, position.current.x, 0.2)
-        mesh.current.position.z = THREE.MathUtils.lerp(mesh.current.position.z, position.current.z, 0.2)
-    }
-  })
-
-  return (
-    <group ref={mesh} position={[0, 0.5, 0]}>
-      {/* Body */}
-      <mesh castShadow position={[0, 0.4, 0]}>
-        <boxGeometry args={[0.4, 0.6, 0.3]} />
-        <meshStandardMaterial color="#E74C3C" />
-      </mesh>
-      {/* Head */}
-      <mesh castShadow position={[0, 0.9, 0]}>
-        <boxGeometry args={[0.3, 0.3, 0.3]} />
-        <meshStandardMaterial color="#F1C40F" />
-      </mesh>
-      {/* Shadow Blob */}
-      <mesh position={[0, -0.45, 0]} rotation={[-Math.PI/2, 0, 0]}>
-        <circleGeometry args={[0.3, 16]} />
-        <meshBasicMaterial color="black" transparent opacity={0.3} />
-      </mesh>
-    </group>
-  )
-}
-
 const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
   const [clickMarkers, setClickMarkers] = useState<{ id: number, position: THREE.Vector3 }[]>([])
+
+  // Track player position for interactions
+  const playerPosition = useRef(new THREE.Vector3(0, 0.5, 0))
+  // Player ref for triggering animations
+  const playerRef = useRef<PlayerHandle>(null)
 
   const handleFloorClick = (point: THREE.Vector3) => {
       const id = Date.now()
@@ -141,6 +64,23 @@ const Lobby = () => {
       setClickMarkers(prev => prev.filter(m => m.id !== id))
   }
 
+  const handleInteraction = (type: 'projects' | 'about' | 'contact', label: string) => {
+      if (playerRef.current) {
+          playerRef.current.triggerInteraction(label)
+          // Delay modal opening slightly to show animation?
+          // Requirement: "pause input briefly and play a 'Hold Up' animation frame ... rendering the clicked project's icon above"
+          // We can open modal after animation or during?
+          // Usually "Got Item" stops gameplay.
+          // Let's open modal after a short delay or immediately but player is paused.
+          // The Player component pauses its own movement input for 1.5s.
+          setTimeout(() => {
+             setActiveModal(type)
+          }, 1500)
+      } else {
+          setActiveModal(type)
+      }
+  }
+
   return (
     <group>
         <Floor onFloorClick={handleFloorClick} />
@@ -148,7 +88,11 @@ const Lobby = () => {
             <ClickMarker key={marker.id} position={marker.position} onComplete={() => removeMarker(marker.id)} />
         ))}
 
-        <Player />
+        <Player
+            ref={playerRef}
+            onPositionChange={(pos) => playerPosition.current.copy(pos)}
+            initialPosition={[0, 0.5, 0]}
+        />
 
         {/* Lights */}
         <ambientLight intensity={0.7} color="#ccccff" />
@@ -180,7 +124,8 @@ const Lobby = () => {
             position={[4, 0.5, -3]}
             label="Projects"
             color="#2ECC71"
-            onClick={() => setActiveModal('projects')}
+            onClick={() => handleInteraction('projects', 'Projects')}
+            playerPosition={playerPosition.current}
         />
 
         {/* About Bookshelf */}
@@ -188,7 +133,8 @@ const Lobby = () => {
             position={[-4, 0.5, -3]}
             label="About Me"
             color="#F39C12"
-            onClick={() => setActiveModal('about')}
+            onClick={() => handleInteraction('about', 'About Me')}
+            playerPosition={playerPosition.current}
         />
 
         {/* Contact Computer */}
@@ -196,7 +142,8 @@ const Lobby = () => {
             position={[0, 0.5, -5]}
             label="Contact"
             color="#E74C3C"
-            onClick={() => setActiveModal('contact')}
+            onClick={() => handleInteraction('contact', 'Contact')}
+            playerPosition={playerPosition.current}
         />
 
         {/* Decor */}
