@@ -59,6 +59,18 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
                 <boxGeometry args={[1, 1, 1]} />
                 <meshStandardMaterial color={hovered ? '#ecf0f1' : color} emissive={hovered ? color : '#000000'} emissiveIntensity={0.5} />
             </mesh>
+
+            {/* Outline Effect */}
+            {hovered && (
+                <mesh position={[0, 0, 0]}>
+                    <boxGeometry args={[1.05, 1.05, 1.05]} />
+                    <meshBasicMaterial
+                        color="white"
+                        side={THREE.BackSide}
+                        toneMapped={false}
+                    />
+                </mesh>
+            )}
          </Float>
       ) : (
           // Invisible trigger
