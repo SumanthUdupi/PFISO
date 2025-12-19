@@ -95,8 +95,8 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         return { x, y, w, h }
     }, [walkData])
 
-    const idleTexture = useSpriteSheet(idleTex, 4, 1, 0.2, idleRegion)
-    const walkTexture = useSpriteSheet(walkTex, 4, 1, 0.1, walkRegion)
+    const idleTexture = useSpriteSheet(idleTex, 1, 1, 0.2, idleRegion)
+    const walkTexture = useSpriteSheet(walkTex, 1, 1, 0.1, walkRegion)
 
     // Physics state
     const velocity = useRef(new THREE.Vector3(0, 0, 0))
