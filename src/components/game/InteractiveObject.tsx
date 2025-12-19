@@ -9,11 +9,12 @@ interface InteractiveObjectProps {
   label: string
   onClick: () => void
   playerPosition?: THREE.Vector3
+  visibleMesh?: boolean
 }
 
 const INTERACTION_RADIUS = 2.5
 
-const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition }) => {
+const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true }) => {
   const [hovered, setHovered] = useState(false)
   const [inRange, setInRange] = useState(false)
   const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
@@ -40,22 +41,42 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
 
   return (
     <group position={position}>
-    <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
-      <mesh
-        castShadow
-        onPointerOver={() => {
-          document.body.style.cursor = 'pointer'
-          setHovered(true)
-        }}
-        onPointerOut={() => {
-          document.body.style.cursor = 'auto'
-          setHovered(false)
-        }}
-        onClick={onClick}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color={hovered ? '#ecf0f1' : color} emissive={hovered ? color : '#000000'} emissiveIntensity={0.5} />
-      </mesh>
+    <group>
+      {visibleMesh ? (
+         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
+            <mesh
+                castShadow
+                onPointerOver={() => {
+                document.body.style.cursor = 'pointer'
+                setHovered(true)
+                }}
+                onPointerOut={() => {
+                document.body.style.cursor = 'auto'
+                setHovered(false)
+                }}
+                onClick={onClick}
+            >
+                <boxGeometry args={[1, 1, 1]} />
+                <meshStandardMaterial color={hovered ? '#ecf0f1' : color} emissive={hovered ? color : '#000000'} emissiveIntensity={0.5} />
+            </mesh>
+         </Float>
+      ) : (
+          // Invisible trigger
+           <mesh
+                onPointerOver={() => {
+                document.body.style.cursor = 'pointer'
+                setHovered(true)
+                }}
+                onPointerOut={() => {
+                document.body.style.cursor = 'auto'
+                setHovered(false)
+                }}
+                onClick={onClick}
+            >
+                <boxGeometry args={[1.2, 1.5, 1.2]} />
+                <meshBasicMaterial transparent opacity={0} />
+            </mesh>
+      )}
 
       {/* Interaction Indicator Ring */}
       <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.6, 0]}>
@@ -92,7 +113,8 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
       {hovered && (
         <Html position={[0, 1.5, 0]} center={anchorX === 'center'} style={{
             transform: anchorX === 'left' ? 'translateX(0%)' : anchorX === 'right' ? 'translateX(-100%)' : 'translateX(-50%)',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            zIndex: 1000 // Ensure it's on top
         }}>
           <div style={{
             color: 'white',
@@ -112,7 +134,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
           </div>
         </Html>
       )}
-    </Float>
+    </group>
     </group>
   )
 }
