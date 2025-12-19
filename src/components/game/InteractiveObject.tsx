@@ -7,15 +7,19 @@ interface InteractiveObjectProps {
   position: [number, number, number]
   color?: string
   label: string
+  // onClick is still here for fallback, but we primarily use Keyboard
   onClick: () => void
   playerPosition?: THREE.Vector3
   visibleMesh?: boolean
+  // New prop to indicate if this is the active focus
+  isFocused?: boolean
 }
 
 const INTERACTION_RADIUS = 2.5
 
-const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true }) => {
+const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true, isFocused = false }) => {
   const [hovered, setHovered] = useState(false)
+  // We can still track local inRange for visuals if needed, but isFocused is passed from parent
   const [inRange, setInRange] = useState(false)
   const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
 
@@ -39,6 +43,9 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
      else setAnchorX('center')
   }, [position])
 
+  // Combined active state: either mouse hover or keyboard focus
+  const isActive = hovered || isFocused;
+
   return (
     <group position={position}>
     <group>
@@ -57,11 +64,11 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
                 onClick={onClick}
             >
                 <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial color={hovered ? '#ecf0f1' : color} emissive={hovered ? color : '#000000'} emissiveIntensity={0.5} />
+                <meshStandardMaterial color={isActive ? '#ecf0f1' : color} emissive={isActive ? color : '#000000'} emissiveIntensity={0.5} />
             </mesh>
 
             {/* Outline Effect */}
-            {hovered && (
+            {isActive && (
                 <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[1.05, 1.05, 1.05]} />
                     <meshBasicMaterial
@@ -96,53 +103,32 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
         <meshBasicMaterial color={color} transparent opacity={inRange ? 0.8 : 0.3} />
       </mesh>
 
-      {/* Proximity "!" Bubble */}
-      {inRange && !hovered && (
-        <group position={[0, 1.2, 0]}>
-             <Float speed={5} rotationIntensity={0} floatIntensity={0.5}>
-                 <Html center transform sprite>
-                     <div style={{
-                         color: color,
-                         background: 'white',
-                         width: '30px',
-                         height: '30px',
-                         borderRadius: '50%',
-                         display: 'flex',
-                         alignItems: 'center',
-                         justifyContent: 'center',
-                         fontFamily: '"Press Start 2P", cursive',
-                         fontSize: '20px',
-                         border: `2px solid ${color}`,
-                         boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                     }}>
-                         !
-                     </div>
-                 </Html>
-             </Float>
-        </group>
-      )}
-
-      {hovered && (
+      {/* Clean Pop-up UI - replaces speech bubble and hover tooltip */}
+      {(isActive || inRange) && (
         <Html position={[0, 1.5, 0]} center={anchorX === 'center'} style={{
             transform: anchorX === 'left' ? 'translateX(0%)' : anchorX === 'right' ? 'translateX(-100%)' : 'translateX(-50%)',
             pointerEvents: 'none',
-            zIndex: 1000 // Ensure it's on top
+            zIndex: 1000
         }}>
           <div style={{
-            color: 'white',
-            background: 'rgba(0,0,0,0.8)',
-            padding: '8px 12px',
-            borderRadius: '4px',
+            color: '#333',
+            background: 'rgba(255, 255, 255, 0.95)',
+            padding: '8px 16px',
+            borderRadius: '20px',
             fontFamily: '"Press Start 2P", cursive',
-            fontSize: '12px',
+            fontSize: '10px',
             whiteSpace: 'nowrap',
             border: `2px solid ${color}`,
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
-            marginLeft: anchorX === 'left' ? '10px' : 0,
-            marginRight: anchorX === 'right' ? '10px' : 0
+            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px'
           }}>
-            {label}
-            <div style={{ fontSize: '8px', marginTop: '4px', opacity: 0.8 }}>(CLICK)</div>
+            <span style={{ fontWeight: 'bold' }}>{label}</span>
+            <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
+                {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
+            </span>
           </div>
         </Html>
       )}

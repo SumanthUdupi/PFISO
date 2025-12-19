@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { Html, Text, Float } from '@react-three/drei'
 import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
 import InteractiveObject from '../components/game/InteractiveObject'
 import Modal from '../components/ui/Modal'
 import ContactForm from '../components/ui/ContactForm'
@@ -8,7 +9,6 @@ import KeyboardGuide from '../components/ui/KeyboardGuide'
 import SkillInventory from '../components/ui/SkillInventory'
 import Typewriter from '../components/ui/Typewriter'
 import PixelTransition from '../components/ui/PixelTransition'
-import ClickMarker from '../components/game/ClickMarker'
 import Player, { PlayerHandle } from '../components/game/Player'
 import projectsData from '../assets/data/projects.json'
 import bioData from '../assets/data/bio.json'
@@ -22,29 +22,19 @@ import Vignette from '../components/game/Environment/Vignette'
 import DeskGroup from '../components/game/Environment/DeskGroup'
 import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
-import FlickeringLight from '../components/game/Environment/FlickeringLight'
 import FlashOverlay from '../components/ui/FlashOverlay'
 
 const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
-  const [clickMarkers, setClickMarkers] = useState<{ id: number, position: THREE.Vector3 }[]>([])
   const [flashTrigger, setFlashTrigger] = useState(false)
+  const [closestObject, setClosestObject] = useState<'projects' | 'about' | 'contact' | null>(null)
 
   // Track player position for interactions
   const playerPosition = useRef(new THREE.Vector3(0, 0.5, 0))
   // Player ref for triggering animations
   const playerRef = useRef<PlayerHandle>(null)
 
-  const handleFloorClick = (point: THREE.Vector3) => {
-      const id = Date.now()
-      setClickMarkers(prev => [...prev, { id, position: point }])
-  }
-
-  const removeMarker = (id: number) => {
-      setClickMarkers(prev => prev.filter(m => m.id !== id))
-  }
-
-  const handleInteraction = (type: 'projects' | 'about' | 'contact', label: string) => {
+  const handleInteraction = useCallback((type: 'projects' | 'about' | 'contact', label: string) => {
       if (playerRef.current) {
           playerRef.current.triggerInteraction(label)
           setTimeout(() => {
@@ -55,7 +45,52 @@ const Lobby = () => {
           setFlashTrigger(true)
           setActiveModal(type)
       }
-  }
+  }, [])
+
+  // Keyboard Interaction Handler
+  useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+          if (activeModal) {
+              if (e.key === 'Escape') {
+                  setActiveModal(null)
+              }
+              return
+          }
+
+          if (e.key === 'Enter' && closestObject) {
+              const label = closestObject === 'projects' ? 'Projects' :
+                            closestObject === 'about' ? 'About Me' : 'Contact'
+              handleInteraction(closestObject, label)
+          }
+      }
+
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [closestObject, activeModal, handleInteraction])
+
+  // Track closest object
+  useFrame(() => {
+      const pp = playerPosition.current
+      const projectPos = new THREE.Vector3(4, 0.5, -3)
+      const aboutPos = new THREE.Vector3(-4, 0.5, -3)
+      const contactPos = new THREE.Vector3(0, 0.5, -5)
+
+      const d1 = pp.distanceTo(projectPos)
+      const d2 = pp.distanceTo(aboutPos)
+      const d3 = pp.distanceTo(contactPos)
+
+      const limit = 2.5
+      let closest: 'projects' | 'about' | 'contact' | null = null
+      let minDst = limit
+
+      if (d1 < minDst) { minDst = d1; closest = 'projects' }
+      if (d2 < minDst) { minDst = d2; closest = 'about' }
+      if (d3 < minDst) { minDst = d3; closest = 'contact' }
+
+      if (closest !== closestObject) {
+          setClosestObject(closest)
+      }
+  })
 
   const floorTheme = useMemo(() => {
     switch (activeModal) {
@@ -71,46 +106,45 @@ const Lobby = () => {
         <Background />
 
         {/* Environment */}
-        <Floor width={15} depth={15} onFloorClick={handleFloorClick} theme={floorTheme} />
+        {/* Removed onFloorClick to disable click-to-move */}
+        <Floor width={15} depth={15} theme={floorTheme} />
         <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
         <Decor width={15} depth={15} />
-        <Motes count={150} area={[20, 10, 20]} />
+        <Motes count={100} area={[20, 10, 20]} />
         <Vignette />
-
-        {clickMarkers.map(marker => (
-            <ClickMarker key={marker.id} position={marker.position} onComplete={() => removeMarker(marker.id)} />
-        ))}
 
         <Player
             ref={playerRef}
             onPositionChange={(pos) => playerPosition.current.copy(pos)}
             initialPosition={[0, 0.5, 0]}
+            bounds={{ width: 15, depth: 15 }}
         />
 
-        {/* Lights */}
-        <ambientLight intensity={0.7} color="#ccccff" />
-        <FlickeringLight
-            position={[10, 20, 10]}
-            intensity={1.2}
-            flickerStrength={0.2}
-            flickerSpeed={0.05}
+        {/* Lights - Cozy Setup */}
+        <ambientLight intensity={0.5} color="#fff0d4" />
+        <directionalLight
+            position={[-5, 10, -5]}
+            intensity={0.8}
             castShadow
-            shadowMapSize={[2048, 2048]}
+            shadow-mapSize={[2048, 2048]}
+            shadow-bias={-0.0001}
+            color="#fffcf0"
         />
+        <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffaa55" distance={15} decay={2} />
 
         <Effects />
 
         {/* Floating Text Instructions */}
         <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5} position={[0, 3, -2]}>
              <Text
-                fontSize={0.5}
+                fontSize={0.4}
                 color="white"
                 anchorX="center"
                 anchorY="middle"
                 outlineWidth={0.02}
-                outlineColor="#000"
+                outlineColor="#333"
             >
-                EXPLORE THE OFFICE
+                USE WASD TO MOVE | ENTER TO INTERACT
             </Text>
         </Float>
 
@@ -123,6 +157,7 @@ const Lobby = () => {
             onClick={() => handleInteraction('projects', 'Projects')}
             playerPosition={playerPosition.current}
             visibleMesh={false}
+            isFocused={closestObject === 'projects'}
         />
 
         {/* About Bookshelf */}
@@ -132,6 +167,7 @@ const Lobby = () => {
             color="#F39C12"
             onClick={() => handleInteraction('about', 'About Me')}
             playerPosition={playerPosition.current}
+            isFocused={closestObject === 'about'}
         />
 
         {/* Contact Computer */}
@@ -143,6 +179,7 @@ const Lobby = () => {
             onClick={() => handleInteraction('contact', 'Contact')}
             playerPosition={playerPosition.current}
             visibleMesh={false}
+            isFocused={closestObject === 'contact'}
         />
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>

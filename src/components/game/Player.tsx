@@ -67,9 +67,10 @@ export interface PlayerHandle {
 interface PlayerProps {
     onPositionChange?: (pos: THREE.Vector3) => void
     initialPosition?: [number, number, number]
+    bounds?: { width: number, depth: number }
 }
 
-const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0.5, 0] }, ref) => {
+const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0.5, 0], bounds }, ref) => {
     const mesh = useRef<THREE.Group>(null)
 
     // Mesh parts refs for animation
@@ -216,6 +217,14 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // Apply Horizontal Velocity
         currentPosition.current.addScaledVector(velocity.current, delta)
 
+        // Constrain to bounds
+        if (bounds) {
+            const halfW = bounds.width / 2 - 0.5 // Subtract player radius approx
+            const halfD = bounds.depth / 2 - 0.5
+            currentPosition.current.x = Math.max(-halfW, Math.min(halfW, currentPosition.current.x))
+            currentPosition.current.z = Math.max(-halfD, Math.min(halfD, currentPosition.current.z))
+        }
+
         // --- Vertical Physics (Jump) ---
         verticalVelocity.current -= GRAVITY * delta
         let currentY = mesh.current.position.y + verticalVelocity.current * delta
@@ -277,8 +286,10 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // --- Head Tracking ---
         if (headMesh.current) {
             const mouse = state.pointer
-            const targetHeadY = -mouse.x * HEAD_TRACKING_LIMIT
-            const targetHeadX = -mouse.y * HEAD_TRACKING_LIMIT
+            // Inverted logic to fix "reverse" tracking
+            const targetHeadY = mouse.x * HEAD_TRACKING_LIMIT
+            const targetHeadX = mouse.y * HEAD_TRACKING_LIMIT
+
             headMesh.current.rotation.y = THREE.MathUtils.lerp(headMesh.current.rotation.y, targetHeadY, 0.1)
             headMesh.current.rotation.x = THREE.MathUtils.lerp(headMesh.current.rotation.x, targetHeadX, 0.1)
         }
