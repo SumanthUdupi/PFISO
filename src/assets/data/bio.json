@@ -2,7 +2,7 @@
   "name": "Jules The Dev",
   "summary": "Full-stack developer with a passion for game development and pixel art. I create immersive web experiences and fun games.",
   "skills": ["React", "TypeScript", "Three.js", "Python", "Flask", "Unity", "C#"],
-  "avatar": "./assets/sprites/avatar.png",
+  "avatar": "./assets/sprites/avatar.webp",
   "experience": [
     {
       "role": "Senior Developer",

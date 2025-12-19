@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 
 interface FloorProps {
@@ -15,17 +15,48 @@ const THEME_COLORS = {
   contact: { primary: '#C0392B', secondary: '#E74C3C' }
 }
 
+const FloorLayer: React.FC<{
+  tiles: { position: [number, number, number], key: string }[]
+  material: THREE.Material
+  geometry: THREE.BufferGeometry
+  onFloorClick: (point: THREE.Vector3) => void
+}> = ({ tiles, material, geometry, onFloorClick }) => {
+  const meshRef = useRef<THREE.InstancedMesh>(null)
+
+  useLayoutEffect(() => {
+    if (!meshRef.current) return
+    const tempObject = new THREE.Object3D()
+
+    tiles.forEach((tile, i) => {
+      tempObject.position.set(...tile.position)
+      tempObject.rotation.set(-Math.PI / 2, 0, 0)
+      tempObject.updateMatrix()
+      meshRef.current!.setMatrixAt(i, tempObject.matrix)
+    })
+    meshRef.current.instanceMatrix.needsUpdate = true
+  }, [tiles])
+
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geometry, material, tiles.length]}
+      receiveShadow
+      onClick={(e) => {
+        e.stopPropagation()
+        onFloorClick(e.point)
+      }}
+    />
+  )
+}
+
 const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorClick }) => {
   const geometry = useMemo(() => new THREE.PlaneGeometry(0.95, 0.95), [])
 
-  // Create variants
-  // We will generate materials based on theme
   const materials = useMemo(() => {
     const colors = THEME_COLORS[theme] || THEME_COLORS.lobby
     const primary = new THREE.Color(colors.primary)
     const secondary = new THREE.Color(colors.secondary)
 
-    // Helper to create variant
     const createMat = (baseColor: THREE.Color, roughness: number) => {
         return new THREE.MeshStandardMaterial({
             color: baseColor,
@@ -33,32 +64,22 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
         })
     }
 
-    // 4 variants: Primary A, Primary B, Secondary A, Secondary B
-    // Primary A: Base
-    // Primary B: Slightly perturbed
-    // Secondary A: Base
-    // Secondary B: Slightly perturbed
-
-    // Perturb color slightly
     const pVar = primary.clone().offsetHSL(0, 0, -0.02)
     const sVar = secondary.clone().offsetHSL(0, 0, -0.02)
-
-    // Also variants like "cracked" or "scuffed" could just be color shifts for now
-    // Or roughness changes.
 
     return [
         createMat(primary, 0.8),         // 0: P Base
         createMat(pVar, 0.9),            // 1: P Var
         createMat(secondary, 0.8),       // 2: S Base
         createMat(sVar, 0.9),            // 3: S Var
-        createMat(primary.clone().offsetHSL(0,0,0.05), 0.7), // 4: P Light (Rare)
+        createMat(primary.clone().offsetHSL(0,0,0.05), 0.7), // 4: P Light
     ]
   }, [theme])
 
-  // Generate grid with randomized tiles
-  // Use stable random based on x, z
-  const grid = useMemo(() => {
-    const tiles = []
+  const groupedTiles = useMemo(() => {
+    const groups: { [key: number]: { position: [number, number, number], key: string }[] } = {
+        0: [], 1: [], 2: [], 3: [], 4: []
+    }
     const wStart = -Math.floor(width / 2)
     const dStart = -Math.floor(depth / 2)
 
@@ -66,52 +87,41 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
       for (let z = 0; z < depth; z++) {
         const wx = wStart + x
         const wz = dStart + z
-
-        // Pseudo-random seed
         const seed = Math.sin(wx * 12.9898 + wz * 78.233) * 43758.5453
         const rand = seed - Math.floor(seed)
-
-        // Checkerboard base logic
         const isSecondary = (x + z) % 2 !== 0
-
-        // Determine material index
         let matIndex = isSecondary ? 2 : 0
 
-        // 20% chance to be a variant
         if (rand > 0.8) {
             matIndex = isSecondary ? 3 : 1
         }
-        // 5% chance for rare variant (only on primary tiles for now)
         if (!isSecondary && rand > 0.95) {
             matIndex = 4
         }
 
-        tiles.push({
+        groups[matIndex].push({
             key: `${wx}-${wz}`,
-            position: [wx, 0, wz] as [number, number, number],
-            matIndex
+            position: [wx, 0, wz] as [number, number, number]
         })
       }
     }
-    return tiles
+    return groups
   }, [width, depth])
 
   return (
     <group position={[0, -0.5, 0]}>
-      {grid.map(tile => (
-          <mesh
-            key={tile.key}
-            position={tile.position}
-            rotation={[-Math.PI / 2, 0, 0]}
-            receiveShadow
-            geometry={geometry}
-            material={materials[tile.matIndex]}
-            onClick={(e) => {
-                e.stopPropagation()
-                onFloorClick(e.point)
-            }}
-          />
-      ))}
+      {Object.entries(groupedTiles).map(([index, tiles]) => {
+          if (tiles.length === 0) return null
+          return (
+            <FloorLayer
+                key={index}
+                tiles={tiles}
+                material={materials[parseInt(index)]}
+                geometry={geometry}
+                onFloorClick={onFloorClick}
+            />
+          )
+      })}
        {/* Decorative border */}
        <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[width + 1, depth + 1]} />
