@@ -5,15 +5,14 @@ const Effects = () => {
   return (
     <EffectComposer multisampling={0} disableNormalPass>
       <Bloom
-        luminanceThreshold={1}
+        luminanceThreshold={0.8}
         mipmapBlur
-        intensity={0.5}
+        intensity={0.4}
         radius={0.4}
       />
-      <Noise opacity={0.1} />
-      <Vignette eskil={false} offset={0.1} darkness={0.5} />
-      <HueSaturation saturation={-0.2} />
-      <Sepia intensity={0.2} />
+      {/* Noise and Sepia removed for a cleaner look */}
+      <Vignette eskil={false} offset={0.1} darkness={0.3} />
+      <HueSaturation saturation={0.1} />
     </EffectComposer>
   )
 }
