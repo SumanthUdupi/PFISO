@@ -2,7 +2,8 @@ import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
-import TeleportSparkle from './TeleportSparkle' // Assuming you still have this
+import TeleportSparkle from './TeleportSparkle'
+import { findPath } from '../../utils/pathfinding'
 
 // --- CONFIGURATION ---
 const SPEED = 6
@@ -104,6 +105,7 @@ const LegoAvatar = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJu
                 </mesh>
             </group>
 
+            {/* LEGS - Pivoted at hip */}
             <group position={[0.22, 0.55, 0]} ref={rightArm}>
                  <mesh position={[0, -0.2, 0]} castShadow>
                     <boxGeometry args={[0.1, 0.35, 0.1]} />
@@ -184,6 +186,7 @@ const VoxelDust = ({ position, isMoving }: { position: THREE.Vector3, isMoving: 
 
 export interface PlayerHandle {
     triggerInteraction: (label: string) => void
+    moveTo: (target: THREE.Vector3) => void
 }
 
 interface PlayerProps {
@@ -203,6 +206,10 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     const isJumping = useRef(false)
     const facingAngle = useRef(0)
 
+    // Pathfinding
+    const path = useRef<THREE.Vector3[]>([])
+    const currentPathTargetIndex = useRef(0)
+
     // React State for passing to visual components
     const [visualState, setVisualState] = useState({ moving: false, jumping: false })
 
@@ -219,6 +226,15 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             velocity.current.set(0, 0, 0)
             isMoving.current = false
             setSparkleTrigger(true)
+            path.current = [] // Clear path
+        },
+        moveTo: (target: THREE.Vector3) => {
+            // Use A* to find path
+            const calculatedPath = findPath(currentPosition.current, target)
+            if (calculatedPath.length > 0) {
+                path.current = calculatedPath
+                currentPathTargetIndex.current = 0
+            }
         }
     }))
 
@@ -228,6 +244,10 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             if (e.code === 'Space' && !isJumping.current && interactionTimer.current <= 0) {
                 verticalVelocity.current = JUMP_FORCE
                 isJumping.current = true
+            }
+            // Cancel path movement on manual input
+            if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                path.current = []
             }
         }
         const handleKeyUp = (e: KeyboardEvent) => keys.current[e.key] = false
@@ -253,13 +273,32 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
         // --- Movement Physics ---
         const inputVector = new THREE.Vector3(0, 0, 0)
+
+        // Manual Input
         if (keys.current['w'] || keys.current['ArrowUp']) inputVector.z -= 1
         if (keys.current['s'] || keys.current['ArrowDown']) inputVector.z += 1
         if (keys.current['a'] || keys.current['ArrowLeft']) inputVector.x -= 1
         if (keys.current['d'] || keys.current['ArrowRight']) inputVector.x += 1
 
+        // Path Following (if no manual input)
+        if (inputVector.length() === 0 && path.current.length > 0) {
+            const target = path.current[currentPathTargetIndex.current]
+            const toTarget = target.clone().sub(currentPosition.current)
+            toTarget.y = 0
+
+            if (toTarget.length() < 0.2) {
+                // Reached node
+                currentPathTargetIndex.current++
+                if (currentPathTargetIndex.current >= path.current.length) {
+                    path.current = [] // Reached end
+                }
+            } else {
+                inputVector.copy(toTarget.normalize())
+            }
+        }
+
         if (inputVector.length() > 0) {
-            inputVector.normalize()
+            if (inputVector.length() > 1) inputVector.normalize() // Already normalized mostly, but just in case
             isMoving.current = true
             // Calculate target rotation based on movement direction
             facingAngle.current = Math.atan2(inputVector.x, inputVector.z)
