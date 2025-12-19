@@ -1,43 +1,62 @@
+# This workflow automates the deployment of a Node.js project to GitHub Pages.
+# It includes validation steps (linting/testing) to ensure only stable code is deployed.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow ongoing deployments to complete safely.
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  # Build job: Compiles the project and runs tests
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          # Caching npm dependencies speeds up subsequent runs
           cache: 'npm'
 
       - name: Install dependencies
+        # 'npm ci' is preferred over 'npm install' for CI environments
         run: npm ci
 
-      - name: Build
+      - name: Lint and Test
+        # It's best practice to ensure the code passes quality checks before building
+        # If your project doesn't have these scripts yet, you can comment these out
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+
+      - name: Build project
         run: npm run build
 
       - name: Upload artifact
+        # We use v3 of the upload-pages-artifact to ensure compatibility with deploy-pages v4
         uses: actions/upload-pages-artifact@v3
         with:
+          # Ensure this matches your build output directory (e.g., dist, build, or out)
           path: ./dist
 
+  # Deployment job: Takes the artifact from the build job and pushes it to GitHub Pages
   deploy:
     environment:
       name: github-pages
