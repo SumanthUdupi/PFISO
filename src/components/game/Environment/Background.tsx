@@ -28,9 +28,9 @@ const Background: React.FC = () => {
       float y = normalize(vPosition).y;
 
       // Colors
-      vec3 skyTop = vec3(0.17, 0.24, 0.31); // Dark Blue #2c3e50
-      vec3 horizon = vec3(1.0, 0.49, 0.37); // Orange/Pink #ff7e5f
-      vec3 abyss = vec3(0.1, 0.08, 0.15); // Dark Purple/Black
+      vec3 skyTop = vec3(0.29, 0.23, 0.38); // Dark Purple #4b3b60
+      vec3 horizon = vec3(0.9, 0.49, 0.13); // Warm Pumpkin #e67e22
+      vec3 abyss = vec3(0.1, 0.1, 0.18); // Deep Blue/Purple #1a1a2e
 
       vec3 color;
 

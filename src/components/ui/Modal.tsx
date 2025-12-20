@@ -36,8 +36,8 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
       display: 'flex',
       flexDirection: 'column',
       padding: 0,
-      backgroundColor: '#C0C0C0',
-      color: '#333',
+      backgroundColor: '#fffbf0',
+      color: '#2c3e50',
       boxShadow: '0 -4px 10px rgba(0,0,0,0.5)',
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
@@ -65,8 +65,8 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
       display: 'flex',
       flexDirection: 'column',
       padding: 0,
-      backgroundColor: '#C0C0C0',
-      color: '#333',
+      backgroundColor: '#fffbf0',
+      color: '#2c3e50',
       boxShadow: '8px 8px 0px rgba(0,0,0,0.5)',
   }
 
@@ -74,7 +74,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
     <div style={isMobile ? mobileContainerStyle : desktopContainerStyle}>
       <NineSlicePanel style={isMobile ? mobilePanelStyle : desktopPanelStyle}>
         <div style={{
-          background: 'linear-gradient(to right, #000080, #1084d0)',
+          background: 'linear-gradient(to right, #4b3b60, #6d597a)',
           padding: '12px 16px', // Larger touch target
           display: 'flex',
           justifyContent: 'space-between',
@@ -86,9 +86,9 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
           <button
             onClick={onClose}
             style={{
-              background: '#C0C0C0',
-              border: '2px outset #eee',
-              color: 'black',
+              background: '#fffbf0',
+              border: '2px outset #dcd0c0',
+              color: '#2c3e50',
               fontFamily: '"Press Start 2P", cursive',
               cursor: 'pointer',
               padding: isMobile ? '8px 12px' : '2px 6px', // Larger touch target (min 44px check via padding+content usually)

@@ -224,7 +224,7 @@ const Lobby = () => {
         <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
         {/* Lights - Cozy Setup */}
-        <ambientLight intensity={0.5} color="#4b3b60" />
+        <ambientLight intensity={0.6} color="#4b3b60" />
         <directionalLight
             position={[-5, 10, -5]}
             intensity={0.8}
@@ -246,7 +246,7 @@ const Lobby = () => {
                     anchorX="center"
                     anchorY="middle"
                     outlineWidth={0.02}
-                    outlineColor="#333"
+                    outlineColor="#4b3b60"
                 >
                     USE WASD TO MOVE | ENTER TO INTERACT
                 </Text>
@@ -261,12 +261,12 @@ const Lobby = () => {
         />
 
         {/* Featured Project Glow */}
-        <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#00ff00" distance={3} decay={2} />
+        <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#26a69a" distance={3} decay={2} />
 
         <InteractiveObject
             position={[4, 0.5, -3]}
             label="Projects"
-            color="#2ECC71"
+            color="#26a69a"
             onClick={() => handleInteraction('projects', 'Projects', projectPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
@@ -284,7 +284,7 @@ const Lobby = () => {
         <InteractiveObject
             position={[-4, 0.5, -3]}
             label="About Me"
-            color="#F39C12"
+            color="#ffa726"
             onClick={() => handleInteraction('about', 'About Me', aboutPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
@@ -308,7 +308,7 @@ const Lobby = () => {
         <InteractiveObject
             position={[2, 0.5, -4.8]}
             label="Contact"
-            color="#E74C3C"
+            color="#ef5350"
             onClick={() => handleInteraction('contact', 'Contact', contactPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
@@ -338,7 +338,7 @@ const Lobby = () => {
                     }}
                     style={{
                         pointerEvents: 'all',
-                        background: '#FFD700',
+                        background: '#ffa726',
                         border: '4px solid white',
                         borderRadius: '12px',
                         padding: '16px 24px',
@@ -400,14 +400,14 @@ const Lobby = () => {
                             style={{
                                 display: 'block',
                                 width: '100%',
-                                background: '#3498DB',
+                                background: '#26a69a',
                                 color: 'white',
                                 padding: '15px',
                                 textAlign: 'center',
                                 textDecoration: 'none',
                                 fontFamily: '"Press Start 2P", cursive',
-                                border: '4px solid #2980B9',
-                                boxShadow: '0 4px 0 #1A5276',
+                                border: '4px solid #1abc9c',
+                                boxShadow: '0 4px 0 #16a085',
                                 marginBottom: '20px'
                             }}
                         >

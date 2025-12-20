@@ -53,7 +53,7 @@ const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, role }) =
             paddingBottom: isMobile ? '20%' : '0'
         }}>
             {step >= 1 && (
-                <h1 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '24px' : '32px', marginBottom: '20px', color: '#F1C40F', textAlign: 'center' }}>
+                <h1 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '24px' : '32px', marginBottom: '20px', color: '#ffa726', textAlign: 'center' }}>
                     <Typewriter text={name} speed={50} />
                 </h1>
             )}
