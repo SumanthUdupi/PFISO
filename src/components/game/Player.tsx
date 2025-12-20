@@ -63,8 +63,8 @@ const getSpriteRow = (angle: number, camera: THREE.Camera) => {
 
 const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
     // Load textures
-    const textureIdle = useTexture('./assets/sprites/player-idle.png')
-    const textureWalk = useTexture('./assets/sprites/player-walk.png')
+    const textureIdle = useTexture('./assets/sprites/player-idle.webp')
+    const textureWalk = useTexture('./assets/sprites/player-walk.webp')
 
     // State to track last facing direction when idle
     const lastAngle = useRef(0)

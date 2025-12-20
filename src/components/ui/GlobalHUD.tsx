@@ -61,7 +61,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           }}
         >
           <SpriteIcon
-            src="./assets/sprites/ui-icons.webp"
+            src="./assets/sprites/ui-icons.png"
             size={isMobile ? 32 : 24}
             sheetSize={128}
             iconSize={64}

@@ -6,6 +6,7 @@ import Lobby from './scenes/Lobby'
 import UIOverlay from './components/ui/UIOverlay'
 import { FPSLimiter } from './components/game/FPSLimiter'
 import { LoadingScreen } from './components/ui/LoadingScreen'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import { useDeviceDetect } from './hooks/useDeviceDetect'
 import projectsData from './assets/data/projects.json'
 import bioData from './assets/data/bio.json'
@@ -49,7 +50,9 @@ function App() {
                 maxPolarAngle={Math.PI / 2}
             />
             <Suspense fallback={<LoadingScreen />}>
-            <Lobby />
+              <ErrorBoundary>
+                <Lobby />
+              </ErrorBoundary>
             </Suspense>
         </Canvas>
         <UIOverlay />
