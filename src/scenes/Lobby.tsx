@@ -4,9 +4,12 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import InteractiveObject from '../components/game/InteractiveObject'
 import Modal from '../components/ui/Modal'
+import ProjectModal from '../components/ui/ProjectModal'
+import BioModal from '../components/ui/BioModal'
 import ContactForm from '../components/ui/ContactForm'
 import KeyboardGuide from '../components/ui/KeyboardGuide'
 import SkillInventory from '../components/ui/SkillInventory'
+import GlobalHUD from '../components/ui/GlobalHUD'
 import Typewriter from '../components/ui/Typewriter'
 import PixelTransition from '../components/ui/PixelTransition'
 import Player, { PlayerHandle } from '../components/game/Player'
@@ -23,6 +26,7 @@ import DeskGroup from '../components/game/Environment/DeskGroup'
 import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
 import FlashOverlay from '../components/ui/FlashOverlay'
+import IntroOverlay from '../components/ui/IntroOverlay'
 
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 
@@ -58,6 +62,7 @@ const CameraController = () => {
 
 const Lobby = () => {
   const { isMobile } = useDeviceDetect()
+  const [introComplete, setIntroComplete] = useState(false)
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
   const [flashTrigger, setFlashTrigger] = useState(false)
   const [closestObject, setClosestObject] = useState<'projects' | 'about' | 'contact' | null>(null)
@@ -104,8 +109,14 @@ const Lobby = () => {
       return () => window.removeEventListener('keydown', handleKeyDown)
   }, [closestObject, activeModal, handleInteraction])
 
+  const pulseRef = useRef<THREE.PointLight>(null)
+
   // Track closest object
-  useFrame(() => {
+  useFrame(({ clock }) => {
+      if (pulseRef.current) {
+          pulseRef.current.intensity = 1.5 + Math.sin(clock.elapsedTime * 4) * 0.5
+      }
+
       const pp = playerPosition.current
       const projectPos = new THREE.Vector3(4, 0.5, -3)
       const aboutPos = new THREE.Vector3(-4, 0.5, -3)
@@ -152,6 +163,13 @@ const Lobby = () => {
   return (
     <group>
         <CameraController />
+        {!introComplete && (
+            <IntroOverlay
+                name={bioData.name}
+                role={bioData.role}
+                onComplete={() => setIntroComplete(true)}
+            />
+        )}
         <Background />
 
         {/* Clickable Plane for Movement (Invisible but catches raycasts) */}
@@ -212,6 +230,10 @@ const Lobby = () => {
 
         {/* Project Desk Group */}
         <DeskGroup position={[4, 0, -3]} rotation={[0, -Math.PI/2, 0]} />
+
+        {/* Featured Project Glow */}
+        <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#00ff00" distance={3} decay={2} />
+
         <InteractiveObject
             position={[4, 0.5, -3]}
             label="Projects"
@@ -279,53 +301,30 @@ const Lobby = () => {
                 <FlashOverlay trigger={flashTrigger} onComplete={() => setFlashTrigger(false)} />
                 {!isMobile && <KeyboardGuide />}
 
-                {/* Mobile Menu Icon (Placeholder) */}
-                {isMobile && (
-                     <div style={{ position: 'absolute', top: 20, right: 20, pointerEvents: 'all' }}>
-                        <div style={{ background: 'rgba(0,0,0,0.5)', padding: '10px', borderRadius: '8px' }}>
-                            <span style={{ color: 'white', fontSize: '24px' }}>☰</span>
-                        </div>
-                     </div>
-                )}
+                <GlobalHUD
+                    onNavigate={(section) => {
+                        if (section) {
+                            setActiveModal(section)
+                        } else {
+                            setActiveModal(null)
+                        }
+                    }}
+                    activeSection={activeModal}
+                />
 
                 <SkillInventory skills={bioData.skills} />
-                <Modal
-                    title="My Projects"
+
+                <ProjectModal
                     isOpen={activeModal === 'projects'}
                     onClose={() => setActiveModal(null)}
-                >
-                    <PixelTransition>
-                    <div style={{ display: 'grid', gap: '20px' }}>
-                        {projectsData.map((project) => (
-                            <div key={project.id} style={{ border: '2px solid #ccc', padding: '10px', background: 'white' }}>
-                                <h3 style={{marginTop: 0}}>{project.title}</h3>
-                                <p><Typewriter text={project.description} speed={10} /></p>
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                    {project.techStack.map(tech => (
-                                        <span key={tech} style={{ background: '#eee', padding: '2px 5px', fontSize: '0.8em', border: '1px solid #aaa' }}>{tech}</span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    </PixelTransition>
-                </Modal>
+                    projects={projectsData}
+                />
 
-                <Modal
-                    title="About Me"
+                <BioModal
                     isOpen={activeModal === 'about'}
                     onClose={() => setActiveModal(null)}
-                >
-                    <PixelTransition>
-                    <p><Typewriter text={bioData.summary} speed={15} /></p>
-                    <h3>Experience</h3>
-                    {bioData.experience.map((exp, i) => (
-                        <div key={i} style={{ marginBottom: '10px', padding: '10px', background: '#ecf0f1' }}>
-                            <strong>{exp.role}</strong> at {exp.company} ({exp.years})
-                        </div>
-                    ))}
-                    </PixelTransition>
-                </Modal>
+                    bio={bioData}
+                />
 
                 <Modal
                     title="Contact Me"
@@ -335,6 +334,34 @@ const Lobby = () => {
                     <PixelTransition>
                     <p><Typewriter text="Send me a message and let's work together!" speed={30} /></p>
                     <ContactForm />
+
+                    <div style={{ marginTop: '20px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
+                        <a
+                            href="./assets/resume.pdf"
+                            download
+                            style={{
+                                display: 'block',
+                                width: '100%',
+                                background: '#3498DB',
+                                color: 'white',
+                                padding: '15px',
+                                textAlign: 'center',
+                                textDecoration: 'none',
+                                fontFamily: '"Press Start 2P", cursive',
+                                border: '4px solid #2980B9',
+                                boxShadow: '0 4px 0 #1A5276',
+                                marginBottom: '20px'
+                            }}
+                        >
+                            💾 DOWNLOAD RESUME
+                        </a>
+
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', fontSize: '24px' }}>👔</a>
+                            <a href="https://github.com" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', fontSize: '24px' }}>🐙</a>
+                            <a href="https://behance.net" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', fontSize: '24px' }}>🎨</a>
+                        </div>
+                    </div>
                     </PixelTransition>
                 </Modal>
             </div>
