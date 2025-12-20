@@ -1,31 +1,69 @@
-import { useThree, useFrame } from '@react-three/fiber'
+import { useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
-
-const isMobile = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-}
+import { useDeviceDetect } from '../../hooks/useDeviceDetect'
 
 export const FPSLimiter = ({ limit = 30 }: { limit?: number }) => {
-    const { set, gl, scene, camera } = useThree()
-    const lastRender = useRef(0)
+    // Destructure advance from useThree state
+    const state = useThree()
+    const { set, invalidate, gl, scene, camera, advance } = state
+    const { isMobile } = useDeviceDetect()
+    const lastInputTime = useRef(performance.now())
 
     useEffect(() => {
-        if (isMobile()) {
-            // Take over the render loop
-            set({ frameloop: 'never' })
+        if (!isMobile) {
+            set({ frameloop: 'always' })
+            return
+        }
 
-            const loop = (time: number) => {
-                requestAnimationFrame(loop)
-                const now = performance.now() / 1000
-                if (now - lastRender.current >= 1 / limit) {
-                    lastRender.current = now
+        // Add event listeners to detect user interaction
+        const handleInput = () => {
+            lastInputTime.current = performance.now()
+        }
+
+        window.addEventListener('pointerdown', handleInput)
+        window.addEventListener('pointermove', handleInput)
+        window.addEventListener('touchstart', handleInput)
+        window.addEventListener('keydown', handleInput)
+
+        // Custom render loop
+        set({ frameloop: 'never' })
+        let lastRenderTime = 0
+
+        const loop = () => {
+            const now = performance.now()
+            const timeSinceInput = now - lastInputTime.current
+
+            // If active input (within 3s), target 60fps
+            // If idle, target 30fps
+            const isIdle = timeSinceInput > 3000
+            const targetInterval = isIdle ? 1000 / 30 : 0 // 0 means as fast as possible
+
+            if (now - lastRenderTime >= targetInterval) {
+                lastRenderTime = now
+                // advance(now) processes useFrame hooks and renders the scene
+                if (advance) {
+                    advance(now)
+                } else {
+                    // Fallback for older versions if advance is not exposed (unlikely in v8)
+                    invalidate()
                     gl.render(scene, camera)
                 }
             }
-            const raf = requestAnimationFrame(loop)
-            return () => cancelAnimationFrame(raf)
+
+            requestAnimationFrame(loop)
         }
-    }, [limit, gl, scene, camera, set])
+
+        const rafId = requestAnimationFrame(loop)
+
+        return () => {
+            cancelAnimationFrame(rafId)
+            window.removeEventListener('pointerdown', handleInput)
+            window.removeEventListener('pointermove', handleInput)
+            window.removeEventListener('touchstart', handleInput)
+            window.removeEventListener('keydown', handleInput)
+            set({ frameloop: 'always' })
+        }
+    }, [isMobile, set, invalidate, gl, scene, camera, advance])
 
     return null
 }

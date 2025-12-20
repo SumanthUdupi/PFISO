@@ -1,42 +1,71 @@
-import React, { useState, useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 interface ClickMarkerProps {
-  position: THREE.Vector3
-  onComplete: () => void
+    position: THREE.Vector3 | null
+    onComplete: () => void
 }
 
 const ClickMarker: React.FC<ClickMarkerProps> = ({ position, onComplete }) => {
-  const mesh = useRef<THREE.Mesh>(null)
-  const [scale, setScale] = useState(0)
-  const [opacity, setOpacity] = useState(1)
+    const mesh = useRef<THREE.Mesh>(null)
+    const ring = useRef<THREE.Mesh>(null)
+    const time = useRef(0)
 
-  useFrame((state, delta) => {
-    // Expand
-    if (scale < 1.5) {
-      setScale(s => s + delta * 5)
-    } else {
-      // Fade out
-      setOpacity(o => o - delta * 3)
-    }
+    useEffect(() => {
+        if (position) {
+            time.current = 0
+            if (mesh.current) {
+                mesh.current.scale.set(0, 0, 0)
+                mesh.current.position.copy(position)
+                mesh.current.position.y = 0.05
+            }
+             if (ring.current) {
+                ring.current.scale.set(0, 0, 0)
+                ring.current.position.copy(position)
+                ring.current.position.y = 0.05
+            }
+        }
+    }, [position])
 
-    if (opacity <= 0) {
-      onComplete()
-    }
-  })
+    useFrame((state, delta) => {
+        if (!position) return
+        time.current += delta * 2
 
-  return (
-    <mesh
-      ref={mesh}
-      position={[position.x, 0.02, position.z]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      scale={[scale, scale, 1]}
-    >
-      <ringGeometry args={[0.3, 0.4, 16]} />
-      <meshBasicMaterial color="#3498DB" transparent opacity={opacity} depthTest={false} />
-    </mesh>
-  )
+        if (time.current > 1.0) {
+            onComplete()
+            return
+        }
+
+        const scale = Math.sin(time.current * Math.PI) * 0.5
+        const opacity = 1.0 - time.current
+
+        if (mesh.current) {
+            mesh.current.scale.setScalar(scale * 1.5)
+            // @ts-ignore
+            if (mesh.current.material) mesh.current.material.opacity = opacity
+        }
+        if (ring.current) {
+            ring.current.scale.setScalar(time.current * 1.5)
+            // @ts-ignore
+             if (ring.current.material) ring.current.material.opacity = opacity
+        }
+    })
+
+    if (!position) return null
+
+    return (
+        <>
+            <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.3, 32]} />
+                <meshBasicMaterial color="#FFD700" transparent opacity={0.8} depthTest={false} />
+            </mesh>
+             <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.3, 0.4, 32]} />
+                <meshBasicMaterial color="#FFD700" transparent opacity={0.8} depthTest={false} />
+            </mesh>
+        </>
+    )
 }
 
 export default ClickMarker
