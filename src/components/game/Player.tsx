@@ -186,7 +186,7 @@ const VoxelDust = ({ position, isMoving }: { position: THREE.Vector3, isMoving: 
 
 export interface PlayerHandle {
     triggerInteraction: (label: string) => void
-    moveTo: (target: THREE.Vector3) => void
+    moveTo: (target: THREE.Vector3, onComplete?: () => void) => void
 }
 
 interface PlayerProps {
@@ -209,6 +209,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     // Pathfinding
     const path = useRef<THREE.Vector3[]>([])
     const currentPathTargetIndex = useRef(0)
+    const onMoveComplete = useRef<(() => void) | undefined>(undefined)
 
     // React State for passing to visual components
     const [visualState, setVisualState] = useState({ moving: false, jumping: false })
@@ -227,13 +228,15 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             isMoving.current = false
             setSparkleTrigger(true)
             path.current = [] // Clear path
+            onMoveComplete.current = undefined
         },
-        moveTo: (target: THREE.Vector3) => {
+        moveTo: (target: THREE.Vector3, onComplete?: () => void) => {
             // Use A* to find path
             const calculatedPath = findPath(currentPosition.current, target)
             if (calculatedPath.length > 0) {
                 path.current = calculatedPath
                 currentPathTargetIndex.current = 0
+                onMoveComplete.current = onComplete
             }
         }
     }))
@@ -248,6 +251,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             // Cancel path movement on manual input
             if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 path.current = []
+                onMoveComplete.current = undefined
             }
         }
         const handleKeyUp = (e: KeyboardEvent) => keys.current[e.key] = false
@@ -291,6 +295,10 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 currentPathTargetIndex.current++
                 if (currentPathTargetIndex.current >= path.current.length) {
                     path.current = [] // Reached end
+                    if (onMoveComplete.current) {
+                        onMoveComplete.current()
+                        onMoveComplete.current = undefined
+                    }
                 }
             } else {
                 inputVector.copy(toTarget.normalize())

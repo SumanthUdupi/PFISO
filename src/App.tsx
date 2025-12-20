@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react'
+import React, { Suspense } from 'react'
 import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { Loader, OrbitControls } from '@react-three/drei'
@@ -11,25 +11,9 @@ import projectsData from './assets/data/projects.json'
 import bioData from './assets/data/bio.json'
 
 function App() {
-  const [zoom, setZoom] = useState(40)
   const { isMobile, isLandscape } = useDeviceDetect()
   // Determine if we are in portrait mobile mode
   const isPortraitMobile = isMobile && !isLandscape
-
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth
-      if (width < 768) {
-        setZoom(20) // Zoom in on mobile
-      } else {
-        setZoom(40)
-      }
-    }
-
-    handleResize() // Initial check
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   return (
     <>
@@ -38,13 +22,16 @@ function App() {
         width: '100%',
         height: isPortraitMobile ? '40vh' : '100vh',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        // Prevent scroll on the canvas container
+        touchAction: 'none'
       }}>
         <Canvas
             shadows
             gl={{ shadowMap: { type: THREE.PCFSoftShadowMap } }}
             orthographic
-            camera={{ position: [20, 20, 20], zoom: zoom, near: 0.1, far: 1000 }}
+            // Initial zoom set to desktop default, Lobby will adjust for mobile
+            camera={{ position: [20, 20, 20], zoom: 40, near: 0.1, far: 1000 }}
             dpr={[1, 2]} // Clamp pixel ratio
         >
             <FPSLimiter limit={30} />
@@ -77,29 +64,47 @@ function App() {
             color: 'white',
             padding: '20px',
             fontFamily: '"Press Start 2P", cursive',
-            borderTop: '4px solid #333'
+            borderTop: '4px solid #333',
+            boxSizing: 'border-box'
         }}>
             <h2 style={{ fontSize: '16px', borderBottom: '2px solid #333', paddingBottom: '10px' }}>Projects</h2>
             <div style={{ display: 'grid', gap: '20px' }}>
                 {projectsData.map((project: any) => (
-                    <div key={project.id} style={{ background: '#222', padding: '15px', borderRadius: '8px' }}>
+                    <article key={project.id} style={{ background: '#222', padding: '15px', borderRadius: '8px' }}>
                         <h3 style={{ fontSize: '14px', marginTop: 0, color: '#FFD700', lineHeight: '1.4' }}>{project.title}</h3>
-                        <p style={{ fontSize: '10px', lineHeight: '1.6', color: '#ccc' }}>{project.description}</p>
+                        {/* Improved typography for body text */}
+                        <p style={{
+                            fontSize: '12px',
+                            lineHeight: '1.6',
+                            color: '#ccc',
+                            fontFamily: 'Inter, system-ui, sans-serif'
+                        }}>
+                            {project.description}
+                        </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
                             {project.techStack.map((tech: string) => (
-                                <span key={tech} style={{ background: '#333', padding: '4px 8px', fontSize: '8px', borderRadius: '4px', color: '#fff' }}>{tech}</span>
+                                <span key={tech} style={{
+                                    background: '#333',
+                                    padding: '4px 8px',
+                                    fontSize: '10px',
+                                    borderRadius: '4px',
+                                    color: '#fff',
+                                    fontFamily: 'Inter, system-ui, sans-serif'
+                                }}>
+                                    {tech}
+                                </span>
                             ))}
                         </div>
-                    </div>
+                    </article>
                 ))}
             </div>
 
             <h2 style={{ fontSize: '16px', borderBottom: '2px solid #333', paddingBottom: '10px', marginTop: '40px' }}>Skills</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                 {bioData.skills.map((skill: any) => (
-                     <div key={skill.name} style={{ background: '#2c3e50', padding: '12px', borderRadius: '8px', textAlign: 'center', minWidth: '80px' }}>
+                     <div key={skill.name} style={{ background: '#2c3e50', padding: '12px', borderRadius: '8px', textAlign: 'center', minWidth: '80px', flex: '1' }}>
                          <div style={{ fontSize: '24px', marginBottom: '8px' }}>{skill.icon}</div>
-                         <div style={{ fontSize: '10px', color: '#ecf0f1' }}>{skill.name}</div>
+                         <div style={{ fontSize: '10px', color: '#ecf0f1', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
                      </div>
                 ))}
             </div>
