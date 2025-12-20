@@ -133,7 +133,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                   onBlur={(e) => e.currentTarget.style.transform = 'translate(0, 0)'}
                 >
                   <div style={{ width: '100%', height: '150px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid #000', overflow: 'hidden' }}>
-                     <img src={project.heroImage} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x150?text=No+Image')} />
+                     <img src={project.heroImage} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                   </div>
                   <div style={{ padding: '15px' }}>
                     <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginTop: 0, marginBottom: '10px' }}>{project.title}</h3>
@@ -175,7 +175,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                     src={selectedProject.heroImage}
                     alt="Hero"
                     style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #000' }}
-                    onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/800x400?text=Hero+Image')}
+                    onError={(e) => (e.currentTarget.src = './assets/placeholder_hero.webp')}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', flexWrap: 'wrap', gap: '20px' }}>
                       <div>
@@ -221,7 +221,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                         </div>
                         <div>
                              {selectedProject.research.personas.map((img, i) => (
-                                 <img key={i} src={img} alt="Persona" style={{ width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Persona')} />
+                                 <img key={i} src={img} alt="Persona" style={{ width: '100%', borderRadius: '4px', border: '1px solid #ccc' }} onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                              ))}
                         </div>
                     </div>
@@ -234,7 +234,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                     <h3 style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '18px', marginTop: '20px' }}>User Flows</h3>
                     <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
                          {selectedProject.designProcess.userFlows.map((img, i) => (
-                             <img key={i} src={img} style={{ height: '200px', border: '1px solid #ccc' }} alt="Flow" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Flow')} />
+                             <img key={i} src={img} style={{ height: '200px', border: '1px solid #ccc' }} alt="Flow" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                          ))}
                     </div>
 
@@ -242,13 +242,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
                          {selectedProject.designProcess.wireframes.map((img, i) => (
                              <div key={i}>
-                                 <img src={img} style={{ width: '100%', border: '1px solid #ccc' }} alt="Wireframe" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Wireframe')} />
+                                 <img src={img} style={{ width: '100%', border: '1px solid #ccc' }} alt="Wireframe" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                                  <p style={{ textAlign: 'center', fontSize: '12px', color: '#666', fontFamily: 'Inter, system-ui, sans-serif' }}>Low-Fidelity</p>
                              </div>
                          ))}
                          {selectedProject.designProcess.mockups.map((img, i) => (
                              <div key={i}>
-                                 <img src={img} style={{ width: '100%', border: '1px solid #ccc' }} alt="Mockup" onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Mockup')} />
+                                 <img src={img} style={{ width: '100%', border: '1px solid #ccc' }} alt="Mockup" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                                  <p style={{ textAlign: 'center', fontSize: '12px', color: '#666', fontFamily: 'Inter, system-ui, sans-serif' }}>High-Fidelity</p>
                              </div>
                          ))}

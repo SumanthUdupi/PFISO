@@ -90,7 +90,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                     src={bio.photo}
                                     alt="Profile"
                                     style={{ width: '100%', height: 'auto', display: 'block' }}
-                                    onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/250x300?text=Profile+Photo')}
+                                    onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')}
                                 />
                             </div>
                             <div style={{ textAlign: 'center', marginTop: '15px', fontFamily: '"Press Start 2P", cursive', fontSize: '12px' }}>
