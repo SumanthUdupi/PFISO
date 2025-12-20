@@ -398,11 +398,14 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             )}
 
             <group ref={group} position={initialPosition}>
-                <LegoAvatar 
-                    isMoving={visualState.moving} 
-                    isJumping={visualState.jumping} 
-                    velocity={velocity.current} // Pass velocity for the lean effect
-                />
+                {/* Avatar Offset: Adjusted to align feet with y=0 ground level */}
+                <group position={[0, 0.3, 0]}>
+                    <LegoAvatar
+                        isMoving={visualState.moving}
+                        isJumping={visualState.jumping}
+                        velocity={velocity.current} // Pass velocity for the lean effect
+                    />
+                </group>
             </group>
 
             {/* Blob Shadow - Simple but effective for Lego */}
