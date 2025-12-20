@@ -34,7 +34,7 @@ const FloorLayer: React.FC<{
       meshRef.current!.setMatrixAt(i, tempObject.matrix)
     })
     meshRef.current.instanceMatrix.needsUpdate = true
-  }, [tiles])
+  }, [tiles, material])
 
   return (
     <instancedMesh
@@ -109,7 +109,7 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
   }, [width, depth])
 
   return (
-    <group position={[0, -0.5, 0]}>
+    <group position={[0, 0, 0]}>
       {Object.entries(groupedTiles).map(([index, tiles]) => {
           if (tiles.length === 0) return null
           return (
