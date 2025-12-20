@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Html } from '@react-three/drei'
+import { Html, CameraShake } from '@react-three/drei'
 import TeleportSparkle from './TeleportSparkle'
 import { findPath } from '../../utils/pathfinding'
+import useAudioStore from '../../audioStore'
 
 // --- CONFIGURATION ---
 const SPEED = 6
@@ -12,6 +13,10 @@ const FRICTION = 12
 const JUMP_FORCE = 9
 const GRAVITY = 25
 const ROTATION_SMOOTHING = 15
+
+// Game Feel Config
+const COYOTE_TIME = 0.15 // seconds
+const JUMP_BUFFER = 0.15 // seconds
 
 // --- 1. THE ART: Procedural Lego Avatar ---
 const LegoMaterial = new THREE.MeshStandardMaterial({
@@ -206,6 +211,13 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     const isJumping = useRef(false)
     const facingAngle = useRef(0)
 
+    // Jump Feel Logic
+    const airTime = useRef(0) // Time since leaving ground (Coyote Time)
+    const jumpBufferTimer = useRef(0) // Time since jump pressed (Jump Buffer)
+    const wasGrounded = useRef(true)
+    const { playSound } = useAudioStore()
+    const [shakeIntensity, setShakeIntensity] = useState(0)
+
     // Pathfinding
     const path = useRef<THREE.Vector3[]>([])
     const currentPathTargetIndex = useRef(0)
@@ -244,9 +256,8 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             keys.current[e.key] = true
-            if (e.code === 'Space' && !isJumping.current && interactionTimer.current <= 0) {
-                verticalVelocity.current = JUMP_FORCE
-                isJumping.current = true
+            if (e.code === 'Space') {
+                jumpBufferTimer.current = JUMP_BUFFER // Buffer the jump
             }
             // Cancel path movement on manual input
             if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -338,16 +349,48 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             currentPosition.current.z = THREE.MathUtils.clamp(currentPosition.current.z, -halfD, halfD)
         }
 
-        // Gravity & Jump
+        // --- Gravity & Jump Logic (Enhanced) ---
         verticalVelocity.current -= GRAVITY * delta
         let currentY = group.current.position.y + verticalVelocity.current * delta
 
-        if (currentY <= 0) { // Ground level is 0
-            currentY = 0
-            verticalVelocity.current = 0
-            isJumping.current = false
+        const isGrounded = currentY <= 0; // Simple floor check (add more raycasting if needed for platforms)
+
+        if (isGrounded) {
+            currentY = 0;
+            verticalVelocity.current = 0;
+            isJumping.current = false;
+            airTime.current = 0; // Reset Coyote Time
+
+            // Landing feedback
+            if (!wasGrounded.current) {
+                // Landed this frame
+                setShakeIntensity(0.2) // Small shake
+                setTimeout(() => setShakeIntensity(0), 100)
+                playSound('land')
+                // Add squash animation via ref if possible? (Simulated in LegoAvatar)
+            }
         } else {
-            isJumping.current = true
+            isJumping.current = true;
+            airTime.current += delta;
+        }
+
+        wasGrounded.current = isGrounded;
+
+        // Handle Jump Buffer Timer
+        if (jumpBufferTimer.current > 0) {
+            jumpBufferTimer.current -= delta;
+        }
+
+        // Trigger Jump
+        // Conditions:
+        // 1. Jump buffered recently (jumpBufferTimer > 0)
+        // 2. Can jump: Either grounded OR within Coyote Time (airTime < COYOTE_TIME) AND not already jumping up (verticalVelocity <= 0)
+        //    (Note: "not already jumping" check prevents double jumps from coyote time glitch, but coyote usually implies falling off ledge)
+        if (jumpBufferTimer.current > 0 && (isGrounded || airTime.current < COYOTE_TIME) && interactionTimer.current <= 0) {
+             verticalVelocity.current = JUMP_FORCE;
+             isJumping.current = true;
+             jumpBufferTimer.current = 0; // Consume buffer
+             playSound('jump');
         }
 
         // Sync State to Ref (for React re-renders only when state changes significantly could optimize, but this is fine)
@@ -370,6 +413,15 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
     return (
         <>
+            <CameraShake
+                maxPitch={0.05}
+                maxRoll={0.05}
+                maxYaw={0.05}
+                intensity={shakeIntensity}
+                decayRate={0.65}
+                decay
+            />
+
             <TeleportSparkle
                 position={group.current ? group.current.position : new THREE.Vector3(...initialPosition)}
                 trigger={sparkleTrigger}

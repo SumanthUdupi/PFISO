@@ -5,12 +5,16 @@ import * as THREE from 'three'
 interface ClickMarkerProps {
     position: THREE.Vector3 | null
     onComplete: () => void
+    valid?: boolean
 }
 
-const ClickMarker: React.FC<ClickMarkerProps> = ({ position, onComplete }) => {
+const ClickMarker: React.FC<ClickMarkerProps> = ({ position, onComplete, valid = true }) => {
     const mesh = useRef<THREE.Mesh>(null)
     const ring = useRef<THREE.Mesh>(null)
     const time = useRef(0)
+
+    const color = valid ? '#2ECC71' : '#E74C3C'; // Green or Red
+    const shape = valid ? 'circle' : 'cross';
 
     useEffect(() => {
         if (position) {
@@ -57,12 +61,16 @@ const ClickMarker: React.FC<ClickMarkerProps> = ({ position, onComplete }) => {
     return (
         <>
             <mesh ref={mesh} rotation={[-Math.PI / 2, 0, 0]}>
-                <circleGeometry args={[0.3, 32]} />
-                <meshBasicMaterial color="#FFD700" transparent opacity={0.8} depthTest={false} />
+                {valid ? (
+                    <circleGeometry args={[0.3, 32]} />
+                ) : (
+                    <planeGeometry args={[0.5, 0.5]} /> // Placeholder for X, or just a red circle
+                )}
+                <meshBasicMaterial color={color} transparent opacity={0.8} depthTest={false} />
             </mesh>
              <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
                 <ringGeometry args={[0.3, 0.4, 32]} />
-                <meshBasicMaterial color="#FFD700" transparent opacity={0.8} depthTest={false} />
+                <meshBasicMaterial color={color} transparent opacity={0.8} depthTest={false} />
             </mesh>
         </>
     )

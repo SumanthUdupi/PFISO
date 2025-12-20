@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Html, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import useGameStore, { SkillTier } from '../../store'
 
 interface InteractiveObjectProps {
   position: [number, number, number]
@@ -14,15 +15,35 @@ interface InteractiveObjectProps {
   // New prop to indicate if this is the active focus
   isFocused?: boolean
   castShadow?: boolean
+  requiredSkill?: { name: string, tier: SkillTier }
 }
 
 const INTERACTION_RADIUS = 2.5
 
-const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color = '#7ED321', label, onClick, playerPosition, visibleMesh = true, isFocused = false, castShadow = true }) => {
+const InteractiveObject: React.FC<InteractiveObjectProps> = ({
+  position,
+  color = '#7ED321',
+  label,
+  onClick,
+  playerPosition,
+  visibleMesh = true,
+  isFocused = false,
+  castShadow = true,
+  requiredSkill
+}) => {
   const [hovered, setHovered] = useState(false)
   // We can still track local inRange for visuals if needed, but isFocused is passed from parent
   const [inRange, setInRange] = useState(false)
   const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
+  const { unlockedSkills } = useGameStore();
+
+  // Check if locked
+  const isLocked = useMemo(() => {
+    if (!requiredSkill) return false;
+    const currentTier = unlockedSkills[requiredSkill.name] || 'Locked';
+    const tierValue = { 'Locked': 0, 'Novice': 1, 'Proficient': 2, 'Master': 3 };
+    return tierValue[currentTier] < tierValue[requiredSkill.tier];
+  }, [requiredSkill, unlockedSkills]);
 
   // Memoize the vector for the object position to avoid recreating it
   const objectPos = useMemo(() => new THREE.Vector3(...position), [position])
@@ -45,31 +66,43 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
   }, [position])
 
   // Combined active state: either mouse hover or keyboard focus
-  const isActive = hovered || isFocused;
+  const isActive = (hovered || isFocused) && !isLocked;
+
+  const handleInteraction = () => {
+    if (isLocked) {
+        // Play error sound?
+        return;
+    }
+    onClick();
+  }
 
   return (
     <group position={position}>
     <group>
       {visibleMesh ? (
-         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
+         <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
             <mesh
                 castShadow={castShadow}
                 onPointerOver={() => {
-                document.body.style.cursor = 'pointer'
+                document.body.style.cursor = isLocked ? 'not-allowed' : 'pointer'
                 setHovered(true)
                 }}
                 onPointerOut={() => {
                 document.body.style.cursor = 'auto'
                 setHovered(false)
                 }}
-                onClick={onClick}
+                onClick={handleInteraction}
             >
                 <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial color={isActive ? '#ecf0f1' : color} emissive={isActive ? color : '#000000'} emissiveIntensity={0.5} />
+                <meshStandardMaterial
+                    color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
+                    emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                    emissiveIntensity={isLocked ? 0.2 : 0.5}
+                />
             </mesh>
 
             {/* Outline Effect */}
-            {isActive && (
+            {isActive && !isLocked && (
                 <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[1.05, 1.05, 1.05]} />
                     <meshBasicMaterial
@@ -79,19 +112,26 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
                     />
                 </mesh>
             )}
+
+             {/* Lock Icon Overlay */}
+             {isLocked && (
+                 <Html center pointerEvents="none" position={[0, 0, 0.6]}>
+                     <div style={{ fontSize: '24px' }}>🔒</div>
+                 </Html>
+             )}
          </Float>
       ) : (
           // Invisible trigger
            <mesh
                 onPointerOver={() => {
-                document.body.style.cursor = 'pointer'
+                document.body.style.cursor = isLocked ? 'not-allowed' : 'pointer'
                 setHovered(true)
                 }}
                 onPointerOut={() => {
                 document.body.style.cursor = 'auto'
                 setHovered(false)
                 }}
-                onClick={onClick}
+                onClick={handleInteraction}
             >
                 <boxGeometry args={[1.2, 1.5, 1.2]} />
                 <meshBasicMaterial transparent opacity={0} />
@@ -101,7 +141,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
       {/* Interaction Indicator Ring */}
       <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.6, 0]}>
         <ringGeometry args={[0.6, 0.7, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={inRange ? 0.8 : 0.3} />
+        <meshBasicMaterial color={isLocked ? '#7f8c8d' : color} transparent opacity={inRange ? 0.8 : 0.3} />
       </mesh>
 
       {/* Clean Pop-up UI - replaces speech bubble and hover tooltip */}
@@ -119,7 +159,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
             fontFamily: '"Press Start 2P", cursive',
             fontSize: '10px',
             whiteSpace: 'nowrap',
-            border: `2px solid ${color}`,
+            border: `2px solid ${isLocked ? '#7f8c8d' : color}`,
             boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
             display: 'flex',
             flexDirection: 'column',
@@ -127,9 +167,15 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({ position, color =
             gap: '4px'
           }}>
             <span style={{ fontWeight: 'bold' }}>{label}</span>
-            <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
-                {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
-            </span>
+            {isLocked ? (
+                <span style={{ fontSize: '8px', color: '#e74c3c', background: '#fadbd8', padding: '2px 6px', borderRadius: '10px' }}>
+                    REQUIRES: {requiredSkill?.name} ({requiredSkill?.tier})
+                </span>
+            ) : (
+                <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
+                    {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
+                </span>
+            )}
           </div>
         </Html>
       )}
