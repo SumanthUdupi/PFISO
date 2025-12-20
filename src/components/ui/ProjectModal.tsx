@@ -109,9 +109,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                   </div>
                   <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginTop: 0, marginBottom: '10px', lineHeight: '1.4' }}>{project.title}</h3>
-                    <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px', color: '#555', lineHeight: '1.5', margin: '0 0 10px 0', flex: 1 }}>{project.description}</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: '#555', lineHeight: '1.5', margin: '0 0 10px 0', flex: 1 }}>{project.description}</p>
                     <div>
-                        <span style={{ fontSize: '12px', fontFamily: 'Inter, system-ui, sans-serif' }}>{project.role.replace('**My Role**: ', '')}</span>
+                        <span style={{ fontSize: '12px', fontFamily: 'var(--font-body)' }}>{project.role.replace('**My Role**: ', '')}</span>
                     </div>
                   </div>
                 </button>
@@ -149,15 +149,15 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                     onError={(e) => (e.currentTarget.src = './assets/placeholder_hero.webp')}
                   />
                   <div style={{ marginTop: '20px' }}>
-                        <h1 style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 800, fontSize: '28px', margin: '0 0 10px 0', lineHeight: 1.3 }}>{selectedProject.title}</h1>
-                        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '18px', color: '#666', marginTop: 0 }}>{selectedProject.description}</p>
+                        <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: '28px', margin: '0 0 10px 0', lineHeight: 1.3 }}>{selectedProject.title}</h1>
+                        <p style={{ fontFamily: 'var(--font-body)', fontSize: '18px', color: '#666', marginTop: 0 }}>{selectedProject.description}</p>
 
                         <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '8px', marginTop: '15px' }}>
-                             <div style={{ marginBottom: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}>{selectedProject.role}</div>
-                             <div style={{ marginBottom: '8px', fontFamily: 'Inter, system-ui, sans-serif' }}><strong>Timeline:</strong> {selectedProject.timeline}</div>
+                             <div style={{ marginBottom: '8px', fontFamily: 'var(--font-body)' }}>{selectedProject.role}</div>
+                             <div style={{ marginBottom: '8px', fontFamily: 'var(--font-body)' }}><strong>Timeline:</strong> {selectedProject.timeline}</div>
                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '10px' }}>
                                 {selectedProject.techStack.map(tech => (
-                                    <span key={tech} style={{ background: '#e0e0e0', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontFamily: 'Inter, system-ui, sans-serif' }}>{tech}</span>
+                                    <span key={tech} style={{ background: '#e0e0e0', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontFamily: 'var(--font-body)' }}>{tech}</span>
                                 ))}
                              </div>
                         </div>
@@ -168,11 +168,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                 <section style={{ marginBottom: '40px' }}>
                     <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #F39C12', display: 'inline-block', paddingBottom: '5px' }}>THE CHALLENGE</h2>
                     <div style={{ background: '#fff', padding: '0', marginTop: '15px' }}>
-                        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6 }}><strong>Context:</strong> {selectedProject.problemStatement.context}</p>
-                        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6 }}><strong>Constraints:</strong> {selectedProject.problemStatement.constraints}</p>
+                        <p style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6 }}><strong>Context:</strong> {selectedProject.problemStatement.context}</p>
+                        <p style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6 }}><strong>Constraints:</strong> {selectedProject.problemStatement.constraints}</p>
                         <div style={{ marginTop: '15px' }}>
                             <strong>Goals:</strong>
-                            <ul style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6, marginTop: '5px' }}>
+                            <ul style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6, marginTop: '5px' }}>
                                 {selectedProject.problemStatement.goals.map((g, i) => <li key={i}>{g}</li>)}
                             </ul>
                         </div>
@@ -182,14 +182,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                 {/* Research / Approach */}
                 <section style={{ marginBottom: '40px' }}>
                     <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #3498DB', display: 'inline-block', paddingBottom: '5px' }}>APPROACH & SOLUTION</h2>
-                    <p style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6, marginTop: '15px' }}>{selectedProject.research.summary}</p>
+                    <p style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6, marginTop: '15px' }}>{selectedProject.research.summary}</p>
 
                     {selectedProject.research.insights.length > 0 && (
                         <div style={{ marginTop: '20px', background: '#eef', padding: '15px', borderRadius: '8px' }}>
-                            <h4 style={{ margin: '0 0 10px 0', fontFamily: 'Inter, system-ui, sans-serif' }}>Key Insights</h4>
+                            <h4 style={{ margin: '0 0 10px 0', fontFamily: 'var(--font-body)' }}>Key Insights</h4>
                             <ul style={{ paddingLeft: '20px', margin: 0 }}>
                                 {selectedProject.research.insights.map((insight, i) => (
-                                    <li key={i} style={{ fontFamily: 'Inter, system-ui, sans-serif', marginBottom: '8px' }}>{insight}</li>
+                                    <li key={i} style={{ fontFamily: 'var(--font-body)', marginBottom: '8px' }}>{insight}</li>
                                 ))}
                             </ul>
                         </div>
@@ -203,7 +203,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
 
                         {selectedProject.designProcess.userFlows.length > 0 && (
                             <div style={{ marginTop: '20px' }}>
-                                <h3 style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '18px' }}>Process Flows</h3>
+                                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px' }}>Process Flows</h3>
                                 <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
                                     {selectedProject.designProcess.userFlows.map((img, i) => (
                                         <img key={i} src={img} style={{ height: '200px', border: '1px solid #ccc' }} alt="Flow" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
@@ -214,7 +214,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
 
                         {selectedProject.designProcess.mockups.length > 0 && (
                             <div style={{ marginTop: '20px' }}>
-                                <h3 style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '18px' }}>Visuals</h3>
+                                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px' }}>Visuals</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
                                     {selectedProject.designProcess.mockups.map((img, i) => (
                                         <div key={i}>
@@ -233,11 +233,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                      <div style={{ display: 'flex', gap: '20px', marginTop: '20px', flexWrap: 'wrap' }}>
                         {selectedProject.outcomes.metrics.map((metric, i) => (
                             <div key={i} style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #2ECC71', paddingLeft: '15px' }}>
-                                <p style={{ fontSize: '16px', color: '#fff', margin: 0, fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 'bold' }}>{metric}</p>
+                                <p style={{ fontSize: '16px', color: '#fff', margin: 0, fontFamily: 'var(--font-body)', fontWeight: 'bold' }}>{metric}</p>
                             </div>
                         ))}
                      </div>
-                     <p style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6, marginTop: '20px', borderTop: '1px solid #555', paddingTop: '20px', fontStyle: 'italic' }}>
+                     <p style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6, marginTop: '20px', borderTop: '1px solid #555', paddingTop: '20px', fontStyle: 'italic' }}>
                          {selectedProject.outcomes.reflection}
                      </p>
                 </section>

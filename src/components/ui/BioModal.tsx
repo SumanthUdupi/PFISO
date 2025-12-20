@@ -55,7 +55,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
 
                         <div style={{ flex: 1, minWidth: '300px' }}>
                             <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>ABOUT ME</h3>
-                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
+                            <div style={{ fontFamily: 'var(--font-body)', fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
                                 {bio.summary.map((paragraph, idx) => (
                                     <p key={idx} style={{ marginBottom: '15px' }}>
                                         <Typewriter text={paragraph} speed={1} />
@@ -65,7 +65,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
 
                             <div style={{ background: '#f0f8ff', padding: '15px', borderLeft: '4px solid #3498db', marginBottom: '20px' }}>
                                 <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginBottom: '10px' }}>TARGET AUDIENCE</h4>
-                                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontStyle: 'italic' }}>{bio.targetAudience}</p>
+                                <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontStyle: 'italic' }}>{bio.targetAudience}</p>
                             </div>
                         </div>
                     </div>
@@ -77,10 +77,10 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                              {bio.competencies.map((comp, i) => (
                                  <div key={i} style={{ background: '#fff', padding: '15px', border: '1px solid #ddd', borderRadius: '4px' }}>
                                      <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#2c3e50', marginBottom: '10px' }}>{comp.title}</h4>
-                                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', marginBottom: '10px' }}>{comp.description}</p>
+                                     <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', marginBottom: '10px' }}>{comp.description}</p>
                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                                          {comp.keywords.map((kw, k) => (
-                                             <span key={k} style={{ background: '#ecf0f1', padding: '2px 6px', fontSize: '10px', borderRadius: '3px', fontFamily: 'Inter, sans-serif' }}>{kw}</span>
+                                             <span key={k} style={{ background: '#ecf0f1', padding: '2px 6px', fontSize: '10px', borderRadius: '3px', fontFamily: 'var(--font-body)' }}>{kw}</span>
                                          ))}
                                      </div>
                                  </div>
@@ -95,7 +95,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                              {bio.domainExpertise.map((exp, i) => (
                                  <div key={i} style={{ marginBottom: '10px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                                      <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#e67e22', minWidth: '150px' }}>{exp.area}</span>
-                                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>{exp.description}</span>
+                                     <span style={{ fontFamily: 'var(--font-body)', fontSize: '14px' }}>{exp.description}</span>
                                  </div>
                              ))}
                          </div>
@@ -106,7 +106,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                          <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>TECHNICAL TOOLKIT</h3>
                          {bio.skills.map((category, i) => (
                              <div key={i} style={{ marginBottom: '20px' }}>
-                                 <h4 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', fontSize: '16px', color: '#34495e', marginBottom: '10px', borderLeft: '4px solid #ffa726', paddingLeft: '10px' }}>{category.category}</h4>
+                                 <h4 style={{ fontFamily: 'var(--font-body)', fontWeight: 'bold', fontSize: '16px', color: '#34495e', marginBottom: '10px', borderLeft: '4px solid #ffa726', paddingLeft: '10px' }}>{category.category}</h4>
                                  <div style={{ display: 'grid', gap: '10px' }}>
                                      {category.items.map((skill, j) => (
                                          <div key={j} style={{ background: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
@@ -114,7 +114,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                                  <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px' }}>{skill.name}</span>
                                                  <span style={{ fontSize: '10px', background: '#3498db', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{skill.level}</span>
                                              </div>
-                                             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', margin: 0, color: '#555' }}>{skill.description}</p>
+                                             <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', margin: 0, color: '#555' }}>{skill.description}</p>
                                              {skill.certification && (
                                                  <div style={{ marginTop: '5px', fontSize: '11px', color: '#27ae60', fontStyle: 'italic' }}>Verified: {skill.certification}</div>
                                              )}
@@ -133,7 +133,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                  <div key={i} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                                      <div style={{ fontSize: '20px' }}>📜</div>
                                      <div>
-                                        <div style={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>{cert.name}</div>
+                                        <div style={{ fontWeight: 'bold', fontFamily: 'var(--font-body)', fontSize: '14px' }}>{cert.name}</div>
                                         <div style={{ fontSize: '12px', color: '#666' }}>{cert.issuer}, {cert.date}</div>
                                      </div>
                                  </div>
@@ -157,7 +157,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                     color: '#333'
                                 }}>
                                     <div style={{ position: 'absolute', top: '-10px', left: '10px', fontSize: '30px', fontFamily: 'serif' }}>"</div>
-                                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', marginTop: '10px', fontStyle: 'italic' }}>{t.quote}</p>
+                                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', marginTop: '10px', fontStyle: 'italic' }}>{t.quote}</p>
                                     <div style={{ marginTop: '10px', fontWeight: 'bold', fontSize: '12px', textAlign: 'right' }}>— {t.author}</div>
                                 </div>
                             ))}

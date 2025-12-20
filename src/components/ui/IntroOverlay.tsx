@@ -69,7 +69,7 @@ const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, headline,
                 </h2>
             )}
             {step >= 3 && (
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: isMobile ? '14px' : '18px', color: '#fff', textAlign: 'center', maxWidth: '600px', lineHeight: 1.6, background: 'rgba(255, 255, 255, 0.1)', padding: '20px', borderRadius: '8px', border: '1px solid #444' }}>
+                <div style={{ fontFamily: 'var(--font-body)', fontSize: isMobile ? '14px' : '18px', color: '#fff', textAlign: 'center', maxWidth: '600px', lineHeight: 1.6, background: 'rgba(255, 255, 255, 0.1)', padding: '20px', borderRadius: '8px', border: '1px solid #444' }}>
                     <Typewriter text={valueProposition} speed={10} />
                 </div>
             )}

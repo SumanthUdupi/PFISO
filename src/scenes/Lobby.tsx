@@ -34,6 +34,7 @@ import InspirationMote from '../components/game/Environment/InspirationMote'
 import FlashOverlay from '../components/ui/FlashOverlay'
 import IntroOverlay from '../components/ui/IntroOverlay'
 import UnlockEffect from '../components/ui/UnlockEffect'
+import useAudioStore from '../audioStore'
 
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 
@@ -65,6 +66,16 @@ const Lobby = () => {
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
   const [flashTrigger, setFlashTrigger] = useState(false)
   const [closestObject, setClosestObject] = useState<'projects' | 'about' | 'contact' | null>(null)
+  const { playSound, startAmbient, stopAmbient } = useAudioStore()
+
+  useEffect(() => {
+      if (introComplete) {
+          startAmbient();
+      }
+      return () => {
+          stopAmbient();
+      }
+  }, [introComplete, startAmbient, stopAmbient]);
 
   // Track player position for interactions
   const playerPosition = useRef(new THREE.Vector3(0, 0.5, 0))
@@ -79,13 +90,16 @@ const Lobby = () => {
       const executeInteraction = () => {
           if (playerRef.current) {
               playerRef.current.triggerInteraction(label)
+              playSound('teleport') // Sound for "teleport/transition" effect or similar
               setTimeout(() => {
                  setFlashTrigger(true)
                  setActiveModal(type)
+                 playSound('open_modal')
               }, 1500)
           } else {
               setFlashTrigger(true)
               setActiveModal(type)
+              playSound('open_modal')
           }
       }
 
@@ -256,6 +270,12 @@ const Lobby = () => {
             color="#ff9966"
         />
         <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffaa55" distance={15} decay={2} />
+
+        {/* REQ-028: Colored Point Lights near key areas */}
+        {/* Desk / Strategy Board Area - Cyan Glow */}
+        <pointLight position={[4, 2, -3]} intensity={0.8} color="#26a69a" distance={5} decay={2} />
+        {/* Inspiration Board Area - Orange Glow */}
+        <pointLight position={[-4, 2, -3]} intensity={0.8} color="#ffa726" distance={5} decay={2} />
 
         <Effects />
 
