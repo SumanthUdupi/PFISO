@@ -1,6 +1,7 @@
 import React from 'react';
 import PixelTransition from './PixelTransition';
 import Typewriter from './Typewriter';
+import Modal from './Modal';
 
 interface BioData {
   name: string;
@@ -24,62 +25,13 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      background: 'rgba(0, 0, 0, 0.85)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000,
-      pointerEvents: 'auto',
-      padding: '20px'
-    }}>
-      <div style={{
-        background: '#fff',
-        width: '100%',
-        maxWidth: '900px',
-        maxHeight: '90vh',
-        border: '4px solid #000',
-        borderRadius: '8px',
-        boxShadow: '10px 10px 0px #000',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
-        <div style={{
-          background: '#8E44AD',
-          color: 'white',
-          padding: '15px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '4px solid #000'
-        }}>
-          <h2 style={{ margin: 0, fontFamily: '"Press Start 2P", cursive', fontSize: '18px' }}>
-            PERSONNEL FILE: {bio.name.toUpperCase()}
-          </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'white',
-              fontFamily: '"Press Start 2P", cursive',
-              fontSize: '20px',
-              cursor: 'pointer'
-            }}
-          >
-            X
-          </button>
-        </div>
-
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+    <Modal
+      title={`PERSONNEL FILE: ${bio.name.toUpperCase()}`}
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="900px"
+    >
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <PixelTransition>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%' }}>
                     {/* Top Section: Photo & Intro */}
@@ -173,8 +125,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                 </div>
             </PixelTransition>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

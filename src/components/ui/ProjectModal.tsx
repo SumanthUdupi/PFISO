@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PixelTransition from './PixelTransition';
 import Typewriter from './Typewriter';
+import Modal from './Modal';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 
 interface CaseStudy {
@@ -47,71 +48,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
   if (!isOpen) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Projects"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0, 0, 0, 0.85)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-        pointerEvents: 'auto',
-        padding: isMobile ? '0' : '20px'
-      }}>
-      <div style={{
-        background: '#fff',
-        width: '100%',
-        maxWidth: '1000px',
-        height: isMobile ? '100%' : '90vh',
-        border: isMobile ? 'none' : '4px solid #000',
-        borderRadius: isMobile ? '0' : '8px',
-        boxShadow: isMobile ? 'none' : '10px 10px 0px #000',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
-        <div style={{
-          background: '#2C3E50',
-          color: 'white',
-          padding: isMobile ? '20px' : '15px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '4px solid #000'
-        }}>
-          <h2 style={{ margin: 0, fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '14px' : '18px', maxWidth: '80%' }}>
-            {selectedProject ? selectedProject.title : 'ARCHIVE // WORK'}
-          </h2>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'white',
-              fontFamily: '"Press Start 2P", cursive',
-              fontSize: '24px',
-              padding: '10px',
-              cursor: 'pointer'
-            }}
-          >
-            X
-          </button>
-        </div>
-
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '15px' : '20px' }}>
+    <Modal
+      title={selectedProject ? selectedProject.title : 'ARCHIVE // WORK'}
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="1000px"
+    >
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           {!selectedProject ? (
             // Project Grid View
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', paddingBottom: '20px' }}>
               {projects.map((project) => (
                 <button
                   key={project.id}
@@ -287,9 +233,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               </div>
             </PixelTransition>
           )}
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

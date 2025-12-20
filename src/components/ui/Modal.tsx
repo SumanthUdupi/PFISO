@@ -7,9 +7,10 @@ interface ModalProps {
   isOpen: boolean
   onClose: () => void
   children: React.ReactNode
+  maxWidth?: string
 }
 
-const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidth }) => {
   const { isMobile } = useDeviceDetect()
 
   if (!isOpen) return null
@@ -60,7 +61,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
 
   const desktopPanelStyle: React.CSSProperties = {
       width: '80%',
-      maxWidth: '600px',
+      maxWidth: maxWidth || '600px',
       maxHeight: '80%',
       display: 'flex',
       flexDirection: 'column',
@@ -85,6 +86,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children }) => {
           <h2 style={{ margin: 0, fontSize: isMobile ? '16px' : '14px', textShadow: '2px 2px #000' }}>{title}</h2>
           <button
             onClick={onClose}
+            aria-label="Close"
             style={{
               background: '#fffbf0',
               border: '2px outset #dcd0c0',
