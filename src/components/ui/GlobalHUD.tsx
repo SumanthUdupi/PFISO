@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 
 interface GlobalHUDProps {
   onNavigate: (section: 'projects' | 'about' | 'contact' | null) => void;
@@ -6,6 +7,7 @@ interface GlobalHUDProps {
 }
 
 const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
+  const { isMobile } = useDeviceDetect();
   const navItems = [
     { id: 'projects', label: 'WORK', icon: '💼' },
     { id: 'about', label: 'BIO', icon: '👤' },
@@ -15,10 +17,12 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   return (
     <div style={{
       position: 'absolute',
-      top: '20px',
+      top: isMobile ? '20px' : '20px',
+      bottom: 'auto',
       right: '20px',
       display: 'flex',
-      gap: '12px',
+      flexDirection: isMobile ? 'row' : 'row',
+      gap: isMobile ? '16px' : '12px',
       zIndex: 1000,
       pointerEvents: 'auto',
     }}>
@@ -29,14 +33,17 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           style={{
             background: activeSection === item.id ? '#F39C12' : '#2C3E50',
             color: activeSection === item.id ? '#333' : 'white',
-            border: '4px solid #fff',
-            boxShadow: '4px 4px 0px #000',
-            padding: '10px 15px',
+            border: isMobile ? '2px solid #fff' : '4px solid #fff',
+            boxShadow: isMobile ? '2px 2px 0px #000' : '4px 4px 0px #000',
+            padding: isMobile ? '16px 20px' : '10px 15px', // Increased touch target
+            minWidth: isMobile ? '60px' : 'auto',
+            minHeight: isMobile ? '60px' : 'auto',
             fontFamily: '"Press Start 2P", cursive',
-            fontSize: '12px',
+            fontSize: isMobile ? '24px' : '12px', // Larger icon on mobile
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
             transition: 'transform 0.1s',
           }}

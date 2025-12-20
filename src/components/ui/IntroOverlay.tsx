@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Html } from '@react-three/drei';
 import Typewriter from './Typewriter';
+import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 
 interface IntroOverlayProps {
   onComplete: () => void;
@@ -10,6 +11,7 @@ interface IntroOverlayProps {
 
 const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, role }) => {
   const [step, setStep] = useState(0);
+  const { isMobile } = useDeviceDetect();
 
   useEffect(() => {
     // Sequence:
@@ -46,15 +48,17 @@ const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, role }) =
             justifyContent: 'center',
             color: 'white',
             transition: 'opacity 1s',
-            opacity: step === 3 ? 0 : 1
+            opacity: step === 3 ? 0 : 1,
+            // Adjust position for mobile split view
+            paddingBottom: isMobile ? '20%' : '0'
         }}>
             {step >= 1 && (
-                <h1 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '32px', marginBottom: '20px', color: '#F1C40F' }}>
+                <h1 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '24px' : '32px', marginBottom: '20px', color: '#F1C40F', textAlign: 'center' }}>
                     <Typewriter text={name} speed={50} />
                 </h1>
             )}
             {step >= 2 && (
-                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', color: '#aaa' }}>
+                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '12px' : '16px', color: '#aaa', textAlign: 'center' }}>
                     <Typewriter text={role} speed={30} />
                 </h2>
             )}

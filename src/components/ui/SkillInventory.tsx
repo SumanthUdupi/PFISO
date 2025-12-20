@@ -1,10 +1,15 @@
 import React from 'react';
+import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 
 interface SkillInventoryProps {
   skills: string[];
 }
 
 const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
+  const { isMobile } = useDeviceDetect();
+
+  if (isMobile) return null;
+
   return (
     <div style={{
       position: 'absolute',
