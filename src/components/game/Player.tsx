@@ -27,8 +27,8 @@ const FRAME_RATE = 10 // fps
 
 const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
     // Load textures
-    const textureIdle = useTexture('./assets/sprites/player-idle.webp')
-    const textureWalk = useTexture('./assets/sprites/player-walk.webp')
+    const textureIdle = useTexture('./assets/sprites/player-idle.png')
+    const textureWalk = useTexture('./assets/sprites/player-walk.png')
 
     // Configure textures for pixel art
     useEffect(() => {
