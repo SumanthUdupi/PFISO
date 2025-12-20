@@ -9,7 +9,10 @@ export const LoadingScreen = () => {
 
   return (
     <Html center style={{ width: '100vw', height: '100vh', background: '#2C3E50', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'white', fontFamily: '"Press Start 2P", cursive' }}>
-       <div style={{ marginBottom: '20px', fontSize: '24px' }}>LOADING OFFICE...</div>
+       <div style={{ marginBottom: '20px', fontSize: '24px', textAlign: 'center', lineHeight: '1.5' }}>
+           COMPILING AWESOMENESS...<br/>
+           <span style={{ fontSize: '12px', color: '#BDC3C7' }}>INITIALIZING VIRTUAL OFFICE</span>
+       </div>
        <div style={{ width: '300px', height: '20px', border: '2px solid white', padding: '2px' }}>
           <div style={{ width: `${progress}%`, height: '100%', background: '#2ECC71', transition: 'width 0.2s' }} />
        </div>

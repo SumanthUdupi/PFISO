@@ -9,9 +9,9 @@ interface GlobalHUDProps {
 const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   const { isMobile } = useDeviceDetect();
   const navItems = [
-    { id: 'projects', label: 'WORK', icon: '💼' },
-    { id: 'about', label: 'BIO', icon: '👤' },
-    { id: 'contact', label: 'MAIL', icon: '✉️' },
+    { id: 'projects', label: 'MY WORK', icon: '💼' },
+    { id: 'about', label: 'ABOUT ME', icon: '👤' },
+    { id: 'contact', label: 'CONTACT', icon: '✉️' },
   ] as const;
 
   return (
@@ -39,7 +39,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
             minWidth: isMobile ? '60px' : 'auto',
             minHeight: isMobile ? '60px' : 'auto',
             fontFamily: '"Press Start 2P", cursive',
-            fontSize: isMobile ? '24px' : '12px', // Larger icon on mobile
+            fontSize: isMobile ? '24px' : '10px', // Larger icon on mobile
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -72,7 +72,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
             boxShadow: '4px 4px 0px #000',
             padding: '10px 15px',
             fontFamily: '"Press Start 2P", cursive',
-            fontSize: '12px',
+            fontSize: '10px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',

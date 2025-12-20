@@ -191,7 +191,8 @@ const Lobby = () => {
         {!introComplete && (
             <IntroOverlay
                 name={bioData.name}
-                role={bioData.role}
+                headline={bioData.headline}
+                valueProposition={bioData.valueProposition}
                 onComplete={() => setIntroComplete(true)}
             />
         )}

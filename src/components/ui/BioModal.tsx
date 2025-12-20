@@ -7,9 +7,12 @@ interface BioData {
   name: string;
   role: string;
   photo: string;
-  summary: string;
+  summary: string[];
   philosophy: string;
-  skills: string[];
+  targetAudience: string;
+  competencies: { title: string; description: string; keywords: string[] }[];
+  domainExpertise: { area: string; description: string }[];
+  skills: { category: string; items: { name: string; level: string; description: string; certification?: string }[] }[];
   experience: { role: string; company: string; years: string }[];
   certifications: { name: string; issuer: string; date: string }[];
   testimonials: { quote: string; author: string }[];
@@ -53,53 +56,91 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                         <div style={{ flex: 1, minWidth: '300px' }}>
                             <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>ABOUT ME</h3>
                             <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
-                                <Typewriter text={bio.summary} speed={5} />
+                                {bio.summary.map((paragraph, idx) => (
+                                    <p key={idx} style={{ marginBottom: '15px' }}>
+                                        <Typewriter text={paragraph} speed={1} />
+                                    </p>
+                                ))}
                             </div>
 
-                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>DESIGN PHILOSOPHY</h3>
-                            <blockquote style={{
-                                fontFamily: 'Inter, sans-serif',
-                                fontStyle: 'italic',
-                                borderLeft: '4px solid #8E44AD',
-                                paddingLeft: '15px',
-                                margin: '15px 0',
-                                background: '#f9f9f9',
-                                padding: '15px'
-                            }}>
-                                "{bio.philosophy}"
-                            </blockquote>
+                            <div style={{ background: '#f0f8ff', padding: '15px', borderLeft: '4px solid #3498db', marginBottom: '20px' }}>
+                                <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginBottom: '10px' }}>TARGET AUDIENCE</h4>
+                                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontStyle: 'italic' }}>{bio.targetAudience}</p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Middle Section: Experience & Certs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginTop: '20px' }}>
-                        <div>
-                             <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '14px', background: '#2C3E50', color: 'white', padding: '10px' }}>EXPERIENCE</h3>
-                             <div style={{ border: '2px solid #2C3E50', padding: '15px' }}>
-                                 {bio.experience.map((exp, i) => (
-                                     <div key={i} style={{ marginBottom: '15px', borderBottom: '1px dashed #ccc', paddingBottom: '10px' }}>
-                                         <div style={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>{exp.role}</div>
-                                         <div style={{ fontSize: '14px', color: '#666' }}>{exp.company} | {exp.years}</div>
+                     {/* What I Do / Competencies */}
+                    <div>
+                         <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '10px' }}>WHAT I DO</h3>
+                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '15px' }}>
+                             {bio.competencies.map((comp, i) => (
+                                 <div key={i} style={{ background: '#fff', padding: '15px', border: '1px solid #ddd', borderRadius: '4px' }}>
+                                     <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#2c3e50', marginBottom: '10px' }}>{comp.title}</h4>
+                                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', marginBottom: '10px' }}>{comp.description}</p>
+                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                                         {comp.keywords.map((kw, k) => (
+                                             <span key={k} style={{ background: '#ecf0f1', padding: '2px 6px', fontSize: '10px', borderRadius: '3px', fontFamily: 'Inter, sans-serif' }}>{kw}</span>
+                                         ))}
                                      </div>
-                                 ))}
-                             </div>
-                        </div>
+                                 </div>
+                             ))}
+                         </div>
+                    </div>
 
-                        <div>
-                             <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '14px', background: '#27AE60', color: 'white', padding: '10px' }}>CERTIFICATIONS</h3>
-                             <div style={{ border: '2px solid #27AE60', padding: '15px' }}>
-                                 {bio.certifications.map((cert, i) => (
-                                     <div key={i} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                         <div style={{ fontSize: '20px' }}>📜</div>
-                                         <div>
-                                            <div style={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>{cert.name}</div>
-                                            <div style={{ fontSize: '12px', color: '#666' }}>{cert.issuer}, {cert.date}</div>
+                    {/* Domain Expertise */}
+                    <div>
+                         <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>DOMAIN EXPERTISE</h3>
+                         <div style={{ marginTop: '15px' }}>
+                             {bio.domainExpertise.map((exp, i) => (
+                                 <div key={i} style={{ marginBottom: '10px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                                     <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#e67e22', minWidth: '150px' }}>{exp.area}</span>
+                                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>{exp.description}</span>
+                                 </div>
+                             ))}
+                         </div>
+                    </div>
+
+                    {/* Skills Detail View */}
+                     <div>
+                         <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>TECHNICAL TOOLKIT</h3>
+                         {bio.skills.map((category, i) => (
+                             <div key={i} style={{ marginBottom: '20px' }}>
+                                 <h4 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 'bold', fontSize: '16px', color: '#34495e', marginBottom: '10px', borderLeft: '4px solid #ffa726', paddingLeft: '10px' }}>{category.category}</h4>
+                                 <div style={{ display: 'grid', gap: '10px' }}>
+                                     {category.items.map((skill, j) => (
+                                         <div key={j} style={{ background: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
+                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                                 <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px' }}>{skill.name}</span>
+                                                 <span style={{ fontSize: '10px', background: '#3498db', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{skill.level}</span>
+                                             </div>
+                                             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', margin: 0, color: '#555' }}>{skill.description}</p>
+                                             {skill.certification && (
+                                                 <div style={{ marginTop: '5px', fontSize: '11px', color: '#27ae60', fontStyle: 'italic' }}>Verified: {skill.certification}</div>
+                                             )}
                                          </div>
-                                     </div>
-                                 ))}
+                                     ))}
+                                 </div>
                              </div>
-                        </div>
+                         ))}
                     </div>
+
+                    {/* Certifications (Traditional List) */}
+                     <div>
+                         <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '14px', background: '#27AE60', color: 'white', padding: '10px' }}>CERTIFICATIONS</h3>
+                         <div style={{ border: '2px solid #27AE60', padding: '15px' }}>
+                             {bio.certifications.map((cert, i) => (
+                                 <div key={i} style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                     <div style={{ fontSize: '20px' }}>📜</div>
+                                     <div>
+                                        <div style={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>{cert.name}</div>
+                                        <div style={{ fontSize: '12px', color: '#666' }}>{cert.issuer}, {cert.date}</div>
+                                     </div>
+                                 </div>
+                             ))}
+                         </div>
+                    </div>
+
 
                     {/* Bottom Section: Testimonials */}
                     <div style={{ marginTop: '20px' }}>
