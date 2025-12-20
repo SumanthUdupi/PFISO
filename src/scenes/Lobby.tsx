@@ -23,6 +23,11 @@ import Floor from '../components/game/Environment/Floor'
 import Decor from '../components/game/Environment/Decor'
 import Background from '../components/game/Environment/Background'
 import DeskGroup from '../components/game/Environment/DeskGroup'
+import StrategyBoard from '../components/game/Environment/StrategyBoard'
+import InspirationBoard from '../components/game/Environment/InspirationBoard'
+import ReceptionDesk from '../components/game/Environment/ReceptionDesk'
+import SupplyShelf from '../components/game/Environment/SupplyShelf'
+import MailSlots from '../components/game/Environment/MailSlots'
 import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
 import FlashOverlay from '../components/ui/FlashOverlay'
@@ -228,8 +233,12 @@ const Lobby = () => {
             </Float>
         )}
 
-        {/* Project Desk Group */}
-        <DeskGroup position={[4, 0, -3]} rotation={[0, -Math.PI/2, 0]} />
+        {/* Professional Work Zone - Strategy Board */}
+        <StrategyBoard
+            position={[4, 0, -3]}
+            rotation={[0, -Math.PI/2, 0]}
+            onClick={() => handleInteraction('projects', 'Projects')}
+        />
 
         {/* Featured Project Glow */}
         <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#00ff00" distance={3} decay={2} />
@@ -245,21 +254,73 @@ const Lobby = () => {
             castShadow={false}
         />
 
-        {/* About Bookshelf */}
+        {/* Personal / Lab Zone - Inspiration Board */}
+        <InspirationBoard
+            position={[-4, 0, -3]}
+            rotation={[0, Math.PI/2, 0]}
+            onClick={() => handleInteraction('about', 'About Me')}
+        />
+
         <InteractiveObject
             position={[-4, 0.5, -3]}
             label="About Me"
             color="#F39C12"
             onClick={() => handleInteraction('about', 'About Me')}
             playerPosition={playerPosition.current}
+            visibleMesh={false}
             isFocused={closestObject === 'about'}
             castShadow={false}
         />
 
-        {/* Contact Computer */}
-        <DeskGroup position={[0, 0, -5]} rotation={[0, 0, 0]} />
+        {/* Home / Lobby - Reception Desk */}
+        {/* Replacing the Contact Computer with Reception Desk at a central location?
+            The prompt says "Home / Lobby".
+            I'll place it slightly forward or keep it as the central piece.
+            Original contact was at [0, 0, -5].
+            Let's put the Supply Shelf at [0, 0, -5] (Skills & Tools "Located between the two boards").
+            And Reception Desk at [0, 0, 0] or maybe [0, 0, -2]?
+            If I put Reception at [0, 0, -2], it might block movement.
+            Let's put Reception Desk where Contact was but maybe slightly forward?
+            Actually, the prompt says "Located between the two boards" for Supply Shelf.
+            Boards are at x=4 and x=-4.
+            So Supply Shelf at x=0 makes sense.
+            Let's put Supply Shelf at [0, 0, -5.5] against the wall.
+            And Reception Desk maybe at [0, 0, -2]?
+            Or maybe Reception Desk is the "Home" point, so maybe [2, 0, -1] or something?
+            Let's try putting Reception Desk at [0, 0, -2.5] and Supply Shelf at [0, 0, -5.5].
+            Wait, Contact Section is "Near the exit door".
+            I'll put MailSlots on the right wall maybe? Or left wall?
+            Let's stick to the previous layout plan for simplicity first.
+
+            Original Layout:
+            Projects: [4, 0, -3]
+            About: [-4, 0.5, -3] (Bookshelf was usually on floor but interactive object raised)
+            Contact: [0, 0, -5]
+
+            New Layout:
+            Projects (Strategy Board): [4, 0, -3]
+            About (Inspiration Board): [-4, 0, -3]
+            Skills (Supply Shelf): [0, 0, -5]
+            Contact (Mail Slots): [5, 1.5, -4] (Wall mounted on right?) or [-5, 1.5, -4]?
+            Reception Desk: [0, 0, -2]?
+        */}
+
+        {/* Skills & Tools - Supply Shelf (Center Back) */}
+        <SupplyShelf position={[0, 0, -5]} rotation={[0, 0, 0]} />
+
+        {/* Contact - Mail Slots (Wall Mounted Right) */}
+        {/* Assuming walls are at +/- 7.5? Walls args are [15, 15] */}
+        {/* Wall position is dependent on `Walls` component. Usually walls are at the edges. */}
+        {/* Let's put Mail Slots at [2, 0, -5] (Next to Shelf) or maybe on the side wall. */}
+        {/* Let's put it on the back wall for now, offset from center. */}
+        <MailSlots
+            position={[2, 0, -4.8]}
+            rotation={[0, 0, 0]}
+            onClick={() => handleInteraction('contact', 'Contact')}
+        />
+
         <InteractiveObject
-            position={[0, 0.5, -5]}
+            position={[2, 0.5, -4.8]}
             label="Contact"
             color="#E74C3C"
             onClick={() => handleInteraction('contact', 'Contact')}
@@ -267,6 +328,17 @@ const Lobby = () => {
             visibleMesh={false}
             isFocused={closestObject === 'contact'}
             castShadow={false}
+        />
+
+        {/* Reception Desk (Center Room) */}
+        <ReceptionDesk
+            position={[0, 0, -2]}
+            rotation={[0, Math.PI, 0]}
+            onClick={() => {
+                // Pan to professional zone? Or just trigger movement?
+                // For now, let's just make it focus on Projects
+                handleInteraction('projects', 'Projects')
+            }}
         />
 
         {/* Mobile Interaction Button Overlay */}
