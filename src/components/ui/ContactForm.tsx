@@ -45,70 +45,81 @@ const ContactForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-      <div>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Name</label>
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          style={{ width: '100%', padding: '10px', fontFamily: 'inherit', border: '2px solid #ccc' }}
-        />
-      </div>
-      <div>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Email</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          required
-          style={{ width: '100%', padding: '10px', fontFamily: 'inherit', border: '2px solid #ccc' }}
-        />
-      </div>
-      <div>
-        <label style={{ display: 'block', marginBottom: '5px' }}>Message</label>
-        <textarea
-          value={formData.message}
-          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-          required
-          rows={5}
-          style={{ width: '100%', padding: '10px', fontFamily: 'inherit', border: '2px solid #ccc' }}
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={status === 'sending'}
-        style={{
-          background: status === 'sending' ? '#95A5A6' : '#4A90E2',
-          color: 'white',
-          border: 'none',
-          padding: '15px',
-          cursor: status === 'sending' ? 'not-allowed' : 'pointer',
-          fontFamily: '"Press Start 2P", cursive',
-          boxShadow: '4px 4px 0px #000',
-          transition: 'all 0.1s'
-        }}
-      >
-        {status === 'sending' ? 'Sending...' : 'Send Message'}
-      </button>
-
-      {status === 'success' && (
-        <div style={{ padding: '10px', background: '#DFF0D8', border: '2px solid #3C763D', color: '#3C763D' }}>
-            Message sent successfully to backend!
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <p style={{ fontFamily: 'Inter, system-ui, sans-serif', fontStyle: 'italic', marginBottom: '10px' }}>
+            Have a project in mind or a role to discuss? I'd love to hear from you.
+        </p>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px' }}>NAME</label>
+            <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            aria-label="Your Name"
+            placeholder="John Doe"
+            style={{ width: '100%', padding: '10px', fontFamily: 'Inter, sans-serif', border: '2px solid #ccc' }}
+            />
         </div>
-      )}
-
-      {status === 'demo-success' && (
-        <div style={{ padding: '10px', background: '#FCF8E3', border: '2px solid #8A6D3B', color: '#8A6D3B' }}>
-            <strong>Demo Mode:</strong> Backend not connected, but form submission simulated successfully!
+        <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px' }}>EMAIL</label>
+            <input
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
+            aria-label="Your Email"
+            placeholder="john@example.com"
+            style={{ width: '100%', padding: '10px', fontFamily: 'Inter, sans-serif', border: '2px solid #ccc' }}
+            />
         </div>
-      )}
+        <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px' }}>MESSAGE</label>
+            <textarea
+            value={formData.message}
+            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+            required
+            aria-label="Your Message"
+            placeholder="How can I help you?"
+            rows={5}
+            style={{ width: '100%', padding: '10px', fontFamily: 'Inter, sans-serif', border: '2px solid #ccc' }}
+            />
+        </div>
+        <button
+            type="submit"
+            disabled={status === 'sending'}
+            style={{
+            background: status === 'sending' ? '#95A5A6' : '#4A90E2',
+            color: 'white',
+            border: 'none',
+            padding: '15px',
+            cursor: status === 'sending' ? 'not-allowed' : 'pointer',
+            fontFamily: '"Press Start 2P", cursive',
+            boxShadow: '4px 4px 0px #000',
+            transition: 'all 0.1s'
+            }}
+        >
+            {status === 'sending' ? 'TRANSMITTING...' : 'SEND MESSAGE'}
+        </button>
 
-      {status === 'error' && (
-        <p style={{ color: 'red' }}>Failed to send message. Please try again.</p>
-      )}
-    </form>
+        {status === 'success' && (
+            <div style={{ padding: '10px', background: '#DFF0D8', border: '2px solid #3C763D', color: '#3C763D', fontFamily: 'Inter, sans-serif' }}>
+                Message received! I'll get back to you within 24 hours.
+            </div>
+        )}
+
+        {status === 'demo-success' && (
+            <div style={{ padding: '10px', background: '#FCF8E3', border: '2px solid #8A6D3B', color: '#8A6D3B', fontFamily: 'Inter, sans-serif' }}>
+                <strong>Message received!</strong> (Demo Mode: Backend simulation successful). I'll get back to you within 24 hours.
+            </div>
+        )}
+
+        {status === 'error' && (
+            <p style={{ color: 'red', fontFamily: 'Inter, sans-serif' }}>Failed to send message. Please try again.</p>
+        )}
+        </form>
+    </div>
   )
 }
 
