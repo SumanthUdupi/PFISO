@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Html, CameraShake } from '@react-three/drei'
+import { Html, CameraShake, useTexture } from '@react-three/drei'
 import TeleportSparkle from './TeleportSparkle'
 import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
@@ -19,64 +19,110 @@ const COYOTE_TIME = 0.15 // seconds
 const JUMP_BUFFER = 0.15 // seconds
 
 // --- 1. THE ART: 2D Sprite Character (Req 34) ---
-import { useTexture } from '@react-three/drei'
 
 // Sprite Animation Configuration
-// REQ-022: Future proofing for 8 frames per direction, currently 4.
-const FRAMES_WALK = 4
+// REQ-022: 8 frames per direction
+const FRAMES_WALK = 8
+const FRAMES_IDLE = 1
+const DIRECTIONS = 4
 // REQ-022: Timing ~100ms per frame = 10 FPS
 const FRAME_RATE = 10
+
+// Helper to determine sprite row based on camera-relative angle
+const getSpriteRow = (angle: number, camera: THREE.Camera) => {
+    // Get camera heading angle
+    const camDir = new THREE.Vector3()
+    camera.getWorldDirection(camDir)
+    const camAngle = Math.atan2(camDir.x, camDir.z)
+
+    // Calculate relative angle (0 to 2PI)
+    let relativeAngle = angle - camAngle
+    relativeAngle = (relativeAngle + 2 * Math.PI) % (2 * Math.PI)
+
+    // Map to 4 directions based on Sprite Sheet Layout
+    // Row 0: Front (South)
+    // Row 1: Right (East)
+    // Row 2: Back (North)
+    // Row 3: Left (West)
+
+    // Relative Angle Mapping:
+    // ~0 (Moving Away) -> Back (Row 2)
+    // ~PI/2 (Moving Left of view) -> Left (Row 3)
+    // ~PI (Moving Towards) -> Front (Row 0)
+    // ~3PI/2 (Moving Right of view) -> Right (Row 1)
+
+    const deg = THREE.MathUtils.radToDeg(relativeAngle)
+
+    if (deg >= 315 || deg < 45) return 2 // Back
+    if (deg >= 45 && deg < 135) return 3 // Left
+    if (deg >= 135 && deg < 225) return 0 // Front
+    if (deg >= 225 && deg < 315) return 1 // Right
+
+    return 0
+}
 
 const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
     // Load textures
     const textureIdle = useTexture('./assets/sprites/player-idle.png')
     const textureWalk = useTexture('./assets/sprites/player-walk.png')
 
+    // State to track last facing direction when idle
+    const lastAngle = useRef(0)
+
     // Configure textures for pixel art
     useEffect(() => {
         textureIdle.magFilter = THREE.NearestFilter
         textureIdle.minFilter = THREE.NearestFilter
+        textureIdle.repeat.set(1, 1 / DIRECTIONS)
+        textureIdle.wrapS = THREE.RepeatWrapping
+        textureIdle.wrapT = THREE.RepeatWrapping
+
         textureWalk.magFilter = THREE.NearestFilter
         textureWalk.minFilter = THREE.NearestFilter
-
-        // Walk texture is a strip
-        textureWalk.repeat.set(1 / FRAMES_WALK, 1)
+        textureWalk.repeat.set(1 / FRAMES_WALK, 1 / DIRECTIONS)
         textureWalk.wrapS = THREE.RepeatWrapping
+        textureWalk.wrapT = THREE.RepeatWrapping
     }, [textureIdle, textureWalk])
 
     const meshRef = useRef<THREE.Mesh>(null)
-    const [frame, setFrame] = useState(0)
 
     useFrame((state, delta) => {
         if (!meshRef.current) return
+
+        // Update Direction
+        if (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1) {
+            lastAngle.current = Math.atan2(velocity.x, velocity.z)
+        }
+
+        // Calculate Row
+        const row = getSpriteRow(lastAngle.current, state.camera)
+        // Texture V offset: Row 0 is at Top (offset 0.75), Row 3 at Bottom (offset 0)
+        // because UV (0,0) is bottom-left.
+        const rowOffset = (DIRECTIONS - 1 - row) / DIRECTIONS
 
         // Animation Logic
         if (isMoving) {
             const t = state.clock.getElapsedTime()
             const f = Math.floor(t * FRAME_RATE) % FRAMES_WALK
 
-            // Update texture offset
+            // Update texture
             if (meshRef.current.material instanceof THREE.MeshBasicMaterial) {
-                // If moving, switch to walk texture
                  if (meshRef.current.material.map !== textureWalk) {
                     meshRef.current.material.map = textureWalk
                     meshRef.current.material.needsUpdate = true
                  }
 
-                 // REQ-021: Isometric Walk Cycle Directions (Placeholder logic)
-                 // Future implementation: Select row based on camera relative angle
-                 // const row = getDirectionRow(velocity, state.camera)
-                 // textureWalk.offset.y = row / 4
-
+                 // Apply offsets
                  textureWalk.offset.x = f / FRAMES_WALK
+                 textureWalk.offset.y = rowOffset
             }
             
             // Bobbing effect for sprite
-            meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.5 // +0.5 to center vertically
+            meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.5
 
             // REQ-030: Run Cycle Transition - Lean forward
             if (velocity.length() > SPEED * 0.8) {
-                 meshRef.current.rotation.x = 0.1 // Lean forward slightly
+                 meshRef.current.rotation.x = 0.1
             } else {
                  meshRef.current.rotation.x = 0
             }
@@ -88,6 +134,9 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
                     meshRef.current.material.map = textureIdle
                     meshRef.current.material.needsUpdate = true
                  }
+                 // Apply directional offset for Idle too
+                 textureIdle.offset.y = rowOffset
+                 textureIdle.offset.x = 0
              }
              // Breathing effect (Req 19)
              meshRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.02
