@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PixelTransition from './PixelTransition';
 import Typewriter from './Typewriter';
+import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 
 interface CaseStudy {
   id: string;
@@ -41,6 +42,7 @@ interface ProjectModalProps {
 
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }) => {
   const [selectedProject, setSelectedProject] = useState<CaseStudy | null>(null);
+  const { isMobile } = useDeviceDetect();
 
   if (!isOpen) return null;
 
@@ -61,16 +63,16 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
         justifyContent: 'center',
         zIndex: 2000,
         pointerEvents: 'auto',
-        padding: '20px'
+        padding: isMobile ? '0' : '20px'
       }}>
       <div style={{
         background: '#fff',
         width: '100%',
         maxWidth: '1000px',
-        height: '90vh',
-        border: '4px solid #000',
-        borderRadius: '8px',
-        boxShadow: '10px 10px 0px #000',
+        height: isMobile ? '100%' : '90vh',
+        border: isMobile ? 'none' : '4px solid #000',
+        borderRadius: isMobile ? '0' : '8px',
+        boxShadow: isMobile ? 'none' : '10px 10px 0px #000',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden'
@@ -79,13 +81,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
         <div style={{
           background: '#2C3E50',
           color: 'white',
-          padding: '15px 20px',
+          padding: isMobile ? '20px' : '15px 20px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           borderBottom: '4px solid #000'
         }}>
-          <h2 style={{ margin: 0, fontFamily: '"Press Start 2P", cursive', fontSize: '18px' }}>
+          <h2 style={{ margin: 0, fontFamily: '"Press Start 2P", cursive', fontSize: isMobile ? '14px' : '18px', maxWidth: '80%' }}>
             {selectedProject ? selectedProject.title : 'ARCHIVE // WORK'}
           </h2>
           <button
@@ -96,7 +98,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               border: 'none',
               color: 'white',
               fontFamily: '"Press Start 2P", cursive',
-              fontSize: '20px',
+              fontSize: '24px',
+              padding: '10px',
               cursor: 'pointer'
             }}
           >
@@ -105,7 +108,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '15px' : '20px' }}>
           {!selectedProject ? (
             // Project Grid View
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -150,14 +153,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                 <button
                   onClick={() => setSelectedProject(null)}
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: '#f1f1f1',
+                    border: '2px solid #ccc',
+                    borderRadius: '8px',
                     fontFamily: '"Press Start 2P", cursive',
                     cursor: 'pointer',
                     marginBottom: '20px',
                     color: '#2C3E50',
-                    textDecoration: 'underline',
-                    padding: '5px 0'
+                    textDecoration: 'none',
+                    padding: '12px 16px',
+                    width: isMobile ? '100%' : 'auto',
+                    textAlign: 'center'
                   }}
                 >
                   &lt; BACK TO PROJECTS

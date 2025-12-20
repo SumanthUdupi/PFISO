@@ -27,7 +27,7 @@ function App() {
         touchAction: 'none'
       }}>
         <Canvas
-            shadows
+            shadows={!isMobile}
             gl={{ shadowMap: { type: THREE.PCFSoftShadowMap } }}
             orthographic
             // Initial zoom set to desktop default, Lobby will adjust for mobile
@@ -67,26 +67,26 @@ function App() {
             borderTop: '4px solid #333',
             boxSizing: 'border-box'
         }}>
-            <h2 style={{ fontSize: '16px', borderBottom: '2px solid #333', paddingBottom: '10px' }}>Projects</h2>
-            <div style={{ display: 'grid', gap: '20px' }}>
+            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px' }}>Projects</h2>
+            <div style={{ display: 'grid', gap: '30px' }}>
                 {projectsData.map((project: any) => (
-                    <article key={project.id} style={{ background: '#222', padding: '15px', borderRadius: '8px' }}>
-                        <h3 style={{ fontSize: '14px', marginTop: 0, color: '#FFD700', lineHeight: '1.4' }}>{project.title}</h3>
+                    <article key={project.id} style={{ background: '#222', padding: '20px', borderRadius: '8px' }}>
+                        <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD700', lineHeight: '1.4' }}>{project.title}</h3>
                         {/* Improved typography for body text */}
                         <p style={{
-                            fontSize: '12px',
+                            fontSize: '14px',
                             lineHeight: '1.6',
                             color: '#ccc',
                             fontFamily: 'Inter, system-ui, sans-serif'
                         }}>
                             {project.description}
                         </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '15px' }}>
                             {project.techStack.map((tech: string) => (
                                 <span key={tech} style={{
                                     background: '#333',
-                                    padding: '4px 8px',
-                                    fontSize: '10px',
+                                    padding: '6px 12px',
+                                    fontSize: '12px',
                                     borderRadius: '4px',
                                     color: '#fff',
                                     fontFamily: 'Inter, system-ui, sans-serif'
@@ -99,17 +99,17 @@ function App() {
                 ))}
             </div>
 
-            <h2 style={{ fontSize: '16px', borderBottom: '2px solid #333', paddingBottom: '10px', marginTop: '40px' }}>Skills</h2>
+            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px', marginTop: '40px' }}>Skills</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                 {bioData.skills.map((skill: any) => (
-                     <div key={skill.name} style={{ background: '#2c3e50', padding: '12px', borderRadius: '8px', textAlign: 'center', minWidth: '80px', flex: '1' }}>
-                         <div style={{ fontSize: '24px', marginBottom: '8px' }}>{skill.icon}</div>
-                         <div style={{ fontSize: '10px', color: '#ecf0f1', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
+                     <div key={skill.name} style={{ background: '#2c3e50', padding: '16px', borderRadius: '8px', textAlign: 'center', minWidth: '100px', flex: '1' }}>
+                         <div style={{ fontSize: '32px', marginBottom: '10px' }}>{skill.icon}</div>
+                         <div style={{ fontSize: '12px', color: '#ecf0f1', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
                      </div>
                 ))}
             </div>
 
-            <div style={{ height: '50px', textAlign: 'center', marginTop: '40px', fontSize: '10px', color: '#666' }}>
+            <div style={{ height: '80px', textAlign: 'center', marginTop: '40px', fontSize: '12px', color: '#666' }}>
                 Swipe up for more...
             </div>
         </div>

@@ -1,6 +1,9 @@
 import React from 'react'
 
 const UIOverlay = () => {
+  // This component seems to be a placeholder or legacy overlay.
+  // The actual game UI is handled within the Lobby scene or specific overlays.
+  // We return null or an empty container to avoid blocking the view.
   return (
     <div style={{
       position: 'absolute',
@@ -11,7 +14,7 @@ const UIOverlay = () => {
       pointerEvents: 'none',
       padding: '20px'
     }}>
-      <h1 style={{ margin: 0, textShadow: '2px 2px 0px #000' }}>Interactive Portfolio</h1>
+      {/* Title removed to prevent obscuring the 3D scene on mobile */}
     </div>
   )
 }
