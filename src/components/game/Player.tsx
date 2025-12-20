@@ -22,8 +22,10 @@ const JUMP_BUFFER = 0.15 // seconds
 import { useTexture } from '@react-three/drei'
 
 // Sprite Animation Configuration
-const FRAMES_WALK = 4 // Assuming 4 frames
-const FRAME_RATE = 10 // fps
+// REQ-022: Future proofing for 8 frames per direction, currently 4.
+const FRAMES_WALK = 4
+// REQ-022: Timing ~100ms per frame = 10 FPS
+const FRAME_RATE = 10
 
 const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
     // Load textures
@@ -60,11 +62,25 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
                     meshRef.current.material.map = textureWalk
                     meshRef.current.material.needsUpdate = true
                  }
+
+                 // REQ-021: Isometric Walk Cycle Directions (Placeholder logic)
+                 // Future implementation: Select row based on camera relative angle
+                 // const row = getDirectionRow(velocity, state.camera)
+                 // textureWalk.offset.y = row / 4
+
                  textureWalk.offset.x = f / FRAMES_WALK
             }
             
             // Bobbing effect for sprite
             meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.5 // +0.5 to center vertically
+
+            // REQ-030: Run Cycle Transition - Lean forward
+            if (velocity.length() > SPEED * 0.8) {
+                 meshRef.current.rotation.x = 0.1 // Lean forward slightly
+            } else {
+                 meshRef.current.rotation.x = 0
+            }
+
         } else {
              // Idle
              if (meshRef.current.material instanceof THREE.MeshBasicMaterial) {
