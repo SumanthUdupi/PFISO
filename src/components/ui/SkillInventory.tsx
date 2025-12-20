@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import useGameStore, { SkillTier } from '../../store';
+import SpriteIcon from './SpriteIcon';
 
 interface SkillItem {
     name: string;
@@ -77,9 +78,17 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
             }}
             title={isLocked ? '???' : `${skill.name} (${currentTier}): ${skill.description}`}
             >
-            <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>
-                {isLocked ? '?' : skill.name.substring(0, 2).toUpperCase()}
-            </span>
+            {isLocked ? (
+                <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>?</span>
+            ) : (
+                <SpriteIcon
+                    src="./assets/sprites/skill-icons.webp"
+                    size={32}
+                    sheetSize={128}
+                    iconSize={32}
+                    index={index}
+                />
+            )}
             {/* Tiny tier indicator dot */}
             {!isLocked && (
                 <div style={{

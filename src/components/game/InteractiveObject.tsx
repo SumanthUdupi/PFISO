@@ -3,6 +3,7 @@ import { Html, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore, { SkillTier } from '../../store'
+import InteractionParticles from './InteractionParticles'
 
 interface InteractiveObjectProps {
   position: [number, number, number]
@@ -68,16 +69,21 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
   // Combined active state: either mouse hover or keyboard focus
   const isActive = (hovered || isFocused) && !isLocked;
 
+  const [triggerBurst, setTriggerBurst] = useState(false);
+
   const handleInteraction = () => {
     if (isLocked) {
         // Play error sound?
         return;
     }
+    setTriggerBurst(true);
+    setTimeout(() => setTriggerBurst(false), 500); // 0.5s burst
     onClick();
   }
 
   return (
     <group position={position}>
+    <InteractionParticles active={triggerBurst} color={color} count={15} />
     <group>
       {visibleMesh ? (
          <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
@@ -106,7 +112,21 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
                 <mesh position={[0, 0, 0]}>
                     <boxGeometry args={[1.05, 1.05, 1.05]} />
                     <meshBasicMaterial
-                        color="white"
+                        color={isFocused ? "#00ffff" : "white"} // Req 16: Vibrant cyan when focused/hovered
+                        side={THREE.BackSide}
+                        toneMapped={false}
+                    />
+                </mesh>
+            )}
+
+            {/* Permanent Visual Identifier (Req 38) */}
+            {!isActive && !isLocked && (
+                <mesh position={[0, 0, 0]}>
+                    <boxGeometry args={[1.02, 1.02, 1.02]} />
+                    <meshBasicMaterial
+                        color={color}
+                        transparent
+                        opacity={0.3}
                         side={THREE.BackSide}
                         toneMapped={false}
                     />

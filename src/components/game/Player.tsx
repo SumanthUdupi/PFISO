@@ -18,125 +18,81 @@ const ROTATION_SMOOTHING = 15
 const COYOTE_TIME = 0.15 // seconds
 const JUMP_BUFFER = 0.15 // seconds
 
-// --- 1. THE ART: Procedural Lego Avatar ---
-const LegoMaterial = new THREE.MeshStandardMaterial({
-    roughness: 0.2,
-    metalness: 0.05, // Plastic feel
-})
+// --- 1. THE ART: 2D Sprite Character (Req 34) ---
+import { useTexture } from '@react-three/drei'
 
-const LegoAvatar = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
-    const group = useRef<THREE.Group>(null)
-    const leftArm = useRef<THREE.Group>(null)
-    const rightArm = useRef<THREE.Group>(null)
-    const leftLeg = useRef<THREE.Group>(null)
-    const rightLeg = useRef<THREE.Group>(null)
-    const head = useRef<THREE.Group>(null)
+// Sprite Animation Configuration
+const FRAMES_WALK = 4 // Assuming 4 frames
+const FRAME_RATE = 10 // fps
+
+const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, isJumping: boolean, velocity: THREE.Vector3 }) => {
+    // Load textures
+    const textureIdle = useTexture('./assets/sprites/player-idle.webp')
+    const textureWalk = useTexture('./assets/sprites/player-walk.webp')
+
+    // Configure textures for pixel art
+    useEffect(() => {
+        textureIdle.magFilter = THREE.NearestFilter
+        textureIdle.minFilter = THREE.NearestFilter
+        textureWalk.magFilter = THREE.NearestFilter
+        textureWalk.minFilter = THREE.NearestFilter
+
+        // Walk texture is a strip
+        textureWalk.repeat.set(1 / FRAMES_WALK, 1)
+        textureWalk.wrapS = THREE.RepeatWrapping
+    }, [textureIdle, textureWalk])
+
+    const meshRef = useRef<THREE.Mesh>(null)
+    const [frame, setFrame] = useState(0)
 
     useFrame((state, delta) => {
-        if (!group.current) return
+        if (!meshRef.current) return
 
-        const t = state.clock.getElapsedTime() * 10 // Animation speed
+        // Animation Logic
+        if (isMoving) {
+            const t = state.clock.getElapsedTime()
+            const f = Math.floor(t * FRAME_RATE) % FRAMES_WALK
 
-        // 1. Walking Animation (Limb Swing)
-        if (isMoving && !isJumping) {
-            // Legs (Contra-lateral movement)
-            if(leftLeg.current) leftLeg.current.rotation.x = Math.sin(t) * 0.8
-            if(rightLeg.current) rightLeg.current.rotation.x = Math.cos(t) * 0.8
-
-            // Arms (Opposite to legs)
-            if(leftArm.current) leftArm.current.rotation.x = Math.cos(t) * 0.6
-            if(rightArm.current) rightArm.current.rotation.x = Math.sin(t) * 0.6
+            // Update texture offset
+            if (meshRef.current.material instanceof THREE.MeshBasicMaterial) {
+                // If moving, switch to walk texture
+                 if (meshRef.current.material.map !== textureWalk) {
+                    meshRef.current.material.map = textureWalk
+                    meshRef.current.material.needsUpdate = true
+                 }
+                 textureWalk.offset.x = f / FRAMES_WALK
+            }
             
-            // Bobbing effect
-            group.current.position.y = Math.abs(Math.sin(t)) * 0.05
-        } else if (isJumping) {
-            // Jump Pose: Arms up, legs split slightly
-            if(leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, -2.5, 0.1)
-            if(rightArm.current) rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, -2.5, 0.1)
-            if(leftLeg.current) leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, 0.5, 0.1)
-            if(rightLeg.current) rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, -0.2, 0.1)
+            // Bobbing effect for sprite
+            meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.5 // +0.5 to center vertically
         } else {
-            // Idle: Breathing
-            if(leftArm.current) leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, 0, 0.1)
-            if(rightArm.current) rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, 0, 0.1)
-            if(leftLeg.current) leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, 0, 0.1)
-            if(rightLeg.current) rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, 0, 0.1)
-            group.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.02
+             // Idle
+             if (meshRef.current.material instanceof THREE.MeshBasicMaterial) {
+                 if (meshRef.current.material.map !== textureIdle) {
+                    meshRef.current.material.map = textureIdle
+                    meshRef.current.material.needsUpdate = true
+                 }
+             }
+             // Breathing effect (Req 19)
+             meshRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.02
+             meshRef.current.position.y = 0.5
         }
 
-        // 2. Lean into turns (Artistic Polish)
-        // Calculate lean based on horizontal velocity interaction
-        const leanAmount = -velocity.x * 0.05
-        group.current.rotation.z = THREE.MathUtils.lerp(group.current.rotation.z, leanAmount, 0.1)
+        // Face camera (Billboard)
+        meshRef.current.quaternion.copy(state.camera.quaternion)
     })
 
     return (
-        <group ref={group}>
-            {/* HEAD */}
-            <group position={[0, 0.75, 0]} ref={head}>
-                <mesh material={LegoMaterial} castShadow receiveShadow>
-                    <cylinderGeometry args={[0.18, 0.18, 0.25, 16]} />
-                    <meshStandardMaterial color="#FFD700" roughness={0.2} /> {/* Classic Yellow */}
-                </mesh>
-                {/* Knob on head */}
-                <mesh position={[0, 0.15, 0]} castShadow>
-                    <cylinderGeometry args={[0.08, 0.08, 0.1, 16]} />
-                    <meshStandardMaterial color="#FFD700" roughness={0.2} />
-                </mesh>
-            </group>
-
-            {/* TORSO */}
-            <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-                {/* Trapezoid approximation via simple box for now */}
-                <boxGeometry args={[0.3, 0.45, 0.2]} />
-                <meshStandardMaterial color="#0055BF" roughness={0.2} /> {/* Blue Shirt */}
-            </mesh>
-
-            {/* HIPS */}
-            <mesh position={[0, 0.15, 0]} castShadow>
-                <boxGeometry args={[0.32, 0.1, 0.2]} />
-                <meshStandardMaterial color="#808080" roughness={0.2} /> 
-            </mesh>
-
-            {/* ARMS - Pivoted at top */}
-            <group position={[-0.22, 0.55, 0]} ref={leftArm}>
-                <mesh position={[0, -0.2, 0]} castShadow>
-                    <boxGeometry args={[0.1, 0.35, 0.1]} />
-                    <meshStandardMaterial color="#0055BF" />
-                </mesh>
-                <mesh position={[0, -0.4, 0]}> {/* Hand */}
-                     <boxGeometry args={[0.08, 0.08, 0.08]} />
-                     <meshStandardMaterial color="#FFD700" />
-                </mesh>
-            </group>
-
-            {/* LEGS - Pivoted at hip */}
-            <group position={[0.22, 0.55, 0]} ref={rightArm}>
-                 <mesh position={[0, -0.2, 0]} castShadow>
-                    <boxGeometry args={[0.1, 0.35, 0.1]} />
-                    <meshStandardMaterial color="#0055BF" />
-                </mesh>
-                <mesh position={[0, -0.4, 0]}> {/* Hand */}
-                     <boxGeometry args={[0.08, 0.08, 0.08]} />
-                     <meshStandardMaterial color="#FFD700" />
-                </mesh>
-            </group>
-
-            {/* LEGS - Pivoted at hip */}
-            <group position={[-0.08, 0.1, 0]} ref={leftLeg}>
-                <mesh position={[0, -0.2, 0]} castShadow>
-                    <boxGeometry args={[0.13, 0.4, 0.18]} />
-                    <meshStandardMaterial color="#808080" /> {/* Grey Pants */}
-                </mesh>
-            </group>
-
-            <group position={[0.08, 0.1, 0]} ref={rightLeg}>
-                <mesh position={[0, -0.2, 0]} castShadow>
-                     <boxGeometry args={[0.13, 0.4, 0.18]} />
-                     <meshStandardMaterial color="#808080" />
-                </mesh>
-            </group>
-        </group>
+        <mesh ref={meshRef} position={[0, 0.5, 0]} castShadow>
+            <planeGeometry args={[1, 1]} />
+            <meshBasicMaterial
+                map={textureIdle}
+                transparent
+                alphaTest={0.5}
+                side={THREE.DoubleSide}
+                toneMapped={false}
+            />
+        </mesh>
     )
 }
 
@@ -452,7 +408,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             <group ref={group} position={initialPosition}>
                 {/* Avatar Offset: Adjusted to align feet with y=0 ground level */}
                 <group position={[0, 0.3, 0]}>
-                    <LegoAvatar
+                    <PlayerSprite
                         isMoving={visualState.moving}
                         isJumping={visualState.jumping}
                         velocity={velocity.current} // Pass velocity for the lean effect
