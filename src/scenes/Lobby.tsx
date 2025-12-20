@@ -41,21 +41,13 @@ const CameraController = () => {
 
     useEffect(() => {
         // Requirement: 25-30% closer on mobile.
-        // Desktop default is roughly zoom 40 (set in App.tsx).
-        // Mobile default in App.tsx was 20.
-        // If "closer" means objects look bigger, zoom should be HIGHER.
-        // If "closer" means camera physical position is closer (in perspective), objects look bigger.
-        // In Orthographic, zoom=40 means view size is W/40.
-        // So higher zoom = smaller frustum = larger objects = "closer".
-
-        // Let's interpret "25-30% closer" as "1.25x - 1.3x magnification compared to desktop".
-        // Desktop zoom: 40.
-        // Mobile zoom should be ~50-52?
-        // But App.tsx logic was: <768px -> zoom 20. This might have been "zoomed out" to fit more?
-        // I will override it here.
+        // Desktop default is roughly zoom 40 (set in App.tsx but overridden here).
+        // Mobile default in App.tsx was 20 which was "zoomed out".
+        // Here we ensure mobile is ZOOMED IN (closer).
+        // Desktop: 40. Mobile: 55 (~1.37x).
 
         if (isMobile) {
-            camera.zoom = 50
+            camera.zoom = 55
         } else {
             camera.zoom = 40
         }
@@ -80,17 +72,43 @@ const Lobby = () => {
   // Click Marker
   const [clickTarget, setClickTarget] = useState<THREE.Vector3 | null>(null)
 
-  const handleInteraction = useCallback((type: 'projects' | 'about' | 'contact', label: string) => {
-      if (playerRef.current) {
-          playerRef.current.triggerInteraction(label)
-          setTimeout(() => {
-             setFlashTrigger(true)
-             setActiveModal(type)
-          }, 1500)
-      } else {
-          setFlashTrigger(true)
-          setActiveModal(type)
+  // Interaction logic with Walk-to support
+  const handleInteraction = useCallback((type: 'projects' | 'about' | 'contact', label: string, targetPos?: THREE.Vector3) => {
+      const executeInteraction = () => {
+          if (playerRef.current) {
+              playerRef.current.triggerInteraction(label)
+              setTimeout(() => {
+                 setFlashTrigger(true)
+                 setActiveModal(type)
+              }, 1500)
+          } else {
+              setFlashTrigger(true)
+              setActiveModal(type)
+          }
       }
+
+      if (targetPos && playerRef.current) {
+          const currentPos = playerPosition.current;
+          const dist = currentPos.distanceTo(targetPos);
+          // If far away (> 3 units), walk first
+          if (dist > 3) {
+             // Calculate a point slightly in front of the target to walk to
+             // Direction from target to player (normalized) * offset
+             const direction = new THREE.Vector3().subVectors(currentPos, targetPos).normalize();
+             direction.y = 0;
+             const walkTarget = targetPos.clone().add(direction.multiplyScalar(2.0));
+             walkTarget.y = 0;
+
+             playerRef.current.moveTo(walkTarget, () => {
+                 executeInteraction();
+             });
+          } else {
+              executeInteraction();
+          }
+      } else {
+          executeInteraction();
+      }
+
   }, [])
 
   // Keyboard Interaction Handler
@@ -116,6 +134,11 @@ const Lobby = () => {
 
   const pulseRef = useRef<THREE.PointLight>(null)
 
+  // Object Positions
+  const projectPos = useMemo(() => new THREE.Vector3(4, 0.5, -3), [])
+  const aboutPos = useMemo(() => new THREE.Vector3(-4, 0.5, -3), [])
+  const contactPos = useMemo(() => new THREE.Vector3(2, 0.5, -4.8), [])
+
   // Track closest object
   useFrame(({ clock }) => {
       if (pulseRef.current) {
@@ -123,9 +146,6 @@ const Lobby = () => {
       }
 
       const pp = playerPosition.current
-      const projectPos = new THREE.Vector3(4, 0.5, -3)
-      const aboutPos = new THREE.Vector3(-4, 0.5, -3)
-      const contactPos = new THREE.Vector3(0, 0.5, -5)
 
       const d1 = pp.distanceTo(projectPos)
       const d2 = pp.distanceTo(aboutPos)
@@ -237,7 +257,7 @@ const Lobby = () => {
         <StrategyBoard
             position={[4, 0, -3]}
             rotation={[0, -Math.PI/2, 0]}
-            onClick={() => handleInteraction('projects', 'Projects')}
+            onClick={() => handleInteraction('projects', 'Projects', projectPos)}
         />
 
         {/* Featured Project Glow */}
@@ -247,7 +267,7 @@ const Lobby = () => {
             position={[4, 0.5, -3]}
             label="Projects"
             color="#2ECC71"
-            onClick={() => handleInteraction('projects', 'Projects')}
+            onClick={() => handleInteraction('projects', 'Projects', projectPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
             isFocused={closestObject === 'projects'}
@@ -258,86 +278,51 @@ const Lobby = () => {
         <InspirationBoard
             position={[-4, 0, -3]}
             rotation={[0, Math.PI/2, 0]}
-            onClick={() => handleInteraction('about', 'About Me')}
+            onClick={() => handleInteraction('about', 'About Me', aboutPos)}
         />
 
         <InteractiveObject
             position={[-4, 0.5, -3]}
             label="About Me"
             color="#F39C12"
-            onClick={() => handleInteraction('about', 'About Me')}
+            onClick={() => handleInteraction('about', 'About Me', aboutPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
             isFocused={closestObject === 'about'}
             castShadow={false}
         />
 
-        {/* Home / Lobby - Reception Desk */}
-        {/* Replacing the Contact Computer with Reception Desk at a central location?
-            The prompt says "Home / Lobby".
-            I'll place it slightly forward or keep it as the central piece.
-            Original contact was at [0, 0, -5].
-            Let's put the Supply Shelf at [0, 0, -5] (Skills & Tools "Located between the two boards").
-            And Reception Desk at [0, 0, 0] or maybe [0, 0, -2]?
-            If I put Reception at [0, 0, -2], it might block movement.
-            Let's put Reception Desk where Contact was but maybe slightly forward?
-            Actually, the prompt says "Located between the two boards" for Supply Shelf.
-            Boards are at x=4 and x=-4.
-            So Supply Shelf at x=0 makes sense.
-            Let's put Supply Shelf at [0, 0, -5.5] against the wall.
-            And Reception Desk maybe at [0, 0, -2]?
-            Or maybe Reception Desk is the "Home" point, so maybe [2, 0, -1] or something?
-            Let's try putting Reception Desk at [0, 0, -2.5] and Supply Shelf at [0, 0, -5.5].
-            Wait, Contact Section is "Near the exit door".
-            I'll put MailSlots on the right wall maybe? Or left wall?
-            Let's stick to the previous layout plan for simplicity first.
-
-            Original Layout:
-            Projects: [4, 0, -3]
-            About: [-4, 0.5, -3] (Bookshelf was usually on floor but interactive object raised)
-            Contact: [0, 0, -5]
-
-            New Layout:
-            Projects (Strategy Board): [4, 0, -3]
-            About (Inspiration Board): [-4, 0, -3]
-            Skills (Supply Shelf): [0, 0, -5]
-            Contact (Mail Slots): [5, 1.5, -4] (Wall mounted on right?) or [-5, 1.5, -4]?
-            Reception Desk: [0, 0, -2]?
-        */}
-
         {/* Skills & Tools - Supply Shelf (Center Back) */}
-        <SupplyShelf position={[0, 0, -5]} rotation={[0, 0, 0]} />
+        {/* REVISED LAYOUT: Move Supply Shelf slightly forward or stagger to avoid being blocked by Reception Desk */}
+        {/* ReceptionDesk is usually small. Let's put SupplyShelf at [0, 0, -6] and ReceptionDesk at [0, 0, -1]? */}
+        {/* Wall is at -7.5. So -6 is fine. */}
+        <SupplyShelf position={[0, 0, -5.5]} rotation={[0, 0, 0]} />
 
         {/* Contact - Mail Slots (Wall Mounted Right) */}
-        {/* Assuming walls are at +/- 7.5? Walls args are [15, 15] */}
-        {/* Wall position is dependent on `Walls` component. Usually walls are at the edges. */}
-        {/* Let's put Mail Slots at [2, 0, -5] (Next to Shelf) or maybe on the side wall. */}
-        {/* Let's put it on the back wall for now, offset from center. */}
         <MailSlots
             position={[2, 0, -4.8]}
             rotation={[0, 0, 0]}
-            onClick={() => handleInteraction('contact', 'Contact')}
+            onClick={() => handleInteraction('contact', 'Contact', contactPos)}
         />
 
         <InteractiveObject
             position={[2, 0.5, -4.8]}
             label="Contact"
             color="#E74C3C"
-            onClick={() => handleInteraction('contact', 'Contact')}
+            onClick={() => handleInteraction('contact', 'Contact', contactPos)}
             playerPosition={playerPosition.current}
             visibleMesh={false}
             isFocused={closestObject === 'contact'}
             castShadow={false}
         />
 
-        {/* Reception Desk (Center Room) */}
+        {/* Reception Desk (Center Room) - Moved forward slightly to clear path to back wall */}
         <ReceptionDesk
             position={[0, 0, -2]}
             rotation={[0, Math.PI, 0]}
             onClick={() => {
-                // Pan to professional zone? Or just trigger movement?
-                // For now, let's just make it focus on Projects
-                handleInteraction('projects', 'Projects')
+                // Focus on Projects by default if clicked
+                handleInteraction('projects', 'Projects', projectPos)
             }}
         />
 
@@ -348,6 +333,7 @@ const Lobby = () => {
                     onClick={() => {
                         const label = closestObject === 'projects' ? 'Projects' :
                                       closestObject === 'about' ? 'About Me' : 'Contact'
+                        // No need to walk, just interact
                         handleInteraction(closestObject, label)
                     }}
                     style={{
