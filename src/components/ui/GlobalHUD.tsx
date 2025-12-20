@@ -31,7 +31,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           key={item.id}
           onClick={() => onNavigate(item.id)}
           style={{
-            background: activeSection === item.id ? '#F39C12' : '#2C3E50',
+            background: activeSection === item.id ? '#ffa726' : '#4b3b60',
             color: activeSection === item.id ? '#333' : 'white',
             border: isMobile ? '2px solid #fff' : '4px solid #fff',
             boxShadow: isMobile ? '2px 2px 0px #000' : '4px 4px 0px #000',
@@ -66,7 +66,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           href="./assets/resume.pdf"
           download
           style={{
-            background: '#3498DB',
+            background: '#26a69a',
             color: 'white',
             border: '4px solid #fff',
             boxShadow: '4px 4px 0px #000',

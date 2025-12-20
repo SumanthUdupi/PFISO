@@ -8,10 +8,16 @@
 
 body {
   margin: 0;
-  background: #111;
+  background: #1a1a2e; /* Dark Purple/Blue background */
   color: white;
   user-select: none;
   cursor: crosshair; /* Fallback retro cursor */
+}
+
+/* Custom Selection Color */
+::selection {
+  background: #ffa726;
+  color: white;
 }
 
 /* Custom Scrollbars */
@@ -21,17 +27,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #2c3e50;
+  background: #fffbf0;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #e74c3c;
-  border: 4px solid #2c3e50;
+  background-color: #ff9966;
+  border: 4px solid #fffbf0;
   box-shadow: inset -2px -2px 0px rgba(0,0,0,0.5), inset 2px 2px 0px rgba(255,255,255,0.5);
 }
 
 ::-webkit-scrollbar-corner {
-  background: #2c3e50;
+  background: #fffbf0;
 }
 
 /* Interactive Elements Cursor */
