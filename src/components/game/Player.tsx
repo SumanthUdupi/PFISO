@@ -73,12 +73,14 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
     useEffect(() => {
         textureIdle.magFilter = THREE.NearestFilter
         textureIdle.minFilter = THREE.NearestFilter
+        textureIdle.generateMipmaps = false
         textureIdle.repeat.set(1, 1 / DIRECTIONS)
         textureIdle.wrapS = THREE.RepeatWrapping
         textureIdle.wrapT = THREE.RepeatWrapping
 
         textureWalk.magFilter = THREE.NearestFilter
         textureWalk.minFilter = THREE.NearestFilter
+        textureWalk.generateMipmaps = false
         textureWalk.repeat.set(1 / FRAMES_WALK, 1 / DIRECTIONS)
         textureWalk.wrapS = THREE.RepeatWrapping
         textureWalk.wrapT = THREE.RepeatWrapping
@@ -118,10 +120,14 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
             }
             
             // Bobbing effect for sprite
-            meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.5
+            meshRef.current.position.y = Math.abs(Math.sin(t * 10)) * 0.05 + 0.6
 
             // REQ-030: Run Cycle Transition - Lean forward
             if (velocity.length() > SPEED * 0.8) {
+                 // Lean forward relative to camera is tricky with billboarding
+                 // But since we copy camera quaternion, rotating X rotates "into" the screen (lean back/forward)
+                 // We want to lean in the direction of movement?
+                 // Simple camera-facing lean:
                  meshRef.current.rotation.x = 0.1
             } else {
                  meshRef.current.rotation.x = 0
@@ -140,7 +146,7 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
              }
              // Breathing effect (Req 19)
              meshRef.current.scale.y = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.02
-             meshRef.current.position.y = 0.5
+             meshRef.current.position.y = 0.6
         }
 
         // Face camera (Billboard)
@@ -148,8 +154,8 @@ const PlayerSprite = ({ isMoving, isJumping, velocity }: { isMoving: boolean, is
     })
 
     return (
-        <mesh ref={meshRef} position={[0, 0.5, 0]} castShadow>
-            <planeGeometry args={[1, 1]} />
+        <mesh ref={meshRef} position={[0, 0.6, 0]}>
+            <planeGeometry args={[1.2, 1.2]} />
             <meshBasicMaterial
                 map={textureIdle}
                 transparent
