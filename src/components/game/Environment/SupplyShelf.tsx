@@ -35,33 +35,33 @@ const SupplyShelf: React.FC<SupplyShelfProps> = ({ position, rotation = [0, 0, 0
              {/* Frame */}
             <mesh position={[-0.4, 1, -0.2]}>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" />
+                <meshStandardMaterial color="#ecf0f1" />
             </mesh>
              <mesh position={[0.4, 1, -0.2]}>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" />
+                <meshStandardMaterial color="#ecf0f1" />
             </mesh>
              <mesh position={[-0.4, 1, 0.2]}>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" />
+                <meshStandardMaterial color="#ecf0f1" />
             </mesh>
              <mesh position={[0.4, 1, 0.2]}>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" />
+                <meshStandardMaterial color="#ecf0f1" />
             </mesh>
 
             {/* Shelves */}
             <mesh position={[0, 0.5, 0]}>
                 <boxGeometry args={[0.9, 0.05, 0.45]} />
-                <meshStandardMaterial color="#95a5a6" />
+                <meshStandardMaterial color="#fffbf0" />
             </mesh>
             <mesh position={[0, 1.2, 0]}>
                 <boxGeometry args={[0.9, 0.05, 0.45]} />
-                <meshStandardMaterial color="#95a5a6" />
+                <meshStandardMaterial color="#fffbf0" />
             </mesh>
              <mesh position={[0, 1.9, 0]}>
                 <boxGeometry args={[0.9, 0.05, 0.45]} />
-                <meshStandardMaterial color="#95a5a6" />
+                <meshStandardMaterial color="#fffbf0" />
             </mesh>
 
             {/* Items */}
