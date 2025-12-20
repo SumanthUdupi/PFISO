@@ -1,24 +1,68 @@
 [
   {
-    "id": "project-1",
-    "title": "Pixel Dungeon",
-    "description": "A rogue-like dungeon crawler made with Unity. Features procedural generation and turn-based combat.",
-    "techStack": ["Unity", "C#", "Pixel Art"],
-    "images": ["./assets/sprites/dungeon_thumb.webp"],
+    "id": "case-study-1",
+    "title": "E-Commerce Redesign",
+    "role": "Lead UX Designer",
+    "timeline": "3 Months",
+    "heroImage": "./assets/projects/p1/hero.webp",
+    "description": "A complete overhaul of the checkout flow to improve conversion rates.",
+    "techStack": ["Figma", "React", "UserTesting"],
     "links": {
       "demo": "https://example.com",
       "code": "https://github.com"
+    },
+    "problemStatement": {
+      "context": "The legacy system was suffering from high cart abandonment rates due to a complex checkout process.",
+      "goals": ["Increase conversion by 15%", "Reduce churn during checkout"],
+      "constraints": "Strict 3-month deadline, legacy backend integration required."
+    },
+    "research": {
+      "summary": "Conducted 15 user interviews and analyzed 50+ hours of session recordings.",
+      "personas": ["./assets/projects/p1/persona1.webp"],
+      "insights": ["Users couldn't find the guest checkout option.", "Checkout form validation was too aggressive."]
+    },
+    "designProcess": {
+      "userFlows": ["./assets/projects/p1/flow.webp"],
+      "wireframes": ["./assets/projects/p1/lofi.webp"],
+      "mockups": ["./assets/projects/p1/hifi.webp"],
+      "prototypeUrl": "https://www.figma.com/embed?proto"
+    },
+    "outcomes": {
+      "metrics": ["20% increase in sales", "4.5/5 user rating post-launch"],
+      "reflection": "I learned the importance of early user testing to validate assumptions about form complexity."
     }
   },
   {
-    "id": "project-2",
-    "title": "Space Shooter",
-    "description": "Retro arcade shooter built with Phaser. High score system and particle effects.",
-    "techStack": ["Phaser", "JavaScript"],
-    "images": ["./assets/sprites/space_thumb.webp"],
+    "id": "case-study-2",
+    "title": "Health Tracker App",
+    "role": "Product Designer",
+    "timeline": "6 Weeks",
+    "heroImage": "./assets/projects/p2/hero.webp",
+    "description": "Mobile application for tracking daily fitness and nutrition goals.",
+    "techStack": ["Sketch", "InVision", "iOS"],
     "links": {
       "demo": "https://example.com",
       "code": "https://github.com"
+    },
+    "problemStatement": {
+      "context": "Users found existing apps too cluttered and difficult to log data quickly.",
+      "goals": ["Simplify data entry to under 30 seconds", "Improve daily engagement"],
+      "constraints": "Mobile-first design, limited development resources."
+    },
+    "research": {
+      "summary": "Surveyed 200 potential users about their fitness tracking habits.",
+      "personas": ["./assets/projects/p2/persona1.webp"],
+      "insights": ["Gamification drives retention.", "Auto-logging via wearables is a must-have."]
+    },
+    "designProcess": {
+      "userFlows": ["./assets/projects/p2/flow.webp"],
+      "wireframes": ["./assets/projects/p2/lofi.webp"],
+      "mockups": ["./assets/projects/p2/hifi.webp"],
+      "prototypeUrl": "https://www.figma.com/embed?proto"
+    },
+    "outcomes": {
+      "metrics": ["50k downloads in first month", "4.8 star rating on App Store"],
+      "reflection": "Simplification is key for mobile utilities. Less is more."
     }
   }
 ]

@@ -1,7 +1,10 @@
 {
   "name": "Jules The Dev",
+  "role": "UX Engineer",
+  "photo": "./assets/sprites/photo_placeholder.webp",
   "summary": "Full-stack developer with a passion for game development and pixel art. I create immersive web experiences and fun games.",
-  "skills": ["React", "TypeScript", "Three.js", "Python", "Flask", "Unity", "C#"],
+  "philosophy": "Design is not just what it looks like and feels like. Design is how it works. I believe in user-centric design that solves real problems while providing delightful experiences.",
+  "skills": ["React", "TypeScript", "Three.js", "Python", "Flask", "Unity", "C#", "Figma", "User Research"],
   "avatar": "./assets/sprites/avatar.webp",
   "experience": [
     {
@@ -14,5 +17,13 @@
       "company": "Indie Studio",
       "years": "2018-2020"
     }
+  ],
+  "certifications": [
+      { "name": "Google UX Design Professional Certificate", "issuer": "Coursera", "date": "2023" },
+      { "name": "Certified Scrum Master", "issuer": "Scrum Alliance", "date": "2022" }
+  ],
+  "testimonials": [
+      { "quote": "Jules is an exceptional designer who balances aesthetics with functionality perfectly.", "author": "Jane Doe, PM at Tech Corp" },
+      { "quote": "The best collaborative partner I've had. Solves problems before they exist.", "author": "John Smith, Lead Dev" }
   ]
 }
