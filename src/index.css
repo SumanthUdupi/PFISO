@@ -12,6 +12,8 @@ body {
   color: white;
   user-select: none;
   cursor: crosshair; /* Fallback retro cursor */
+  /* Text Readability Enhancement */
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* Custom Selection Color */

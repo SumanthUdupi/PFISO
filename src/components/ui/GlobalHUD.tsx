@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import QuestTracker from './QuestTracker';
 
 interface GlobalHUDProps {
   onNavigate: (section: 'projects' | 'about' | 'contact' | null) => void;
@@ -15,6 +16,8 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   ] as const;
 
   return (
+    <>
+    <QuestTracker />
     <div style={{
       position: 'absolute',
       top: isMobile ? '20px' : '20px',
@@ -88,6 +91,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           <span className="hud-label" style={{ display: 'none' }}>CV</span>
       </a>
     </div>
+    </>
   );
 };
 

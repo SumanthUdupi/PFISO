@@ -3,6 +3,8 @@ import PixelTransition from './PixelTransition';
 import Typewriter from './Typewriter';
 import Modal from './Modal';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import useGameStore from '../../store';
+import { useEffect } from 'react';
 
 interface CaseStudy {
   id: string;
@@ -45,6 +47,23 @@ interface ProjectModalProps {
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }) => {
   const [selectedProject, setSelectedProject] = useState<CaseStudy | null>(null);
   const { isMobile } = useDeviceDetect();
+  const { unlockSkill, markProjectViewed } = useGameStore();
+
+  useEffect(() => {
+    if (selectedProject) {
+      markProjectViewed(selectedProject.id);
+
+      // Unlock skills associated with this project
+      selectedProject.techStack.forEach(skill => {
+        // Determine tier based on project scope or hardcoded mapping?
+        // For now, let's say "featured" projects give Proficient, others Novice.
+        // Or simple: Just unlocking it is Novice.
+        // Requirement says: "Viewing a small project might grant 'Novice', while a major project grants 'Proficient'."
+        const tier = selectedProject.featured ? 'Proficient' : 'Novice';
+        unlockSkill(skill, tier);
+      });
+    }
+  }, [selectedProject, markProjectViewed, unlockSkill]);
 
   if (!isOpen) return null;
 

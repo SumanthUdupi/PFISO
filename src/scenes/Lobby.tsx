@@ -30,8 +30,10 @@ import SupplyShelf from '../components/game/Environment/SupplyShelf'
 import MailSlots from '../components/game/Environment/MailSlots'
 import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
+import InspirationMote from '../components/game/Environment/InspirationMote'
 import FlashOverlay from '../components/ui/FlashOverlay'
 import IntroOverlay from '../components/ui/IntroOverlay'
+import UnlockEffect from '../components/ui/UnlockEffect'
 
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 
@@ -185,6 +187,15 @@ const Lobby = () => {
       }
   }
 
+  // Mote locations (hardcoded for now, could be dynamic)
+  const motes = useMemo(() => [
+      { id: 1, position: [-5, 1, 5], quote: "Design is not just what it looks like and feels like. Design is how it works." },
+      { id: 2, position: [5, 2, 5], quote: "Code is poetry." },
+      { id: 3, position: [0, 3, -7], quote: "Simplicity is the ultimate sophistication." },
+      { id: 4, position: [6, 0.5, 0], quote: "Good software is like a joke. If you have to explain it, it’s bad." },
+      { id: 5, position: [-6, 0.5, 2], quote: "First, solve the problem. Then, write the code." }
+  ], []);
+
   return (
     <group>
         <CameraController />
@@ -210,10 +221,20 @@ const Lobby = () => {
         </mesh>
 
         {/* Environment */}
-        <Floor width={15} depth={15} theme={floorTheme} />
+        <Floor width={15} depth={15} theme={floorTheme} onFloorClick={handleFloorClick} />
         <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
         <Decor width={15} depth={15} />
         <Motes count={100} area={[20, 10, 20]} />
+
+        {/* Scatter Motes */}
+        {motes.map(mote => (
+            <InspirationMote
+                key={mote.id}
+                id={mote.id}
+                position={mote.position as [number, number, number]}
+                quote={mote.quote}
+            />
+        ))}
 
         <Player
             ref={playerRef}
@@ -357,6 +378,7 @@ const Lobby = () => {
 
         <Html fullscreen style={{ pointerEvents: 'none' }}>
             <div style={{ pointerEvents: 'none', width: '100%', height: '100%' }}>
+                <UnlockEffect />
                 <FlashOverlay trigger={flashTrigger} onComplete={() => setFlashTrigger(false)} />
                 {!isMobile && <KeyboardGuide />}
 
