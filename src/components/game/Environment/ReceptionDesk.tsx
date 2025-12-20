@@ -34,19 +34,19 @@ const ReceptionDesk: React.FC<ReceptionDeskProps> = ({ position, rotation = [0, 
             {/* Desk Body */}
             <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 1, 0.8]} />
-                <meshStandardMaterial color="#2c3e50" />
+                <meshStandardMaterial color="#fffbf0" />
             </mesh>
 
             {/* Nameplate */}
             <group position={[0.6, 1.05, 0.2]} rotation={[-Math.PI/6, 0, 0]}>
                 <mesh>
                     <boxGeometry args={[0.6, 0.15, 0.05]} />
-                    <meshStandardMaterial color="#f1c40f" metalness={0.8} roughness={0.2} /> {/* Brass */}
+                    <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.2} />
                 </mesh>
                  <Text
                     position={[0, 0, 0.03]}
                     fontSize={0.08}
-                    color="black"
+                    color="#fffbf0"
                     anchorX="center"
                     anchorY="middle"
                 >

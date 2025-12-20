@@ -9,7 +9,7 @@ interface FloorProps {
 }
 
 const THEME_COLORS = {
-  lobby: { primary: '#2C3E50', secondary: '#34495E' },
+  lobby: { primary: '#455A64', secondary: '#546E7A' },
   project: { primary: '#27AE60', secondary: '#2ECC71' },
   about: { primary: '#D35400', secondary: '#E67E22' },
   contact: { primary: '#C0392B', secondary: '#E74C3C' }

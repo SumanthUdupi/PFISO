@@ -27,7 +27,7 @@ const MailSlots: React.FC<MailSlotsProps> = ({ position, rotation = [0, 0, 0], o
              {/* Main Unit */}
             <mesh position={[0, 1.5, 0]} castShadow>
                 <boxGeometry args={[1.5, 1, 0.3]} />
-                <meshStandardMaterial color="#8e44ad" />
+                <meshStandardMaterial color="#e67e22" />
             </mesh>
 
             {/* Slots (Visual Grid) */}
@@ -37,7 +37,7 @@ const MailSlots: React.FC<MailSlotsProps> = ({ position, rotation = [0, 0, 0], o
                 return (
                     <mesh key={i} position={[x, y, 0.16]}>
                          <planeGeometry args={[0.3, 0.3]} />
-                         <meshStandardMaterial color="#2c3e50" />
+                         <meshStandardMaterial color="#d35400" />
                     </mesh>
                 )
             })}
