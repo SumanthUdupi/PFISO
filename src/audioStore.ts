@@ -35,7 +35,10 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
 
     try {
         const ctx = getAudioContext();
-        if (!ctx) return;
+        // If context is suspended (user hasn't interacted), we can't play sound yet.
+        // Attempting to resume here might fail or warn if no user gesture.
+        // So we just return silently if not running.
+        if (!ctx || ctx.state === 'suspended') return;
 
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();

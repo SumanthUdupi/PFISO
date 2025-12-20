@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Html, useProgress } from '@react-three/drei'
-import SpriteIcon from './SpriteIcon';
 
 export const LoadingScreen = () => {
   const { progress } = useProgress()

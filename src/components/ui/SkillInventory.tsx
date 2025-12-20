@@ -82,7 +82,7 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
                 <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>?</span>
             ) : (
                 <SpriteIcon
-                    src="./assets/sprites/skill-icons.webp"
+                    src="./assets/sprites/skill-icons.png"
                     size={32}
                     sheetSize={128}
                     iconSize={32}

@@ -38,10 +38,8 @@ const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, headline,
     };
   }, [onComplete]);
 
-  if (step === 4) return null; // Or render fade out state
-
   return (
-    <Html fullscreen style={{ pointerEvents: 'none', zIndex: 5000 }}>
+    <Html fullscreen style={{ pointerEvents: 'none', zIndex: 5000, display: step === 4 ? 'none' : 'block' }}>
         <div style={{
             width: '100%',
             height: '100%',
@@ -53,6 +51,7 @@ const IntroOverlay: React.FC<IntroOverlayProps> = ({ onComplete, name, headline,
             color: 'white',
             transition: 'opacity 1s',
             opacity: step === 4 ? 0 : 1,
+            pointerEvents: 'none',
             // Adjust position for mobile split view
             paddingBottom: isMobile ? '20%' : '0',
             paddingLeft: '20px',
