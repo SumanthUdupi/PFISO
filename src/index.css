@@ -86,25 +86,18 @@ button,
 /* Portrait Mobile Layout */
 .mobile-portrait-container {
   width: 100%;
-  height: 40vh;
-  /* Fallback */
-  height: 40dvh;
-  /* Dynamic viewport height */
+  /* Height is managed by inline styles in App.tsx for transitions */
   position: relative;
   overflow: hidden;
   touch-action: none;
 }
 
 .mobile-content-list {
-  height: 60vh;
-  /* Fallback */
-  height: 60dvh;
-  /* Dynamic viewport height */
+  /* Height is managed by inline styles in App.tsx for transitions */
   overflow-y: auto;
   background: #111;
   color: white;
-  padding: 20px;
-  /* Add safe area padding for bottom */
+  /* Padding is managed by inline styles for transitions */
   padding-bottom: calc(20px + var(--safe-area-bottom));
   font-family: 'Press Start 2P', cursive;
   border-top: 4px solid #333;
@@ -112,6 +105,13 @@ button,
   /* Ensure scrolling feels native */
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+
+  /* Absolute positioning to slide up/down if needed, but flex/flow layout in App.tsx works too.
+     Currently it is just below the canvas.
+     Wait, if I want it to slide up OVER the canvas or push the canvas?
+     The current App.tsx structure has them as siblings.
+     So when one shrinks, the other grows.
+  */
 }
 
 /* Mobile Typography Scale */

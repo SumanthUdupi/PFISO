@@ -9,24 +9,35 @@ import { LoadingScreen } from './components/ui/LoadingScreen'
 import { useDeviceDetect } from './hooks/useDeviceDetect'
 import projectsData from './assets/data/projects.json'
 import bioData from './assets/data/bio.json'
+import MobileControls from './components/ui/MobileControls'
+import { useState } from 'react'
 
 function App() {
     const { isMobile, isLandscape } = useDeviceDetect()
     // Determine if we are in portrait mobile mode
     const isPortraitMobile = isMobile && !isLandscape
 
+    // State for collapsing the project section
+    const [isProjectSectionOpen, setIsProjectSectionOpen] = useState(false)
+
+    // Flatten skills for mobile display
+    const flattenedSkills = bioData.skills.flatMap((cat: any) => cat.items)
+
     return (
         <>
             {/* 3D Viewport Container */}
             <div
                 className={isPortraitMobile ? "mobile-portrait-container" : ""}
-                style={!isPortraitMobile ? {
+                style={isPortraitMobile ? {
+                    height: isProjectSectionOpen ? '40dvh' : '90dvh', // Expand when closed
+                    transition: 'height 0.3s ease'
+                } : {
                     width: '100%',
                     height: '100vh',
                     position: 'relative',
                     overflow: 'hidden',
                     touchAction: 'none'
-                } : undefined}
+                }}
             >
                 <Canvas
                     shadows={!isMobile}
@@ -55,11 +66,43 @@ function App() {
                     </Suspense>
                 </Canvas>
                 <UIOverlay />
+                {isMobile && <MobileControls />}
             </div>
 
             {/* Portrait Mode Content List */}
             {isPortraitMobile && (
-                <div className="mobile-content-list">
+                <>
+                {/* Collapse Toggle Button */}
+                <button
+                    onClick={() => setIsProjectSectionOpen(!isProjectSectionOpen)}
+                    style={{
+                        position: 'absolute',
+                        bottom: isProjectSectionOpen ? '60dvh' : '0',
+                        left: '50%',
+                        transform: 'translateX(-50%) translateY(-100%)',
+                        zIndex: 1000,
+                        background: '#333',
+                        color: 'white',
+                        border: 'none',
+                        borderTopLeftRadius: '10px',
+                        borderTopRightRadius: '10px',
+                        padding: '10px 20px',
+                        fontFamily: '"Press Start 2P", cursive',
+                        fontSize: '10px',
+                        boxShadow: '0 -2px 5px rgba(0,0,0,0.5)',
+                        transition: 'bottom 0.3s ease'
+                    }}
+                >
+                    {isProjectSectionOpen ? '▼ Minimize' : '▲ Projects'}
+                </button>
+
+                <div className="mobile-content-list" style={{
+                    height: isProjectSectionOpen ? '60dvh' : '0',
+                    padding: isProjectSectionOpen ? '20px' : '0',
+                    transition: 'height 0.3s ease, padding 0.3s ease',
+                    overflow: 'hidden', // Hide overflow when closed
+                    overflowY: isProjectSectionOpen ? 'auto' : 'hidden'
+                }}>
                     <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px' }}>Projects</h2>
                     <div>
                         {projectsData.map((project: any) => (
@@ -99,10 +142,14 @@ function App() {
 
                     <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px', marginTop: '40px' }}>Skills</h2>
                     <div className="mobile-skills-grid">
-                        {bioData.skills.map((skill: any) => (
+                        {flattenedSkills.map((skill: any) => (
                             <div key={skill.name} className="skill-card">
-                                <div style={{ fontSize: '32px', marginBottom: '10px' }}>{skill.icon}</div>
+                                <div style={{ fontSize: '24px', marginBottom: '10px' }}>
+                                    {/* Default icon if none provided */}
+                                    {skill.icon || '🔹'}
+                                </div>
                                 <div style={{ fontSize: '12px', color: '#ecf0f1', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
+                                {skill.level && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '4px' }}>{skill.level}</div>}
                             </div>
                         ))}
                     </div>
@@ -111,6 +158,7 @@ function App() {
                         Swipe up for more...
                     </div>
                 </div>
+                </>
             )}
 
             <Loader />

@@ -6,6 +6,7 @@ import TeleportSparkle from './TeleportSparkle'
 import LegoCharacter from './LegoCharacter'
 import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
+import useControlsStore from '../../stores/controlsStore'
 
 // --- CONFIGURATION ---
 const SPEED = 6
@@ -114,6 +115,10 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     const interactionTimer = useRef<number>(0)
     const [sparkleTrigger, setSparkleTrigger] = useState(false)
 
+    // Subscribe to joystick controls
+    const { joystick, isActionPressed } = useControlsStore()
+    const prevActionPressed = useRef(false)
+
     useImperativeHandle(ref, () => ({
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
@@ -156,6 +161,14 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
     }, [])
 
+    // Clear path on joystick input
+    useEffect(() => {
+        if (Math.abs(joystick.x) > 0.1 || Math.abs(joystick.y) > 0.1) {
+            path.current = []
+            onMoveComplete.current = undefined
+        }
+    }, [joystick])
+
     useFrame((state, delta) => {
         if (!group.current) return
 
@@ -171,11 +184,17 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // --- Movement Physics ---
         const inputVector = new THREE.Vector3(0, 0, 0)
 
-        // Manual Input
+        // Manual Input (Keyboard)
         if (keys.current['w'] || keys.current['ArrowUp']) inputVector.z -= 1
         if (keys.current['s'] || keys.current['ArrowDown']) inputVector.z += 1
         if (keys.current['a'] || keys.current['ArrowLeft']) inputVector.x -= 1
         if (keys.current['d'] || keys.current['ArrowRight']) inputVector.x += 1
+
+        // Manual Input (Joystick)
+        // Inverted Z for joystick Y because negative Z is "forward/up" in 3D space,
+        // and joystick "up" is negative Y usually.
+        if (Math.abs(joystick.x) > 0.1) inputVector.x += joystick.x
+        if (Math.abs(joystick.y) > 0.1) inputVector.z += joystick.y
 
         // Path Following (if no manual input)
         if (inputVector.length() === 0 && path.current.length > 0) {
@@ -262,6 +281,12 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (jumpBufferTimer.current > 0) {
             jumpBufferTimer.current -= delta;
         }
+
+        // Jump Input from Action Button
+        if (isActionPressed && !prevActionPressed.current) {
+             jumpBufferTimer.current = JUMP_BUFFER
+        }
+        prevActionPressed.current = isActionPressed
 
         // Trigger Jump
         // Conditions:
