@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html, CameraShake } from '@react-three/drei'
 import TeleportSparkle from './TeleportSparkle'
-import LegoCharacter from './LegoCharacter'
+import RobloxCharacter from './RobloxCharacter'
 import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
 import useControlsStore from '../../stores/controlsStore'
@@ -20,8 +20,8 @@ const ROTATION_SMOOTHING = 15
 const COYOTE_TIME = 0.15 // seconds
 const JUMP_BUFFER = 0.15 // seconds
 
-// --- 1. THE ART: 3D Lego Character (Replaces 2D Sprite) ---
-// See LegoCharacter.tsx for implementation
+// --- 1. THE ART: 3D Roblox-style Character (Replaces Lego) ---
+// See RobloxCharacter.tsx for implementation
 
 // --- 2. Voxel Particles (Cubes instead of circles) ---
 const VoxelDust = ({ position, isMoving }: { position: THREE.Vector3, isMoving: boolean }) => {
@@ -357,9 +357,20 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             )}
 
             <group ref={group} position={initialPosition}>
-                {/* Avatar Offset: Adjusted to align feet with y=0 ground level */}
-                <group position={[0, 0.3, 0]}>
-                    <LegoCharacter
+                {/* Avatar Offset: Adjusted to align feet with y=0 ground level. Roblox char is ~1.0m tall, feet at local y=0 in component but component has internal offset.
+                    RobloxCharacter legs start at 0.4 relative to group origin, and pivot at 0.2 down from there.
+                    Let's check RobloxCharacter structure:
+                    Legs pos Y = 0.4. Group inside pos Y = -0.2. Mesh inside pos Y = 0 (relative).
+                    Wait, in RobloxCharacter:
+                    Leg Group: Y=0.4
+                        Inner Group: Y=-0.2 (Hip)
+                            Mesh Box height=0.4. Default center (0,0,0). So top at 0.2, bottom at -0.2.
+                            So bottom of leg mesh is at 0.4 - 0.2 - 0.2 = 0.0.
+                    So the character's feet are exactly at y=0 relative to the <RobloxCharacter> origin.
+                    So we don't need the 0.3 offset anymore if we want feet on ground.
+                */}
+                <group position={[0, 0, 0]}>
+                    <RobloxCharacter
                         isMoving={visualState.moving}
                     />
                 </group>
