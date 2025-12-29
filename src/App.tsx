@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { Loader, OrbitControls } from '@react-three/drei'
@@ -10,7 +10,6 @@ import { useDeviceDetect } from './hooks/useDeviceDetect'
 import projectsData from './assets/data/projects.json'
 import bioData from './assets/data/bio.json'
 import MobileControls from './components/ui/MobileControls'
-import { useState } from 'react'
 
 function App() {
     const { isMobile, isLandscape } = useDeviceDetect()
@@ -49,14 +48,10 @@ function App() {
                 >
                     <FPSLimiter limit={30} />
                     <OrbitControls
+                        makeDefault
                         enableZoom={true}
                         enableRotate={true}
                         enablePan={true}
-                        mouseButtons={{
-                            LEFT: THREE.MOUSE.PAN,
-                            MIDDLE: THREE.MOUSE.ROTATE,
-                            RIGHT: THREE.MOUSE.PAN
-                        }}
                         minZoom={10}
                         maxZoom={100}
                         maxPolarAngle={Math.PI / 2}
