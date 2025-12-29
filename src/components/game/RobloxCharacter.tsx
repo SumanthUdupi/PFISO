@@ -13,6 +13,8 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving }) => {
     const leftArm = useRef<THREE.Group>(null)
     const rightArm = useRef<THREE.Group>(null)
     const headGroup = useRef<THREE.Group>(null)
+    const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), [])
+    const targetVec = useRef(new THREE.Vector3())
 
     // Materials - Professional Office Theme
     const skinMaterial = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ffe0bd', roughness: 0.5 }), [])
@@ -33,6 +35,30 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving }) => {
     }
 
     useFrame((state) => {
+        // Head Tracking
+        if (headGroup.current && group.current) {
+            state.raycaster.setFromCamera(state.pointer, state.camera)
+            const hit = state.raycaster.ray.intersectPlane(plane, targetVec.current)
+
+            if (hit) {
+                // Convert world target to local space (clone to avoid mutation issues)
+                const localTarget = hit.clone()
+                group.current.worldToLocal(localTarget)
+
+                // Calculate angle in local space (Character faces +Z, so atan2(x, z) gives deviation from +Z)
+                // Range: -PI to PI. 0 is Front (+Z). PI is Back (-Z).
+                let targetAngle = Math.atan2(localTarget.x, localTarget.z)
+
+                // Clamp angle to a reasonable range (e.g., +/- 60 degrees = 1.05 radians)
+                // so the head doesn't twist unnaturally
+                const limit = 1.0
+                targetAngle = THREE.MathUtils.clamp(targetAngle, -limit, limit)
+
+                // Smoothly interpolate rotation
+                headGroup.current.rotation.y = THREE.MathUtils.lerp(headGroup.current.rotation.y, targetAngle, 0.1)
+            }
+        }
+
         if (!leftLeg.current || !rightLeg.current || !leftArm.current || !rightArm.current) return
 
         const t = state.clock.getElapsedTime()
@@ -134,9 +160,8 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving }) => {
             </group>
 
             {/* --- HEAD --- */}
-            {/* Requirement: Head turned to the right. Facial features on right-facing side. */}
-            {/* Rotation: Math.PI / 2 (90 deg) turns Head to face Right (+X) relative to Body (+Z) */}
-            <group ref={headGroup} position={[0, 0.8, 0]} rotation={[0, Math.PI / 2, 0]}>
+            {/* Head follows cursor, faces +Z by default */}
+            <group ref={headGroup} position={[0, 0.8, 0]}>
                 {/* Neck */}
                 <mesh position={[0, 0.05, 0]} castShadow receiveShadow material={skinMaterial}>
                     <cylinderGeometry args={[0.08, 0.08, 0.1]} />
