@@ -32,7 +32,6 @@ import Effects from '../components/game/Effects'
 import Motes from '../components/game/Environment/Motes'
 import InspirationMote from '../components/game/Environment/InspirationMote'
 import FlashOverlay from '../components/ui/FlashOverlay'
-import IntroOverlay from '../components/ui/IntroOverlay'
 import UnlockEffect from '../components/ui/UnlockEffect'
 import useAudioStore from '../audioStore'
 
@@ -62,7 +61,7 @@ const CameraController = () => {
 
 const Lobby = () => {
   const { isMobile } = useDeviceDetect()
-  const [introComplete, setIntroComplete] = useState(false)
+  const [introComplete, setIntroComplete] = useState(true)
   const [activeModal, setActiveModal] = useState<'projects' | 'about' | 'contact' | null>(null)
   const [flashTrigger, setFlashTrigger] = useState(false)
   const [closestObject, setClosestObject] = useState<'projects' | 'about' | 'contact' | null>(null)
@@ -213,14 +212,6 @@ const Lobby = () => {
   return (
     <group>
         <CameraController />
-        {!introComplete && (
-            <IntroOverlay
-                name={bioData.name}
-                headline={bioData.headline}
-                valueProposition={bioData.valueProposition}
-                onComplete={() => setIntroComplete(true)}
-            />
-        )}
         <Background />
 
         {/* Clickable Plane for Movement (Invisible but catches raycasts) */}
