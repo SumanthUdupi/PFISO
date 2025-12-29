@@ -53,8 +53,9 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving }) => {
             // Plane Normal = -CameraDirection (Facing camera)
             planeNormal.current.copy(camDir.current).negate()
 
-            // Plane Position = HeadPos + CamDir * 10 (Push plane 5 units into the scene relative to head)
-            planePos.current.copy(worldHeadPos.current).add(camDir.current.multiplyScalar(5))
+            // Plane Position = HeadPos - CamDir * 2 (Pull plane 2 units towards camera relative to head)
+            // This ensures the character looks AT the cursor (in front of them) rather than a point on the wall behind them.
+            planePos.current.copy(worldHeadPos.current).add(camDir.current.multiplyScalar(-2))
 
             dummyPlane.current.setFromNormalAndCoplanarPoint(planeNormal.current, planePos.current)
 
@@ -243,7 +244,7 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving }) => {
                         <boxGeometry args={[dims.head[0], dims.head[1], dims.head[2]]} />
                     </mesh>
 
-                    {/* Face Features (On Local +Z, which is World +X due to rotation) */}
+                    {/* Face Features (On Local +Z) */}
                     {/* Z-offset increased to 0.12 to prevent Z-fighting (Half depth is 0.11) */}
                     <group position={[0, 0, 0.12]}>
                         {/* Eyes */}
