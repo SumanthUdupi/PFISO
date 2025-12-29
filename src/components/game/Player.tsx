@@ -8,67 +8,101 @@ import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
 import useControlsStore from '../../stores/controlsStore'
 
-// --- CONFIGURATION ---
-const SPEED = 6
-const ACCELERATION = 40
-const FRICTION = 12
-const JUMP_FORCE = 9
-const GRAVITY = 25
-const ROTATION_SMOOTHING = 15
+// --- TUNING CONSTANTS ---
+const MOVE_SPEED = 6
+const ACCELERATION_GROUND = 60
+const ACCELERATION_AIR = 15 // Less control in air
+const FRICTION_GROUND = 15
+const FRICTION_AIR = 2 // Air drag
+const JUMP_FORCE = 10
+const GRAVITY = 30
+const ROTATION_SPEED = 12
 
-// Game Feel Config
-const COYOTE_TIME = 0.15 // seconds
-const JUMP_BUFFER = 0.15 // seconds
+// Game Feel
+const COYOTE_TIME = 0.15 
+const JUMP_BUFFER = 0.15
+const JUMP_CUT_HEIGHT = 0.5 // How much velocity is retained if key released early
+const TILT_AMOUNT = 0.15 // How much to lean forward when running
+const BANK_AMOUNT = 0.15 // How much to lean into turns
 
-// --- 1. THE ART: 3D Roblox-style Character (Replaces Lego) ---
-// See RobloxCharacter.tsx for implementation
+// --- HELPER: Spring Physics for Squash/Stretch ---
+class Spring {
+    val: number = 1
+    target: number = 1
+    vel: number = 0
+    stiffness: number
+    damping: number
 
-// --- 2. Voxel Particles (Cubes instead of circles) ---
-const VoxelDust = ({ position, isMoving }: { position: THREE.Vector3, isMoving: boolean }) => {
+    constructor(stiffness = 200, damping = 15) {
+        this.stiffness = stiffness
+        this.damping = damping
+    }
+
+    update(dt: number) {
+        const force = (this.target - this.val) * this.stiffness
+        this.vel += force * dt
+        this.vel *= Math.max(0, 1 - this.damping * dt) // Damping
+        this.val += this.vel * dt
+    }
+
+    impulse(force: number) {
+        this.vel += force
+    }
+}
+
+// --- PARTICLES: Directional Dust ---
+const VoxelDust = ({ position, velocity, isGrounded }: { position: THREE.Vector3, velocity: THREE.Vector3, isGrounded: boolean }) => {
     const particles = useRef<{ mesh: THREE.Mesh, life: number, velocity: THREE.Vector3, rotSpeed: THREE.Vector3 }[]>([])
     const group = useRef<THREE.Group>(null)
-    const geometry = useMemo(() => new THREE.BoxGeometry(0.08, 0.08, 0.08), [])
-    const material = useMemo(() => new THREE.MeshBasicMaterial({ color: '#cccccc', transparent: true, opacity: 0.6 }), [])
+    const geometry = useMemo(() => new THREE.BoxGeometry(0.06, 0.06, 0.06), []) // Smaller, finer dust
+    const material = useMemo(() => new THREE.MeshBasicMaterial({ color: '#dddddd', transparent: true }), [])
 
     useFrame((state, delta) => {
         if (!group.current) return
-        if (isMoving && Math.random() < 0.3) { // Higher spawn rate
+
+        const speed = new THREE.Vector3(velocity.x, 0, velocity.z).length()
+        
+        // Spawn dust if moving fast on ground
+        if (isGrounded && speed > 2 && Math.random() < 0.4) {
             const mesh = new THREE.Mesh(geometry, material.clone())
-            // Spawn at feet
-            mesh.position.set(
-                position.x + (Math.random() - 0.5) * 0.4,
-                0.1,
-                position.z + (Math.random() - 0.5) * 0.4
-            )
+            
+            // Spawn at feet, slightly offset behind movement
+            const kickDir = velocity.clone().normalize().negate().multiplyScalar(0.2)
+            const spread = new THREE.Vector3((Math.random()-0.5)*0.3, 0, (Math.random()-0.5)*0.3)
+            
+            mesh.position.copy(position).add(new THREE.Vector3(0, 0.05, 0)).add(kickDir).add(spread)
+            
             group.current.add(mesh)
+            
             particles.current.push({
                 mesh,
                 life: 1.0,
-                velocity: new THREE.Vector3((Math.random() - 0.5) * 1, Math.random() * 2, (Math.random() - 0.5) * 1),
-                rotSpeed: new THREE.Vector3(Math.random(), Math.random(), Math.random())
+                // Kick dust up and back
+                velocity: kickDir.add(new THREE.Vector3(0, Math.random() * 1.5, 0)), 
+                rotSpeed: new THREE.Vector3(Math.random()*10, Math.random()*10, Math.random()*10)
             })
         }
+
+        // Update Particles
         for (let i = particles.current.length - 1; i >= 0; i--) {
             const p = particles.current[i]
-            p.life -= delta * 2.5
-            p.velocity.y -= delta * 5 // Heavy gravity on cubes
+            p.life -= delta * 3.0 // Fast fade
+            p.velocity.y -= delta * 3 // Gravity
             p.mesh.position.addScaledVector(p.velocity, delta)
-            p.mesh.rotation.x += p.rotSpeed.x * delta * 5
-            p.mesh.rotation.y += p.rotSpeed.y * delta * 5
-
+            p.mesh.rotation.x += p.rotSpeed.x * delta
+            p.mesh.rotation.y += p.rotSpeed.y * delta
+            
             p.mesh.scale.setScalar(p.life)
             // @ts-ignore
             p.mesh.material.opacity = p.life
 
-            if (p.life <= 0 || p.mesh.position.y < 0) {
+            if (p.life <= 0) {
                 group.current.remove(p.mesh)
-                p.mesh.geometry.dispose()
-                // @ts-ignore
-                p.mesh.material.dispose()
                 particles.current.splice(i, 1)
             }
         }
     })
+
     return <group ref={group} />
 }
 
@@ -83,309 +117,339 @@ interface PlayerProps {
     bounds?: { width: number, depth: number }
 }
 
-const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0.5, 0], bounds }, ref) => {
-    const group = useRef<THREE.Group>(null)
+const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0, 0], bounds }, ref) => {
+    // Refs for Scene Objects
+    const group = useRef<THREE.Group>(null)       // Holds everything
+    const visualGroup = useRef<THREE.Group>(null) // Used for squash/stretch
+    const rotateGroup = useRef<THREE.Group>(null) // Used for banking/tilting
 
-    // Physics Logic
+    // Physics State
+    const position = useRef(new THREE.Vector3(...initialPosition))
     const velocity = useRef(new THREE.Vector3(0, 0, 0))
-    const verticalVelocity = useRef(0)
-    const currentPosition = useRef(new THREE.Vector3(...initialPosition))
-    const isMoving = useRef(false)
-    const isJumping = useRef(false)
-    const facingAngle = useRef(0)
+    const verticalVel = useRef(0)
+    const targetRotation = useRef(0)
+    const currentRotation = useRef(0)
 
-    // Jump Feel Logic
-    const airTime = useRef(0) // Time since leaving ground (Coyote Time)
-    const jumpBufferTimer = useRef(0) // Time since jump pressed (Jump Buffer)
-    const wasGrounded = useRef(true)
-    const { playSound } = useAudioStore()
-    const [shakeIntensity, setShakeIntensity] = useState(0)
+    // Game Feel State
+    const isGrounded = useRef(true)
+    const coyoteTimer = useRef(0)
+    const jumpBufferTimer = useRef(0)
+    const jumpHeld = useRef(false)
+    
+    // Procedural Animation State
+    const squashSpring = useRef(new Spring(150, 15)) // Stiff spring for "Toy" feel
+    const tilt = useRef(0)
+    const bank = useRef(0)
 
-    // Pathfinding
-    const path = useRef<THREE.Vector3[]>([])
-    const currentPathTargetIndex = useRef(0)
-    const onMoveComplete = useRef<(() => void) | undefined>(undefined)
-
-    // React State for passing to visual components
-    const [visualState, setVisualState] = useState({ moving: false, jumping: false })
-
-    // Input state
-    const keys = useRef<{ [key: string]: boolean }>({})
+    // React State
     const [interactionLabel, setInteractionLabel] = useState<string | null>(null)
-    const interactionTimer = useRef<number>(0)
+    const [interactionTimer, setInteractionTimer] = useState(0)
+    const [shakeIntensity, setShakeIntensity] = useState(0)
     const [sparkleTrigger, setSparkleTrigger] = useState(false)
+    const [isMovingVisual, setIsMovingVisual] = useState(false)
 
-    // Subscribe to joystick controls
+    // Pathfinding & Controls
+    const path = useRef<THREE.Vector3[]>([])
+    const currentPathIndex = useRef(0)
+    const onMoveComplete = useRef<(() => void) | undefined>(undefined)
     const { joystick, isActionPressed } = useControlsStore()
-    const prevActionPressed = useRef(false)
+    const prevAction = useRef(false)
+    const keys = useRef<{ [key: string]: boolean }>({})
 
+    const { playSound } = useAudioStore()
+
+    // --- API ---
     useImperativeHandle(ref, () => ({
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
-            interactionTimer.current = 1.5
+            setInteractionTimer(1.5)
             velocity.current.set(0, 0, 0)
-            isMoving.current = false
             setSparkleTrigger(true)
-            path.current = [] // Clear path
-            onMoveComplete.current = undefined
+            path.current = []
         },
         moveTo: (target: THREE.Vector3, onComplete?: () => void) => {
-            // Use A* to find path
-            const calculatedPath = findPath(currentPosition.current, target)
+            const calculatedPath = findPath(position.current, target)
             if (calculatedPath.length > 0) {
                 path.current = calculatedPath
-                currentPathTargetIndex.current = 0
+                currentPathIndex.current = 0
                 onMoveComplete.current = onComplete
             }
         }
     }))
 
+    // --- INPUT HANDLING ---
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
+        const onKeyDown = (e: KeyboardEvent) => {
             keys.current[e.key] = true
             if (e.code === 'Space') {
-                jumpBufferTimer.current = JUMP_BUFFER // Buffer the jump
+                jumpBufferTimer.current = JUMP_BUFFER
+                jumpHeld.current = true
             }
-            // Cancel path movement on manual input
-            if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                path.current = []
-                onMoveComplete.current = undefined
+            if (['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+                path.current = [] // Cancel auto-pathing
             }
         }
-        const handleKeyUp = (e: KeyboardEvent) => keys.current[e.key] = false
-        window.addEventListener('keydown', handleKeyDown)
-        window.addEventListener('keyup', handleKeyUp)
+        const onKeyUp = (e: KeyboardEvent) => {
+            keys.current[e.key] = false
+            if (e.code === 'Space') jumpHeld.current = false
+        }
+        window.addEventListener('keydown', onKeyDown)
+        window.addEventListener('keyup', onKeyUp)
         return () => {
-            window.removeEventListener('keydown', handleKeyDown)
-            window.removeEventListener('keyup', handleKeyUp)
+            window.removeEventListener('keydown', onKeyDown)
+            window.removeEventListener('keyup', onKeyUp)
         }
     }, [])
 
-    // Clear path on joystick input
     useEffect(() => {
-        if (Math.abs(joystick.x) > 0.1 || Math.abs(joystick.y) > 0.1) {
-            path.current = []
-            onMoveComplete.current = undefined
-        }
+        if (Math.abs(joystick.x) > 0.1 || Math.abs(joystick.y) > 0.1) path.current = []
     }, [joystick])
 
+    // --- PHYSICS LOOP ---
     useFrame((state, delta) => {
-        if (!group.current) return
+        if (!group.current || !visualGroup.current || !rotateGroup.current) return
 
-        // Interaction freeze
-        if (interactionTimer.current > 0) {
-            interactionTimer.current -= delta
-            if (interactionTimer.current <= 0) setInteractionLabel(null)
-            // Celebration Spin
-            group.current.rotation.y += 15 * delta
+        // 1. Interaction Freeze
+        if (interactionTimer > 0) {
+            setInteractionTimer(t => t - delta)
+            if (interactionTimer < 0) setInteractionLabel(null)
+            visualGroup.current.rotation.y += 10 * delta // Celebration spin
             return
         }
 
-        // --- Movement Physics ---
-        const inputVector = new THREE.Vector3(0, 0, 0)
+        // 2. Input Calculation
+        const input = new THREE.Vector3(0, 0, 0)
+        if (keys.current['w'] || keys.current['ArrowUp']) input.z -= 1
+        if (keys.current['s'] || keys.current['ArrowDown']) input.z += 1
+        if (keys.current['a'] || keys.current['ArrowLeft']) input.x -= 1
+        if (keys.current['d'] || keys.current['ArrowRight']) input.x += 1
+        
+        // Joystick override
+        if (Math.abs(joystick.x) > 0.1) input.x += joystick.x
+        if (Math.abs(joystick.y) > 0.1) input.z += joystick.y // Invert logic handled in input
 
-        // Manual Input (Keyboard)
-        if (keys.current['w'] || keys.current['ArrowUp']) inputVector.z -= 1
-        if (keys.current['s'] || keys.current['ArrowDown']) inputVector.z += 1
-        if (keys.current['a'] || keys.current['ArrowLeft']) inputVector.x -= 1
-        if (keys.current['d'] || keys.current['ArrowRight']) inputVector.x += 1
-
-        // Manual Input (Joystick)
-        // Inverted Z for joystick Y because negative Z is "forward/up" in 3D space,
-        // and joystick "up" is negative Y usually.
-        if (Math.abs(joystick.x) > 0.1) inputVector.x += joystick.x
-        if (Math.abs(joystick.y) > 0.1) inputVector.z += joystick.y
-
-        // Path Following (if no manual input)
-        if (inputVector.length() === 0 && path.current.length > 0) {
-            const target = path.current[currentPathTargetIndex.current]
-            const toTarget = target.clone().sub(currentPosition.current)
-            toTarget.y = 0
-
-            if (toTarget.length() < 0.2) {
-                // Reached node
-                currentPathTargetIndex.current++
-                if (currentPathTargetIndex.current >= path.current.length) {
-                    path.current = [] // Reached end
-                    if (onMoveComplete.current) {
-                        onMoveComplete.current()
-                        onMoveComplete.current = undefined
-                    }
+        // Pathfinding override
+        if (input.lengthSq() === 0 && path.current.length > 0) {
+            const target = path.current[currentPathIndex.current]
+            const dir = target.clone().sub(position.current)
+            dir.y = 0
+            if (dir.length() < 0.2) {
+                currentPathIndex.current++
+                if (currentPathIndex.current >= path.current.length) {
+                    path.current = []
+                    onMoveComplete.current?.()
                 }
             } else {
-                inputVector.copy(toTarget.normalize())
+                input.copy(dir.normalize())
             }
         }
 
-        if (inputVector.length() > 0) {
-            if (inputVector.length() > 1) inputVector.normalize() // Already normalized mostly, but just in case
-            isMoving.current = true
-            // Calculate target rotation based on movement direction
-            facingAngle.current = Math.atan2(inputVector.x, inputVector.z)
-        } else {
-            isMoving.current = false
+        // Normalize input
+        if (input.length() > 1) input.normalize()
+
+        // 3. Movement Physics
+        const accel = isGrounded.current ? ACCELERATION_GROUND : ACCELERATION_AIR
+        const friction = isGrounded.current ? FRICTION_GROUND : FRICTION_AIR
+
+        // Apply Acceleration
+        velocity.current.addScaledVector(input, accel * delta)
+
+        // Apply Friction
+        const speed = velocity.current.length()
+        if (speed > 0) {
+            const drop = speed * friction * delta
+            const newSpeed = Math.max(0, speed - drop)
+            if (speed > MOVE_SPEED) {
+                // Soft cap for speed (allow bursts but decay back to max)
+                 velocity.current.multiplyScalar(MOVE_SPEED / speed)
+            } else {
+                 velocity.current.multiplyScalar(newSpeed / speed)
+            }
         }
 
-        // Apply Velocity
-        if (isMoving.current) {
-            velocity.current.addScaledVector(inputVector, ACCELERATION * delta)
-        }
-
-        // Cap Speed
-        if (velocity.current.length() > SPEED) velocity.current.setLength(SPEED)
-
-        // Friction
-        const frictionForce = velocity.current.clone().multiplyScalar(-1).normalize().multiplyScalar(FRICTION * delta)
-        if (velocity.current.length() < frictionForce.length()) velocity.current.set(0, 0, 0)
-        else velocity.current.add(frictionForce)
-
-        // Apply Movement
-        currentPosition.current.addScaledVector(velocity.current, delta)
+        // Apply Velocity to Position
+        position.current.addScaledVector(velocity.current, delta)
 
         // Bounds
         if (bounds) {
-            const halfW = bounds.width / 2 - 0.5
-            const halfD = bounds.depth / 2 - 0.5
-            currentPosition.current.x = THREE.MathUtils.clamp(currentPosition.current.x, -halfW, halfW)
-            currentPosition.current.z = THREE.MathUtils.clamp(currentPosition.current.z, -halfD, halfD)
+            position.current.x = THREE.MathUtils.clamp(position.current.x, -bounds.width/2 + 0.5, bounds.width/2 - 0.5)
+            position.current.z = THREE.MathUtils.clamp(position.current.z, -bounds.depth/2 + 0.5, bounds.depth/2 - 0.5)
         }
 
-        // --- Gravity & Jump Logic (Enhanced) ---
-        verticalVelocity.current -= GRAVITY * delta
-        let currentY = group.current.position.y + verticalVelocity.current * delta
+        // 4. Rotation & Banking
+        const moving = velocity.current.lengthSq() > 0.1
+        if (moving) {
+            // Calculate target angle
+            targetRotation.current = Math.atan2(velocity.current.x, velocity.current.z)
+            
+            // Shortest path angle interpolation
+            let angleDiff = targetRotation.current - currentRotation.current
+            // Normalize to -PI to PI
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
 
-        const isGrounded = currentY <= 0; // Simple floor check (add more raycasting if needed for platforms)
+            // Smooth rotation
+            const rotChange = angleDiff * ROTATION_SPEED * delta
+            currentRotation.current += rotChange
 
-        if (isGrounded) {
-            currentY = 0;
-            verticalVelocity.current = 0;
-            isJumping.current = false;
-            airTime.current = 0; // Reset Coyote Time
+            // Calculate "Centripetal Force" for banking
+            // If we are turning sharply at high speed, bank more
+            const turnRate = rotChange / delta // rads per second
+            const targetBank = -turnRate * 0.05 * (speed / MOVE_SPEED) // Negative because we lean INTO turn
+            
+            bank.current = THREE.MathUtils.lerp(bank.current, THREE.MathUtils.clamp(targetBank, -BANK_AMOUNT, BANK_AMOUNT), 10 * delta)
+        } else {
+            bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * delta)
+        }
+        
+        // Tilt (Forward/Back) based on acceleration/speed
+        // Leaning forward when accelerating
+        const dotProd = input.dot(velocity.current.clone().normalize())
+        const targetTilt = (speed / MOVE_SPEED) * TILT_AMOUNT * dotProd
+        tilt.current = THREE.MathUtils.lerp(tilt.current, targetTilt, 5 * delta)
 
-            // Landing feedback
-            if (!wasGrounded.current) {
+        rotateGroup.current.rotation.y = currentRotation.current
+        rotateGroup.current.rotation.z = bank.current
+        rotateGroup.current.rotation.x = tilt.current
+
+        // 5. Jump Physics
+        // Update Timers
+        if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= delta
+        if (!isGrounded.current) coyoteTimer.current += delta
+
+        // Jump Input (Action Button)
+        if (isActionPressed && !prevAction.current) {
+            jumpBufferTimer.current = JUMP_BUFFER
+            jumpHeld.current = true
+        }
+        if (!isActionPressed && prevAction.current) {
+            jumpHeld.current = false
+        }
+        prevAction.current = isActionPressed
+
+        // Gravity
+        verticalVel.current -= GRAVITY * delta
+
+        // Execute Jump
+        if (jumpBufferTimer.current > 0 && (isGrounded.current || coyoteTimer.current < COYOTE_TIME)) {
+            verticalVel.current = JUMP_FORCE
+            isGrounded.current = false
+            coyoteTimer.current = 100 // invalidate coyote
+            jumpBufferTimer.current = 0
+            
+            // Visuals
+            squashSpring.current.impulse(3.0) // Stretch up
+            playSound('jump')
+        }
+
+        // Variable Jump Height (Jump Cut)
+        if (!jumpHeld.current && verticalVel.current > 0) {
+            verticalVel.current *= JUMP_CUT_HEIGHT // Cut velocity instantly for shorter hop
+        }
+
+        // Vertical Movement
+        position.current.y += verticalVel.current * delta
+
+        // Ground Collision
+        if (position.current.y <= 0) {
+            position.current.y = 0
+            if (!isGrounded.current) {
                 // Landed this frame
-                setShakeIntensity(0.2) // Small shake
+                isGrounded.current = true
+                verticalVel.current = 0
+                coyoteTimer.current = 0
+                
+                // Landing Juice
+                squashSpring.current.impulse(-4.0) // Hard squash down
+                setShakeIntensity(0.15)
                 setTimeout(() => setShakeIntensity(0), 100)
                 playSound('land')
-                // Add squash animation via ref if possible? (Simulated in LegoAvatar)
             }
         } else {
-            isJumping.current = true;
-            airTime.current += delta;
+            isGrounded.current = false
         }
 
-        wasGrounded.current = isGrounded;
+        // 6. Squash & Stretch Simulation
+        squashSpring.current.update(delta)
+        // Map spring value (1 is normal, <1 squash, >1 stretch) to scale
+        // Maintain volume: if Y scales down, X/Z should scale up
+        const scaleY = squashSpring.current.val
+        const scaleXZ = 1 / Math.sqrt(scaleY) 
+        
+        visualGroup.current.scale.set(scaleXZ, scaleY, scaleXZ)
+        
+        // Update Transforms
+        group.current.position.copy(position.current)
+        
+        // Update React State for Child Props (only if changed significantly)
+        if (moving !== isMovingVisual) setIsMovingVisual(moving)
+    })
 
-        // Handle Jump Buffer Timer
-        if (jumpBufferTimer.current > 0) {
-            jumpBufferTimer.current -= delta;
-        }
-
-        // Jump Input from Action Button
-        if (isActionPressed && !prevActionPressed.current) {
-             jumpBufferTimer.current = JUMP_BUFFER
-        }
-        prevActionPressed.current = isActionPressed
-
-        // Trigger Jump
-        // Conditions:
-        // 1. Jump buffered recently (jumpBufferTimer > 0)
-        // 2. Can jump: Either grounded OR within Coyote Time (airTime < COYOTE_TIME) AND not already jumping up (verticalVelocity <= 0)
-        //    (Note: "not already jumping" check prevents double jumps from coyote time glitch, but coyote usually implies falling off ledge)
-        if (jumpBufferTimer.current > 0 && (isGrounded || airTime.current < COYOTE_TIME) && interactionTimer.current <= 0) {
-            verticalVelocity.current = JUMP_FORCE;
-            isJumping.current = true;
-            jumpBufferTimer.current = 0; // Consume buffer
-            playSound('jump');
-        }
-
-        // Sync State to Ref (for React re-renders only when state changes significantly could optimize, but this is fine)
-        if (visualState.moving !== isMoving.current || visualState.jumping !== isJumping.current) {
-            setVisualState({ moving: isMoving.current, jumping: isJumping.current })
-        }
-
-        // Update Group Transforms
-        group.current.position.set(currentPosition.current.x, currentY, currentPosition.current.z)
-
-        // Smooth Rotation Logic (The Artist's touch: smooth turns, not snapping)
-        if (isMoving.current) {
-            const q = new THREE.Quaternion()
-            q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), facingAngle.current)
-            group.current.quaternion.slerp(q, ROTATION_SMOOTHING * delta)
-        }
-
-        if (onPositionChange) onPositionChange(currentPosition.current)
+    // Calculate Shadow Scale
+    // Simple mock: Scale goes down as Y goes up
+    const shadowScale = useRef(1)
+    useFrame(() => {
+        const height = Math.max(0, position.current.y)
+        // Shadow gets smaller and more transparent as we go up
+        shadowScale.current = THREE.MathUtils.lerp(shadowScale.current, Math.max(0, 1 - height * 0.5), 0.1)
     })
 
     return (
         <>
-            <CameraShake
-                maxPitch={0.05}
-                maxRoll={0.05}
-                maxYaw={0.05}
-                intensity={shakeIntensity}
-                decayRate={0.65}
-                decay
+            <CameraShake 
+                maxPitch={0.05} maxRoll={0.05} maxYaw={0.05} 
+                intensity={shakeIntensity} 
+                decay decayRate={0.65} 
             />
 
-            <TeleportSparkle
-                position={group.current ? group.current.position : new THREE.Vector3(...initialPosition)}
-                trigger={sparkleTrigger}
-                onComplete={() => setSparkleTrigger(false)}
+            <TeleportSparkle 
+                position={position.current} 
+                trigger={sparkleTrigger} 
+                onComplete={() => setSparkleTrigger(false)} 
             />
 
-            {/* Interaction UI */}
             {interactionLabel && (
-                <Html position={[currentPosition.current.x, currentPosition.current.y + 2, currentPosition.current.z]} center>
+                <Html position={[position.current.x, position.current.y + 2, position.current.z]} center>
                     <div style={{
-                        fontFamily: '"Press Start 2P", monospace',
-                        color: '#FFF',
-                        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        textAlign: 'center',
-                        border: '3px solid white',
-                        boxShadow: '0 4px 0 rgba(0,0,0,0.2)',
-                        transform: 'scale(1.0)',
+                        fontFamily: 'Inter, sans-serif',
+                        fontWeight: '800',
+                        color: 'white',
+                        textShadow: '0px 2px 0px rgba(0,0,0,0.2)',
+                        background: '#222',
+                        padding: '6px 12px',
+                        borderRadius: '20px',
+                        border: '2px solid white',
                         animation: 'popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}>
-                        <div style={{ fontSize: '24px', marginBottom: '2px', textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>★</div>
-                        <div style={{ fontSize: '12px', fontWeight: 'bold', textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>{interactionLabel}</div>
+                       E - {interactionLabel}
                     </div>
                 </Html>
             )}
 
-            <group ref={group} position={initialPosition}>
-                {/* Avatar Offset: Adjusted to align feet with y=0 ground level. Roblox char is ~1.0m tall, feet at local y=0 in component but component has internal offset.
-                    RobloxCharacter legs start at 0.4 relative to group origin, and pivot at 0.2 down from there.
-                    Let's check RobloxCharacter structure:
-                    Legs pos Y = 0.4. Group inside pos Y = -0.2. Mesh inside pos Y = 0 (relative).
-                    Wait, in RobloxCharacter:
-                    Leg Group: Y=0.4
-                        Inner Group: Y=-0.2 (Hip)
-                            Mesh Box height=0.4. Default center (0,0,0). So top at 0.2, bottom at -0.2.
-                            So bottom of leg mesh is at 0.4 - 0.2 - 0.2 = 0.0.
-                    So the character's feet are exactly at y=0 relative to the <RobloxCharacter> origin.
-                    So we don't need the 0.3 offset anymore if we want feet on ground.
-                */}
-                <group position={[0, 0, 0]}>
-                    <RobloxCharacter
-                        isMoving={visualState.moving}
-                    />
+            <group ref={group}>
+                <group ref={rotateGroup}>
+                    {/* Visual Offset: Pivot point is at feet, so visual group is 0 */}
+                    <group ref={visualGroup}>
+                        <RobloxCharacter isMoving={isMovingVisual && isGrounded.current} />
+                    </group>
                 </group>
             </group>
 
-            {/* Blob Shadow - Simple but effective for Lego */}
-            <mesh
-                position={[currentPosition.current.x, 0.02, currentPosition.current.z]}
+            {/* Dynamic Shadow */}
+            <mesh 
+                position={[position.current.x, 0.01, position.current.z]} 
                 rotation={[-Math.PI / 2, 0, 0]}
+                scale={[shadowScale.current, shadowScale.current, 1]}
             >
                 <circleGeometry args={[0.35, 32]} />
-                <meshBasicMaterial color="black" transparent opacity={0.25} />
+                <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
             </mesh>
 
-            <VoxelDust position={currentPosition.current} isMoving={visualState.moving && !visualState.jumping} />
+            <VoxelDust 
+                position={position.current} 
+                velocity={velocity.current} 
+                isGrounded={isGrounded.current} 
+            />
         </>
     )
 })
