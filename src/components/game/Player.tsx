@@ -7,23 +7,24 @@ import RobloxCharacter from './RobloxCharacter'
 import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
 import useControlsStore from '../../stores/controlsStore'
+import physicsInstance, { RigidBody } from '../../systems/PhysicsSystem'
+import gameSystemInstance from '../../systems/GameSystem'
 
 // --- TUNING CONSTANTS ---
 const MOVE_SPEED = 6
 const ACCELERATION_GROUND = 60
-const ACCELERATION_AIR = 15 // Less control in air
+const ACCELERATION_AIR = 15
 const FRICTION_GROUND = 15
-const FRICTION_AIR = 2 // Air drag
-const JUMP_FORCE = 10
-const GRAVITY = 30
+const FRICTION_AIR = 2
+const JUMP_FORCE = 12 // Slightly higher for custom physics
 const ROTATION_SPEED = 12
 
 // Game Feel
-const COYOTE_TIME = 0.15 
+const COYOTE_TIME = 0.15
 const JUMP_BUFFER = 0.15
-const JUMP_CUT_HEIGHT = 0.5 // How much velocity is retained if key released early
-const TILT_AMOUNT = 0.15 // How much to lean forward when running
-const BANK_AMOUNT = 0.15 // How much to lean into turns
+const JUMP_CUT_HEIGHT = 0.5
+const TILT_AMOUNT = 0.15
+const BANK_AMOUNT = 0.15
 
 // --- HELPER: Spring Physics for Squash/Stretch ---
 class Spring {
@@ -41,7 +42,7 @@ class Spring {
     update(dt: number) {
         const force = (this.target - this.val) * this.stiffness
         this.vel += force * dt
-        this.vel *= Math.max(0, 1 - this.damping * dt) // Damping
+        this.vel *= Math.max(0, 1 - this.damping * dt)
         this.val += this.vel * dt
     }
 
@@ -51,58 +52,44 @@ class Spring {
 }
 
 // --- PARTICLES: Directional Dust ---
+// (Kept identical for visual flair)
 const VoxelDust = ({ position, velocity, isGrounded }: { position: THREE.Vector3, velocity: THREE.Vector3, isGrounded: boolean }) => {
     const particles = useRef<{ mesh: THREE.Mesh, life: number, velocity: THREE.Vector3, rotSpeed: THREE.Vector3 }[]>([])
     const group = useRef<THREE.Group>(null)
-    const geometry = useMemo(() => new THREE.BoxGeometry(0.06, 0.06, 0.06), []) // Smaller, finer dust
+    const geometry = useMemo(() => new THREE.BoxGeometry(0.06, 0.06, 0.06), [])
     const material = useMemo(() => new THREE.MeshBasicMaterial({ color: '#dddddd', transparent: true }), [])
 
     useFrame((state, delta) => {
         if (!group.current) return
-
         const speed = new THREE.Vector3(velocity.x, 0, velocity.z).length()
-        
-        // Spawn dust if moving fast on ground
         if (isGrounded && speed > 2 && Math.random() < 0.4) {
             const mesh = new THREE.Mesh(geometry, material.clone())
-            
-            // Spawn at feet, slightly offset behind movement
             const kickDir = velocity.clone().normalize().negate().multiplyScalar(0.2)
-            const spread = new THREE.Vector3((Math.random()-0.5)*0.3, 0, (Math.random()-0.5)*0.3)
-            
+            const spread = new THREE.Vector3((Math.random() - 0.5) * 0.3, 0, (Math.random() - 0.5) * 0.3)
             mesh.position.copy(position).add(new THREE.Vector3(0, 0.05, 0)).add(kickDir).add(spread)
-            
             group.current.add(mesh)
-            
             particles.current.push({
-                mesh,
-                life: 1.0,
-                // Kick dust up and back
-                velocity: kickDir.add(new THREE.Vector3(0, Math.random() * 1.5, 0)), 
-                rotSpeed: new THREE.Vector3(Math.random()*10, Math.random()*10, Math.random()*10)
+                mesh, life: 1.0,
+                velocity: kickDir.add(new THREE.Vector3(0, Math.random() * 1.5, 0)),
+                rotSpeed: new THREE.Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10)
             })
         }
-
-        // Update Particles
         for (let i = particles.current.length - 1; i >= 0; i--) {
             const p = particles.current[i]
-            p.life -= delta * 3.0 // Fast fade
-            p.velocity.y -= delta * 3 // Gravity
+            p.life -= delta * 3.0
+            p.velocity.y -= delta * 3
             p.mesh.position.addScaledVector(p.velocity, delta)
             p.mesh.rotation.x += p.rotSpeed.x * delta
             p.mesh.rotation.y += p.rotSpeed.y * delta
-            
             p.mesh.scale.setScalar(p.life)
             // @ts-ignore
             p.mesh.material.opacity = p.life
-
             if (p.life <= 0) {
                 group.current.remove(p.mesh)
                 particles.current.splice(i, 1)
             }
         }
     })
-
     return <group ref={group} />
 }
 
@@ -118,28 +105,53 @@ interface PlayerProps {
 }
 
 const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, initialPosition = [0, 0, 0], bounds }, ref) => {
-    // Refs for Scene Objects
-    const group = useRef<THREE.Group>(null)       // Holds everything
-    const visualGroup = useRef<THREE.Group>(null) // Used for squash/stretch
-    const rotateGroup = useRef<THREE.Group>(null) // Used for banking/tilting
+    const group = useRef<THREE.Group>(null)
+    const visualGroup = useRef<THREE.Group>(null)
+    const rotateGroup = useRef<THREE.Group>(null)
 
-    // Physics State
-    const position = useRef(new THREE.Vector3(...initialPosition))
-    const velocity = useRef(new THREE.Vector3(0, 0, 0))
-    const verticalVel = useRef(0)
-    const targetRotation = useRef(0)
-    const currentRotation = useRef(0)
+    // --- PHYSICS SYSTEM INTEGRATION ---
+    const bodyRef = useRef<RigidBody | null>(null)
+
+    useEffect(() => {
+        // Create Physics Body
+        const initialPos = new THREE.Vector3(...initialPosition)
+        const body: RigidBody = {
+            id: 'player',
+            position: initialPos.clone(),
+            velocity: new THREE.Vector3(),
+            mass: 70,
+            restitution: 0,
+            friction: 0.1,
+            linearDamping: 0.5,
+            isGrounded: false,
+            collider: {
+                id: 'player_col',
+                type: 'capsule',
+                radius: 0.3,
+                height: 1.2,
+                object: group.current!, // Placeholder
+                isStatic: false,
+                isTrigger: false
+            }
+        }
+        physicsInstance.addBody(body)
+        bodyRef.current = body
+
+        return () => {
+            physicsInstance.removeBody('player')
+        }
+    }, []) // Run once
 
     // Game Feel State
-    const isGrounded = useRef(true)
     const coyoteTimer = useRef(0)
     const jumpBufferTimer = useRef(0)
     const jumpHeld = useRef(false)
-    
+
     // Procedural Animation State
-    const squashSpring = useRef(new Spring(150, 15)) // Stiff spring for "Toy" feel
+    const squashSpring = useRef(new Spring(150, 15))
     const tilt = useRef(0)
     const bank = useRef(0)
+    const currentRotation = useRef(0)
 
     // React State
     const [interactionLabel, setInteractionLabel] = useState<string | null>(null)
@@ -163,12 +175,13 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
             setInteractionTimer(1.5)
-            velocity.current.set(0, 0, 0)
+            if (bodyRef.current) bodyRef.current.velocity.set(0, 0, 0)
             setSparkleTrigger(true)
             path.current = []
         },
         moveTo: (target: THREE.Vector3, onComplete?: () => void) => {
-            const calculatedPath = findPath(position.current, target)
+            if (!bodyRef.current) return
+            const calculatedPath = findPath(bodyRef.current.position, target)
             if (calculatedPath.length > 0) {
                 path.current = calculatedPath
                 currentPathIndex.current = 0
@@ -185,8 +198,8 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 jumpBufferTimer.current = JUMP_BUFFER
                 jumpHeld.current = true
             }
-            if (['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
-                path.current = [] // Cancel auto-pathing
+            if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                path.current = []
             }
         }
         const onKeyUp = (e: KeyboardEvent) => {
@@ -205,15 +218,20 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (Math.abs(joystick.x) > 0.1 || Math.abs(joystick.y) > 0.1) path.current = []
     }, [joystick])
 
-    // --- PHYSICS LOOP ---
+    // --- MAIN LOOP ---
     useFrame((state, delta) => {
-        if (!group.current || !visualGroup.current || !rotateGroup.current) return
+        // Tick the Game System Update logic
+        // In a real ECS refactor this would be outside components, but for now we bridge here
+        gameSystemInstance.update(state.clock.elapsedTime, delta)
+
+        if (!group.current || !visualGroup.current || !rotateGroup.current || !bodyRef.current) return
+        const body = bodyRef.current
 
         // 1. Interaction Freeze
         if (interactionTimer > 0) {
             setInteractionTimer(t => t - delta)
             if (interactionTimer < 0) setInteractionLabel(null)
-            visualGroup.current.rotation.y += 10 * delta // Celebration spin
+            visualGroup.current.rotation.y += 10 * delta
             return
         }
 
@@ -223,15 +241,14 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (keys.current['s'] || keys.current['ArrowDown']) input.z += 1
         if (keys.current['a'] || keys.current['ArrowLeft']) input.x -= 1
         if (keys.current['d'] || keys.current['ArrowRight']) input.x += 1
-        
-        // Joystick override
+
         if (Math.abs(joystick.x) > 0.1) input.x += joystick.x
-        if (Math.abs(joystick.y) > 0.1) input.z += joystick.y // Invert logic handled in input
+        if (Math.abs(joystick.y) > 0.1) input.z += joystick.y
 
         // Pathfinding override
         if (input.lengthSq() === 0 && path.current.length > 0) {
             const target = path.current[currentPathIndex.current]
-            const dir = target.clone().sub(position.current)
+            const dir = target.clone().sub(body.position)
             dir.y = 0
             if (dir.length() < 0.2) {
                 currentPathIndex.current++
@@ -244,80 +261,76 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             }
         }
 
-        // Normalize input
         if (input.length() > 1) input.normalize()
 
-        // 3. Movement Physics
-        const accel = isGrounded.current ? ACCELERATION_GROUND : ACCELERATION_AIR
-        const friction = isGrounded.current ? FRICTION_GROUND : FRICTION_AIR
+        // 3. Movement Physics Application (Force-based now)
+        const accel = body.isGrounded ? ACCELERATION_GROUND : ACCELERATION_AIR
+        const friction = body.isGrounded ? FRICTION_GROUND : FRICTION_AIR
 
-        // Apply Acceleration
-        velocity.current.addScaledVector(input, accel * delta)
+        // Apply Input Acceleration
+        // Note: In custom physics this modifies velocity directly instead of force for tighter control
+        body.velocity.addScaledVector(input, accel * delta)
 
         // Apply Friction
-        const speed = velocity.current.length()
-        if (speed > 0) {
-            const drop = speed * friction * delta
-            const newSpeed = Math.max(0, speed - drop)
-            if (speed > MOVE_SPEED) {
-                // Soft cap for speed (allow bursts but decay back to max)
-                 velocity.current.multiplyScalar(MOVE_SPEED / speed)
+        const speed = body.velocity.length()
+        const horizontalVel = new THREE.Vector3(body.velocity.x, 0, body.velocity.z)
+        const horizontalSpeed = horizontalVel.length()
+
+        if (horizontalSpeed > 0) {
+            const drop = horizontalSpeed * friction * delta
+            const newSpeed = Math.max(0, horizontalSpeed - drop)
+
+            // Reconstruct velocity preserving Y
+            if (horizontalSpeed > MOVE_SPEED) {
+                // Soft cap
+                const ratio = MOVE_SPEED / horizontalSpeed
+                body.velocity.x *= ratio
+                body.velocity.z *= ratio
             } else {
-                 velocity.current.multiplyScalar(newSpeed / speed)
+                const ratio = newSpeed / horizontalSpeed
+                body.velocity.x *= ratio
+                body.velocity.z *= ratio
             }
         }
 
-        // Apply Velocity to Position
-        position.current.addScaledVector(velocity.current, delta)
-
-        // Bounds
+        // Bounds Check (Legacy, but good safety)
         if (bounds) {
-            position.current.x = THREE.MathUtils.clamp(position.current.x, -bounds.width/2 + 0.5, bounds.width/2 - 0.5)
-            position.current.z = THREE.MathUtils.clamp(position.current.z, -bounds.depth/2 + 0.5, bounds.depth/2 - 0.5)
+            body.position.x = THREE.MathUtils.clamp(body.position.x, -bounds.width / 2 + 0.5, bounds.width / 2 - 0.5)
+            body.position.z = THREE.MathUtils.clamp(body.position.z, -bounds.depth / 2 + 0.5, bounds.depth / 2 - 0.5)
         }
 
         // 4. Rotation & Banking
-        const moving = velocity.current.lengthSq() > 0.1
+        const moving = horizontalSpeed > 0.1
         if (moving) {
-            // Calculate target angle
-            targetRotation.current = Math.atan2(velocity.current.x, velocity.current.z)
-            
-            // Shortest path angle interpolation
-            let angleDiff = targetRotation.current - currentRotation.current
-            // Normalize to -PI to PI
+            const targetRot = Math.atan2(body.velocity.x, body.velocity.z)
+            let angleDiff = targetRot - currentRotation.current
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
 
-            // Smooth rotation
             const rotChange = angleDiff * ROTATION_SPEED * delta
             currentRotation.current += rotChange
 
-            // Calculate "Centripetal Force" for banking
-            // If we are turning sharply at high speed, bank more
-            const turnRate = rotChange / delta // rads per second
-            const targetBank = -turnRate * 0.05 * (speed / MOVE_SPEED) // Negative because we lean INTO turn
-            
+            const turnRate = rotChange / delta
+            const targetBank = -turnRate * 0.05 * (horizontalSpeed / MOVE_SPEED)
             bank.current = THREE.MathUtils.lerp(bank.current, THREE.MathUtils.clamp(targetBank, -BANK_AMOUNT, BANK_AMOUNT), 10 * delta)
         } else {
             bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * delta)
         }
-        
-        // Tilt (Forward/Back) based on acceleration/speed
-        // Leaning forward when accelerating
-        const dotProd = input.dot(velocity.current.clone().normalize())
-        const targetTilt = (speed / MOVE_SPEED) * TILT_AMOUNT * dotProd
+
+        const dotProd = input.dot(horizontalVel.clone().normalize())
+        const targetTilt = (horizontalSpeed / MOVE_SPEED) * TILT_AMOUNT * dotProd
         tilt.current = THREE.MathUtils.lerp(tilt.current, targetTilt, 5 * delta)
 
+        // Apply Rotations
         rotateGroup.current.rotation.y = currentRotation.current
         rotateGroup.current.rotation.z = bank.current
         rotateGroup.current.rotation.x = tilt.current
 
         // 5. Jump Physics
-        // Update Timers
         if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= delta
-        if (!isGrounded.current) coyoteTimer.current += delta
+        if (!body.isGrounded) coyoteTimer.current += delta
+        else coyoteTimer.current = 0
 
-        // Jump Input (Action Button)
         if (isActionPressed && !prevAction.current) {
             jumpBufferTimer.current = JUMP_BUFFER
             jumpHeld.current = true
@@ -327,89 +340,61 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
         prevAction.current = isActionPressed
 
-        // Gravity
-        verticalVel.current -= GRAVITY * delta
-
-        // Execute Jump
-        if (jumpBufferTimer.current > 0 && (isGrounded.current || coyoteTimer.current < COYOTE_TIME)) {
-            verticalVel.current = JUMP_FORCE
-            isGrounded.current = false
-            coyoteTimer.current = 100 // invalidate coyote
+        // Execute Jump using Physics Velocity
+        if (jumpBufferTimer.current > 0 && (body.isGrounded || coyoteTimer.current < COYOTE_TIME)) {
+            body.velocity.y = JUMP_FORCE
+            body.isGrounded = false
+            coyoteTimer.current = 100
             jumpBufferTimer.current = 0
-            
-            // Visuals
-            squashSpring.current.impulse(3.0) // Stretch up
+
+            squashSpring.current.impulse(3.0)
             playSound('jump')
         }
 
-        // Variable Jump Height (Jump Cut)
-        if (!jumpHeld.current && verticalVel.current > 0) {
-            verticalVel.current *= JUMP_CUT_HEIGHT // Cut velocity instantly for shorter hop
+        // Variable Jump Height
+        if (!jumpHeld.current && body.velocity.y > 0) {
+            body.velocity.y *= JUMP_CUT_HEIGHT
         }
 
-        // Vertical Movement
-        position.current.y += verticalVel.current * delta
+        // 6. Sync Visuals to Physics Body
+        group.current.position.copy(body.position)
 
-        // Ground Collision
-        if (position.current.y <= 0) {
-            position.current.y = 0
-            if (!isGrounded.current) {
-                // Landed this frame
-                isGrounded.current = true
-                verticalVel.current = 0
-                coyoteTimer.current = 0
-                
-                // Landing Juice
-                squashSpring.current.impulse(-4.0) // Hard squash down
-                setShakeIntensity(0.15)
-                setTimeout(() => setShakeIntensity(0), 100)
-                playSound('land')
-            }
-        } else {
-            isGrounded.current = false
-        }
+        // Callback for camera/others
+        if (onPositionChange) onPositionChange(body.position)
 
-        // 6. Squash & Stretch Simulation
+        // Squash & Stretch
         squashSpring.current.update(delta)
-        // Map spring value (1 is normal, <1 squash, >1 stretch) to scale
-        // Maintain volume: if Y scales down, X/Z should scale up
         const scaleY = squashSpring.current.val
-        const scaleXZ = 1 / Math.sqrt(scaleY) 
-        
+        const scaleXZ = 1 / Math.sqrt(scaleY)
         visualGroup.current.scale.set(scaleXZ, scaleY, scaleXZ)
-        
-        // Update Transforms
-        group.current.position.copy(position.current)
-        
-        // Update React State for Child Props (only if changed significantly)
+
         if (moving !== isMovingVisual) setIsMovingVisual(moving)
+
+        // Ground impact logic could be improved by checking velocity delta in physics step
+        // But for "landing juice", checking isGrounded transition is fine.
     })
 
-    // Calculate Shadow Scale
-    // Simple mock: Scale goes down as Y goes up
     const shadowScale = useRef(1)
     useFrame(() => {
-        const height = Math.max(0, position.current.y)
-        // Shadow gets smaller and more transparent as we go up
+        if (!bodyRef.current) return
+        const height = Math.max(0, bodyRef.current.position.y)
         shadowScale.current = THREE.MathUtils.lerp(shadowScale.current, Math.max(0, 1 - height * 0.5), 0.1)
     })
 
     return (
         <>
-            <CameraShake 
-                maxPitch={0.05} maxRoll={0.05} maxYaw={0.05} 
-                intensity={shakeIntensity} 
-                decay decayRate={0.65} 
+            <CameraShake
+                maxPitch={0.05} maxRoll={0.05} maxYaw={0.05}
+                intensity={shakeIntensity}
+                decay decayRate={0.65}
             />
-
-            <TeleportSparkle 
-                position={position.current} 
-                trigger={sparkleTrigger} 
-                onComplete={() => setSparkleTrigger(false)} 
+            <TeleportSparkle
+                position={bodyRef.current?.position || new THREE.Vector3()}
+                trigger={sparkleTrigger}
+                onComplete={() => setSparkleTrigger(false)}
             />
-
-            {interactionLabel && (
-                <Html position={[position.current.x, position.current.y + 2, position.current.z]} center>
+            {interactionLabel && bodyRef.current && (
+                <Html position={[bodyRef.current.position.x, bodyRef.current.position.y + 2, bodyRef.current.position.z]} center>
                     <div style={{
                         fontFamily: 'Inter, sans-serif',
                         fontWeight: '800',
@@ -421,35 +406,36 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                         border: '2px solid white',
                         animation: 'popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}>
-                       E - {interactionLabel}
+                        E - {interactionLabel}
                     </div>
                 </Html>
             )}
 
             <group ref={group}>
                 <group ref={rotateGroup}>
-                    {/* Visual Offset: Pivot point is at feet, so visual group is 0 */}
                     <group ref={visualGroup}>
-                        <RobloxCharacter isMoving={isMovingVisual && isGrounded.current} />
+                        <RobloxCharacter isMoving={isMovingVisual && (bodyRef.current?.isGrounded ?? true)} />
                     </group>
                 </group>
             </group>
 
-            {/* Dynamic Shadow */}
-            <mesh 
-                position={[position.current.x, 0.01, position.current.z]} 
-                rotation={[-Math.PI / 2, 0, 0]}
-                scale={[shadowScale.current, shadowScale.current, 1]}
-            >
-                <circleGeometry args={[0.35, 32]} />
-                <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
-            </mesh>
-
-            <VoxelDust 
-                position={position.current} 
-                velocity={velocity.current} 
-                isGrounded={isGrounded.current} 
-            />
+            {bodyRef.current && (
+                <mesh
+                    position={[bodyRef.current.position.x, 0.01, bodyRef.current.position.z]}
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    scale={[shadowScale.current, shadowScale.current, 1]}
+                >
+                    <circleGeometry args={[0.35, 32]} />
+                    <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
+                </mesh>
+            )}
+            {bodyRef.current && (
+                <VoxelDust
+                    position={bodyRef.current.position}
+                    velocity={bodyRef.current.velocity}
+                    isGrounded={bodyRef.current.isGrounded}
+                />
+            )}
         </>
     )
 })

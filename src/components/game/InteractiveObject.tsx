@@ -3,17 +3,16 @@ import { Html, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore, { SkillTier } from '../../store'
+import useCursorStore from '../../stores/CursorStore'
 import InteractionParticles from './InteractionParticles'
 
 interface InteractiveObjectProps {
   position: [number, number, number]
   color?: string
   label: string
-  // onClick is still here for fallback, but we primarily use Keyboard
   onClick: () => void
   playerPosition?: THREE.Vector3
   visibleMesh?: boolean
-  // New prop to indicate if this is the active focus
   isFocused?: boolean
   castShadow?: boolean
   requiredSkill?: { name: string, tier: SkillTier }
@@ -33,10 +32,10 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
   requiredSkill
 }) => {
   const [hovered, setHovered] = useState(false)
-  // We can still track local inRange for visuals if needed, but isFocused is passed from parent
   const [inRange, setInRange] = useState(false)
   const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
   const { unlockedSkills } = useGameStore();
+  const { setCursor } = useCursorStore()
 
   // Check if locked
   const isLocked = useMemo(() => {
@@ -46,160 +45,147 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
     return tierValue[currentTier] < tierValue[requiredSkill.tier];
   }, [requiredSkill, unlockedSkills]);
 
-  // Memoize the vector for the object position to avoid recreating it
   const objectPos = useMemo(() => new THREE.Vector3(...position), [position])
 
   useFrame(() => {
     if (playerPosition) {
       const dist = playerPosition.distanceTo(objectPos)
-      if (dist < INTERACTION_RADIUS) {
-        if (!inRange) setInRange(true)
-      } else {
-        if (inRange) setInRange(false)
-      }
+      const newInRange = dist < INTERACTION_RADIUS
+      if (inRange !== newInRange) setInRange(newInRange)
     }
   })
 
   useEffect(() => {
-     if (position[0] > 2) setAnchorX('right')
-     else if (position[0] < -2) setAnchorX('left')
-     else setAnchorX('center')
+    if (position[0] > 2) setAnchorX('right')
+    else if (position[0] < -2) setAnchorX('left')
+    else setAnchorX('center')
   }, [position])
 
-  // Combined active state: either mouse hover or keyboard focus
   const isActive = (hovered || isFocused) && !isLocked;
-
   const [triggerBurst, setTriggerBurst] = useState(false);
 
   const handleInteraction = () => {
-    if (isLocked) {
-        // Play error sound?
-        return;
-    }
+    if (isLocked) return;
     setTriggerBurst(true);
-    setTimeout(() => setTriggerBurst(false), 500); // 0.5s burst
+    setTimeout(() => setTriggerBurst(false), 500);
     onClick();
+  }
+
+  const handlePointerOver = () => {
+    setCursor(isLocked ? 'not-allowed' : 'pointer')
+    setHovered(true)
+  }
+
+  const handlePointerOut = () => {
+    setCursor('default')
+    setHovered(false)
   }
 
   return (
     <group position={position}>
-    <InteractionParticles active={triggerBurst} color={color} count={15} />
-    <group>
-      {visibleMesh ? (
-         <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
+      <InteractionParticles active={triggerBurst} color={color} count={15} />
+      <group>
+        {visibleMesh ? (
+          <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
             <mesh
-                castShadow={castShadow}
-                onPointerOver={() => {
-                document.body.style.cursor = isLocked ? 'not-allowed' : 'pointer'
-                setHovered(true)
-                }}
-                onPointerOut={() => {
-                document.body.style.cursor = 'auto'
-                setHovered(false)
-                }}
-                onClick={handleInteraction}
+              castShadow={castShadow}
+              onPointerOver={handlePointerOver}
+              onPointerOut={handlePointerOut}
+              onClick={handleInteraction}
             >
-                <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial
-                    color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
-                    emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
-                    emissiveIntensity={isLocked ? 0.2 : 0.5}
-                />
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial
+                color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
+                emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                emissiveIntensity={isLocked ? 0.2 : 0.5}
+              />
             </mesh>
 
             {/* Outline Effect */}
             {isActive && !isLocked && (
-                <mesh position={[0, 0, 0]}>
-                    <boxGeometry args={[1.05, 1.05, 1.05]} />
-                    <meshBasicMaterial
-                        color={isFocused ? "#00ffff" : "white"} // Req 16: Vibrant cyan when focused/hovered
-                        side={THREE.BackSide}
-                        toneMapped={false}
-                    />
-                </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[1.05, 1.05, 1.05]} />
+                <meshBasicMaterial
+                  color={isFocused ? "#00ffff" : "white"}
+                  side={THREE.BackSide}
+                  toneMapped={false}
+                />
+              </mesh>
             )}
 
-            {/* Permanent Visual Identifier (Req 38) */}
+            {/* Permanent Visual Identifier */}
             {!isActive && !isLocked && (
-                <mesh position={[0, 0, 0]}>
-                    <boxGeometry args={[1.02, 1.02, 1.02]} />
-                    <meshBasicMaterial
-                        color={color}
-                        transparent
-                        opacity={0.3}
-                        side={THREE.BackSide}
-                        toneMapped={false}
-                    />
-                </mesh>
+              <mesh position={[0, 0, 0]}>
+                <boxGeometry args={[1.02, 1.02, 1.02]} />
+                <meshBasicMaterial
+                  color={color}
+                  transparent
+                  opacity={0.3}
+                  side={THREE.BackSide}
+                  toneMapped={false}
+                />
+              </mesh>
             )}
 
-             {/* Lock Icon Overlay */}
-             {isLocked && (
-                 <Html center pointerEvents="none" position={[0, 0, 0.6]}>
-                     <div style={{ fontSize: '24px' }}>🔒</div>
-                 </Html>
-             )}
-         </Float>
-      ) : (
+            {/* Lock Icon Overlay */}
+            {isLocked && (
+              <Html center pointerEvents="none" position={[0, 0, 0.6]}>
+                <div style={{ fontSize: '24px' }}>🔒</div>
+              </Html>
+            )}
+          </Float>
+        ) : (
           // Invisible trigger
-           <mesh
-                onPointerOver={() => {
-                document.body.style.cursor = isLocked ? 'not-allowed' : 'pointer'
-                setHovered(true)
-                }}
-                onPointerOut={() => {
-                document.body.style.cursor = 'auto'
-                setHovered(false)
-                }}
-                onClick={handleInteraction}
-            >
-                <boxGeometry args={[1.2, 1.5, 1.2]} />
-                <meshBasicMaterial transparent opacity={0} />
-            </mesh>
-      )}
+          <mesh
+            onPointerOver={handlePointerOver}
+            onPointerOut={handlePointerOut}
+            onClick={handleInteraction}
+          >
+            <boxGeometry args={[1.2, 1.5, 1.2]} />
+            <meshBasicMaterial transparent opacity={0} />
+          </mesh>
+        )}
 
-      {/* Interaction Indicator Ring */}
-      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.6, 0]}>
-        <ringGeometry args={[0.6, 0.7, 32]} />
-        <meshBasicMaterial color={isLocked ? '#7f8c8d' : color} transparent opacity={inRange ? 0.8 : 0.3} />
-      </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.6, 0]}>
+          <ringGeometry args={[0.6, 0.7, 32]} />
+          <meshBasicMaterial color={isLocked ? '#7f8c8d' : color} transparent opacity={inRange ? 0.8 : 0.3} />
+        </mesh>
 
-      {/* Clean Pop-up UI - replaces speech bubble and hover tooltip */}
-      {(isActive || inRange) && (
-        <Html position={[0, 1.5, 0]} center={anchorX === 'center'} style={{
+        {(isActive || inRange) && (
+          <Html position={[0, 1.5, 0]} center={anchorX === 'center'} style={{
             transform: anchorX === 'left' ? 'translateX(0%)' : anchorX === 'right' ? 'translateX(-100%)' : 'translateX(-50%)',
             pointerEvents: 'none',
             zIndex: 1000
-        }}>
-          <div style={{
-            color: '#333',
-            background: 'rgba(255, 255, 255, 0.95)',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            fontFamily: '"Press Start 2P", cursive',
-            fontSize: '10px',
-            whiteSpace: 'nowrap',
-            border: `2px solid ${isLocked ? '#7f8c8d' : color}`,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px'
           }}>
-            <span style={{ fontWeight: 'bold' }}>{label}</span>
-            {isLocked ? (
+            <div style={{
+              color: '#333',
+              background: 'rgba(255, 255, 255, 0.95)',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontFamily: '"Press Start 2P", cursive',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+              border: `2px solid ${isLocked ? '#7f8c8d' : color}`,
+              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <span style={{ fontWeight: 'bold' }}>{label}</span>
+              {isLocked ? (
                 <span style={{ fontSize: '8px', color: '#e74c3c', background: '#fadbd8', padding: '2px 6px', borderRadius: '10px' }}>
-                    REQUIRES: {requiredSkill?.name} ({requiredSkill?.tier})
+                  REQUIRES: {requiredSkill?.name} ({requiredSkill?.tier})
                 </span>
-            ) : (
+              ) : (
                 <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
-                    {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
+                  {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
                 </span>
-            )}
-          </div>
-        </Html>
-      )}
-    </group>
+              )}
+            </div>
+          </Html>
+        )}
+      </group>
     </group>
   )
 }
