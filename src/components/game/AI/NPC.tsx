@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
+import { RigidBody, CapsuleCollider } from '@react-three/rapier'
 import RobloxCharacter from '../RobloxCharacter'
 import { StateMachine, State } from './FSM'
 
@@ -15,7 +16,7 @@ interface NPCProps {
 }
 
 interface NPCContext {
-    visualRoot: THREE.Group
+    rigidBody: any // Rapier API
     position: THREE.Vector3
     lookTarget: THREE.Vector3
     isMoving: boolean
@@ -45,27 +46,12 @@ class IdleState extends State<NPCContext> {
 
         // Look around occasionally
         if (Math.sin(this.timer) > 0.5) {
-            // Look forward/random
             this.context.setLookTarget(this.context.position.clone().add(new THREE.Vector3(0, 0, 5)));
         }
 
-        // Transition to Patrol
-        if (this.timer > this.duration) {
+        // Transition to Patrol (if waypoints exist)
+        if (this.context.waypoints.length > 0 && this.timer > this.duration) {
             this.machine.changeState('Patrol');
-        }
-
-        // Proximity Trigger for Interaction (Simple logic)
-        if (this.context.playerRef.current) {
-            const playerPos = new THREE.Vector3();
-            // Assuming playerRef has getPosition or we access the mesh world position directly
-            // For now, let's assume valid ref. If not available, skip.
-            if (this.context.playerRef.current.position) { // Check your Player handle structure!
-                // It might be a direct mesh ref or a handle. The handle has position via callback usually.
-                // Let's assume passed ref is the Mesh or Group
-                // Actually, in Lobby.tsx, playerRef is a PlayerHandle which has no direct position property exposure sync
-                // We passed onPositionChange to Lobby. Use that? 
-                // Ideally we pass the mutable playerPosition ref from Lobby.
-            }
         }
     }
 }
@@ -76,7 +62,6 @@ class PatrolState extends State<NPCContext> {
 
     enter() {
         this.context.setIsMoving(true);
-        // Pick next waypoint
         this.currentWPIndex = (this.currentWPIndex + 1) % this.context.waypoints.length;
     }
 
@@ -85,71 +70,47 @@ class PatrolState extends State<NPCContext> {
     }
 
     update(delta: number) {
-        const target = this.context.waypoints[this.currentWPIndex];
-        const current = this.context.position;
+        if (!this.context.rigidBody) return;
 
-        const dir = new THREE.Vector3().subVectors(target, current);
+        const target = this.context.waypoints[this.currentWPIndex];
+        const current = this.context.rigidBody.translation();
+        const currentVec = new THREE.Vector3(current.x, current.y, current.z);
+
+        // Update stored position for context
+        this.context.position.copy(currentVec);
+
+        const dir = new THREE.Vector3().subVectors(target, currentVec);
+        dir.y = 0; // Keep horizontal
         const dist = dir.length();
 
         // Look at target
         this.context.setLookTarget(target);
 
-        if (dist < 0.1) {
+        if (dist < 0.5) {
             // Arrived
             this.machine.changeState('Idle');
+            this.context.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
             return;
         }
 
-        // Move
-        const moveDist = Math.min(dist, this.speed * delta);
-        dir.normalize().multiplyScalar(moveDist);
-        current.add(dir);
-
-        // Update Visual Root (No physics body, just visual for cosmetic NPC)
-        this.context.visualRoot.position.copy(current);
-
-        // Rotate body to face movement
-        const angle = Math.atan2(dir.x, dir.z);
-        this.context.visualRoot.rotation.y = angle;
+        // Move Kinematically via velocity
+        dir.normalize().multiplyScalar(this.speed);
+        this.context.rigidBody.setLinvel({ x: dir.x, y: 0, z: dir.z }, true);
     }
 }
-
-class InteractState extends State<NPCContext> {
-    enter() {
-        this.context.setIsMoving(false);
-        this.context.showBark("Hello there!");
-    }
-
-    exit() { }
-
-    update(delta: number) {
-        // Face player
-        if (this.context.playerRef.current) {
-            // Need player position logic
-        }
-    }
-}
-
 
 const NPC: React.FC<NPCProps> = ({ position, waypoints = [], name = "NPC", playerRef, dialogue }) => {
-    const group = useRef<THREE.Group>(null);
+    const rigidBodyRef = useRef<any>(null);
     const [isMoving, setIsMoving] = useState(false);
     const [lookTarget, setLookTarget] = useState(new THREE.Vector3());
     const [barkText, setBarkText] = useState<string | null>(null);
-
-    // Initial position
-    useEffect(() => {
-        if (group.current) {
-            group.current.position.set(...position);
-        }
-    }, [position]);
 
     // FSM Setup
     const fsm = useMemo(() => new StateMachine<NPCContext>(), []);
 
     // Context
     const context = useMemo<NPCContext>(() => ({
-        visualRoot: null!, // Set later
+        rigidBody: null!, // Set later
         position: new THREE.Vector3(...position),
         lookTarget: new THREE.Vector3(), // internal tracking
         isMoving: false,
@@ -162,74 +123,76 @@ const NPC: React.FC<NPCProps> = ({ position, waypoints = [], name = "NPC", playe
 
     // Init FSM
     useEffect(() => {
-        if (!group.current) return;
-        context.visualRoot = group.current;
+        // Wait for body ref
+        if (!rigidBodyRef.current) return;
+        context.rigidBody = rigidBodyRef.current;
 
         fsm.addState('Idle', new IdleState(fsm, context));
         fsm.addState('Patrol', new PatrolState(fsm, context));
-        // fsm.addState('Interact', new InteractState(fsm, context));
-
         fsm.start('Idle');
     }, [fsm, context]);
 
     // Update Loop
     useFrame((state, delta) => {
-        fsm.update(delta);
-
-        // Update local logic like clearing bark after time
-        if (barkText && Math.random() > 0.995) { // Random clear for now or simple timer
-            setBarkText(null);
+        if (rigidBodyRef.current) {
+            context.rigidBody = rigidBodyRef.current; // Ensure fresh ref
+            fsm.update(delta);
         }
 
-        // Hacky player tracking trigger for "Interact"/Wave
-        // We need accurate player position. 
-        // Let's rely on lookTarget being updated by FSM
+        if (barkText && Math.random() > 0.995) {
+            setBarkText(null);
+        }
     });
 
     return (
-        <group ref={group}>
-            <RobloxCharacter isMoving={isMoving} lookTarget={lookTarget} />
+        <RigidBody
+            ref={rigidBodyRef}
+            position={position}
+            type="dynamic"
+            enabledRotations={[false, false, false]}
+            friction={0}
+            linearDamping={5} // High damping to stop quickly
+        >
+            <CapsuleCollider args={[0.3, 0.3]} position={[0, 0.6, 0]} />
 
-            {/* Name Tag */}
-            <Html position={[0, 2.2, 0]} center pointerEvents="none">
-                <div style={{
-                    background: 'rgba(0,0,0,0.5)',
-                    color: 'white',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    fontFamily: 'monospace'
-                }}>
-                    {name}
-                </div>
-            </Html>
+            <group>
+                <RobloxCharacter isMoving={isMoving} lookTarget={lookTarget} />
 
-            {/* Bark Bubble */}
-            {barkText && (
-                <Html position={[0, 2.5, 0]} center>
+                {/* Name Tag */}
+                <Html position={[0, 2.2, 0]} center pointerEvents="none">
                     <div style={{
-                        background: 'white',
-                        color: 'black',
-                        padding: '8px 12px',
-                        borderRadius: '12px',
-                        borderBottomLeftRadius: '0',
-                        fontFamily: '"Press Start 2P", cursive',
+                        background: 'rgba(0,0,0,0.5)',
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
                         fontSize: '10px',
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                        whiteSpace: 'nowrap',
-                        animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        fontFamily: 'monospace'
                     }}>
-                        {barkText}
+                        {name}
                     </div>
-                    <style>{`
-                    @keyframes popIn {
-                        from { transform: scale(0) translate(-50%, 50%); opacity: 0; }
-                        to { transform: scale(1) translate(0, 0); opacity: 1; }
-                    }
-                `}</style>
                 </Html>
-            )}
-        </group>
+
+                {/* Bark Bubble */}
+                {barkText && (
+                    <Html position={[0, 2.5, 0]} center>
+                        <div style={{
+                            background: 'white',
+                            color: 'black',
+                            padding: '8px 12px',
+                            borderRadius: '12px',
+                            borderBottomLeftRadius: '0',
+                            fontFamily: '"Press Start 2P", cursive',
+                            fontSize: '10px',
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                            whiteSpace: 'nowrap',
+                            animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}>
+                            {barkText}
+                        </div>
+                    </Html>
+                )}
+            </group>
+        </RigidBody>
     )
 }
 
