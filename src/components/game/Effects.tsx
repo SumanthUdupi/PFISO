@@ -1,9 +1,30 @@
 import React from 'react'
-import { EffectComposer, Bloom, HueSaturation } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, HueSaturation, Outline, ChromaticAberration } from '@react-three/postprocessing'
 import { useDeviceDetect } from '../../hooks/useDeviceDetect'
+import * as THREE from 'three'
+import useCameraStore from '../../stores/cameraStore'
+import { useFrame } from '@react-three/fiber'
 
 const Effects = () => {
   const { isMobile } = useDeviceDetect()
+  const { getShake } = useCameraStore()
+  const caRef = React.useRef<any>(null)
+
+  useFrame(() => {
+     if (caRef.current) {
+         const shake = getShake()
+         // MECH-028: Chromatic Aberration Pulse based on trauma
+         const offsetVal = 0.002 + shake * 0.05
+
+         // Safe update of offset
+         if (caRef.current.offset && typeof caRef.current.offset.set === 'function') {
+             caRef.current.offset.set(offsetVal, offsetVal)
+         } else {
+             // Fallback if it's an array or simple property
+             caRef.current.offset = [offsetVal, offsetVal]
+         }
+     }
+  })
 
   if (isMobile) {
       return null
@@ -11,26 +32,31 @@ const Effects = () => {
 
   return (
     <EffectComposer multisampling={0} disableNormalPass>
-      {/* REQ-014: Tint bloom towards warm orange/gold */}
-      {/* Note: Standard 'Bloom' in postprocessing doesn't always support direct tint prop depending on version,
-          but we can adjust threshold or use a different component.
-          The 'drei' wrapper usually passes props to 'postprocessing'.
-          Wait, standard Bloom effect often lacks 'color' prop directly in some versions.
-          However, usually we control color by light color.
-          But REQ asks to "Tint the bloom effect slightly".
-          If the library supports it (some do via 'color' or 'kernelSize' etc).
-          Let's assume default bloom. We can use <SelectiveBloom> if we want specific tint,
-          or just rely on the fact that we boosted light colors in REQ-012/028.
-          Let's increase intensity slightly for that "cinematic" feel.
-      */}
       <Bloom
-        luminanceThreshold={0.85} // Higher threshold to only catch brights
+        luminanceThreshold={0.85}
         mipmapBlur
-        intensity={0.6} // Increased intensity
+        intensity={0.6}
         radius={0.5}
       />
-      {/* REQ-012/031: Global color grading/mood */}
       <HueSaturation saturation={0.2} hue={-0.05} />
+
+      {/* MECH-014: Object Highlight / Outline Shader */}
+      <Outline
+        blur
+        edgeStrength={2.5}
+        width={1000}
+        visibleEdgeColor={0xffffff}
+        hiddenEdgeColor={0xffffff}
+        xRay={false}
+      />
+
+      {/* MECH-028 */}
+      <ChromaticAberration
+        ref={caRef}
+        offset={[0.002, 0.002]} // Initial low value
+        radialModulation={false}
+        modulationOffset={0}
+      />
     </EffectComposer>
   )
 }
