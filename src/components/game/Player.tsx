@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Html, CameraShake } from '@react-three/drei'
+import { Html, CameraShake, ContactShadows } from '@react-three/drei'
 import { RigidBody, CapsuleCollider, useRapier, RigidBodyApi, RapierRigidBody } from '@react-three/rapier'
 import TeleportSparkle from './TeleportSparkle'
 import RobloxCharacter from './RobloxCharacter'
@@ -95,9 +95,9 @@ const VoxelDust = ({ position, velocity, isGrounded }: { position: THREE.Vector3
 
 // MECH-012: Command Queue Types
 type Command =
- | { type: 'MOVE', target: THREE.Vector3 }
- | { type: 'INTERACT', label: string }
- | { type: 'CALLBACK', fn: () => void }
+    | { type: 'MOVE', target: THREE.Vector3 }
+    | { type: 'INTERACT', label: string }
+    | { type: 'CALLBACK', fn: () => void }
 
 export interface PlayerHandle {
     triggerInteraction: (label: string) => void
@@ -251,8 +251,8 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         let onGround = false
         if (hit) {
             if (hit.toi < 0.2 && Math.abs(vel.y) < 0.5) {
-                 onGround = true
-                 if (hit.normal) groundNormal.set(hit.normal.x, hit.normal.y, hit.normal.z)
+                onGround = true
+                if (hit.normal) groundNormal.set(hit.normal.x, hit.normal.y, hit.normal.z)
             }
         }
         isGrounded.current = onGround
@@ -261,9 +261,9 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (onGround && !wasGrounded.current) {
             // Landed
             if (Math.abs(currentVelocity.current.y) < -5) { // Hard landing check
-                 addTrauma(0.4)
+                addTrauma(0.4)
             } else if (Math.abs(currentVelocity.current.y) < -2) {
-                 addTrauma(0.15)
+                addTrauma(0.15)
             }
         }
         wasGrounded.current = onGround
@@ -346,7 +346,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             moveDir = input.clone().projectOnPlane(groundNormal).normalize()
             const slopeAngle = groundNormal.angleTo(new THREE.Vector3(0, 1, 0))
             if (slopeAngle > Math.PI / 4) {
-                 moveDir = input.clone()
+                moveDir = input.clone()
             }
         }
 
@@ -413,7 +413,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
 
         if (!jumpHeld.current && newVel.y > 0) {
-             newVel.y *= JUMP_CUT_HEIGHT
+            newVel.y *= JUMP_CUT_HEIGHT
         }
 
         rigidBodyRef.current.setLinvel(newVel, true)
@@ -485,14 +485,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 </group>
             </RigidBody>
 
-            <mesh
-                position={[currentPosition.current.x, 0.01, currentPosition.current.z]}
-                rotation={[-Math.PI / 2, 0, 0]}
-                scale={[shadowScale.current, shadowScale.current, 1]}
-            >
-                <circleGeometry args={[0.35, 32]} />
-                <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
-            </mesh>
+            <ContactShadows opacity={0.4} scale={10} blur={2.5} far={4} follow target={currentPosition.current} />
 
             <VoxelDust
                 position={currentPosition.current}

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { Html, Text, Float } from '@react-three/drei'
+import { Html, Text, Float, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
@@ -12,7 +12,7 @@ import ContactForm from '../components/ui/ContactForm'
 import KeyboardGuide from '../components/ui/KeyboardGuide'
 import SkillInventory from '../components/ui/SkillInventory'
 import GlobalHUD from '../components/ui/GlobalHUD'
-import Typewriter from '../components/ui/Typewriter'
+import SmoothText from '../components/ui/SmoothText'
 import PixelTransition from '../components/ui/PixelTransition'
 import Player, { PlayerHandle } from '../components/game/Player'
 import ClickMarker from '../components/game/ClickMarker'
@@ -77,41 +77,48 @@ const LobbyContent = () => {
     const [clickTarget, setClickTarget] = useState<THREE.Vector3 | null>(null)
 
     const handleInteraction = useCallback((type: 'projects' | 'about' | 'contact', label: string, targetPos?: THREE.Vector3) => {
+        if (!playerRef.current) return
+        if (activeModal) return // Block interaction if modal is open
+
+        // CLEAR any existing commands first
+        playerRef.current.clearQueue()
+
+        // 1. Define interaction execution
         const executeInteraction = () => {
-            if (playerRef.current) {
-                playerRef.current.triggerInteraction(label)
-                playSound('teleport')
-                setTimeout(() => {
-                    setFlashTrigger(true)
-                    setActiveModal(type)
-                    playSound('open_modal')
-                }, 1500)
-            } else {
+            playerRef.current?.triggerInteraction(label)
+            playSound('teleport') // Sound effect for interaction
+            setTimeout(() => {
                 setFlashTrigger(true)
                 setActiveModal(type)
                 playSound('open_modal')
-            }
+            }, 500) // Reduced delay for snappier feel
         }
 
-        if (targetPos && playerRef.current) {
+        // 2. If target position exists, Queue MOVE -> INTERACT
+        if (targetPos) {
             const currentPos = playerPosition.current;
             const dist = currentPos.distanceTo(targetPos);
+
             if (dist > 3) {
+                // Calculate walk target (slightly offset from object so we don't clip inside)
                 const direction = new THREE.Vector3().subVectors(currentPos, targetPos).normalize();
                 direction.y = 0;
                 const walkTarget = targetPos.clone().add(direction.multiplyScalar(2.0));
                 walkTarget.y = 0;
 
-                playerRef.current.moveTo(walkTarget, () => {
-                    executeInteraction();
-                });
+                // Queue Move
+                playerRef.current.enqueueCommand({ type: 'MOVE', target: walkTarget })
+                // Queue Interaction Callback
+                playerRef.current.enqueueCommand({ type: 'CALLBACK', fn: executeInteraction })
             } else {
-                executeInteraction();
+                // Already close enough, just interact
+                executeInteraction()
             }
         } else {
-            executeInteraction();
+            // No target pos (e.g. keyboard command), just interact
+            executeInteraction()
         }
-    }, [])
+    }, [playSound, activeModal])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -139,18 +146,13 @@ const LobbyContent = () => {
     const aboutPos = useMemo(() => new THREE.Vector3(-4, 0.5, -3), [])
     const contactPos = useMemo(() => new THREE.Vector3(2, 0.5, -4.8), [])
 
-    useFrame(({ clock, camera }, delta) => {
+    useFrame(({ clock }, delta) => {
         if (pulseRef.current) {
             pulseRef.current.intensity = 1.5 + Math.sin(clock.elapsedTime * 4) * 0.5
         }
 
         const pp = playerPosition.current
-        const offset = new THREE.Vector3(0, 10, 10)
-        const targetCamPos = pp.clone().add(offset)
-        const damp = 1.0 - Math.exp(-3 * delta)
-
-        camera.position.lerp(targetCamPos, damp)
-        camera.lookAt(pp)
+        // Camera logic removed (Handled by CameraController)
 
         const d1 = pp.distanceTo(projectPos)
         const d2 = pp.distanceTo(aboutPos)
@@ -179,6 +181,8 @@ const LobbyContent = () => {
     }, [activeModal])
 
     const handleFloorClick = (point: THREE.Vector3) => {
+        if (activeModal) return // Block movement if modal is open
+
         const target = point.clone()
         target.y = 0
         setClickTarget(target)
@@ -350,6 +354,15 @@ const LobbyContent = () => {
                 ]}
             />
 
+            {/* Guide NPC */}
+            <NPC
+                position={[5, 1, 5]}
+                waypoints={[[5, 1, 5], [8, 1, 5], [8, 1, 2], [5, 1, 2]]}
+                name="Guide"
+                playerRef={playerRef}
+                dialogue={["Welcome!", "Feel free to look around.", "Check out the projects!"]}
+            />
+
             {isMobile && closestObject && !activeModal && (
                 <Html position={[0, -2, 0]} center style={{ pointerEvents: 'none', width: '100vw', height: '100vh', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '100px' }}>
                     <button
@@ -413,7 +426,7 @@ const LobbyContent = () => {
                         onClose={() => setActiveModal(null)}
                     >
                         <PixelTransition>
-                            <p><Typewriter text="Send me a message and let's work together!" speed={30} /></p>
+                            <p><SmoothText text="Send me a message and let's work together!" delay={0.2} /></p>
                             <ContactForm />
 
                             <div style={{ marginTop: '20px', borderTop: '2px solid #ccc', paddingTop: '20px' }}>
@@ -453,8 +466,11 @@ const LobbyContent = () => {
 
 const Lobby = () => {
     return (
-        <Physics gravity={[0, -30, 0]} timeStep={1/60}>
+        <Physics gravity={[0, -30, 0]} timeStep={1 / 60}>
             <LobbyContent />
+            <Environment preset="city" />
+
+
         </Physics>
     )
 }

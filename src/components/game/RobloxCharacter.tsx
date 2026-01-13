@@ -78,15 +78,13 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, lookTarget 
       if (lookTarget) {
         targetPoint = lookTarget;
       } else {
-        // Original Mouse Logic
-        headGroup.current.getWorldPosition(worldHeadPos.current)
-        state.camera.getWorldDirection(camDir.current)
-        planeNormal.current.copy(camDir.current).negate()
-        planePos.current.copy(worldHeadPos.current).add(camDir.current.multiplyScalar(-2))
-        dummyPlane.current.setFromNormalAndCoplanarPoint(planeNormal.current, planePos.current)
-        state.raycaster.setFromCamera(state.pointer, state.camera)
-        const hit = state.raycaster.ray.intersectPlane(dummyPlane.current, targetVec.current)
-        if (hit) targetPoint = targetVec.current;
+        // MECH-FIX: Removed creepy mouse tracking. 
+        // Character now looks forward by default or slight idle sway?
+        // For now, null means look forward.
+        targetPoint = null;
+
+        // Optional: Idle "looking around" could be added here if needed, 
+        // but for now "smooth and functional" means stable.
       }
 
       if (targetPoint) {
@@ -103,10 +101,16 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, lookTarget 
         targetPitch = THREE.MathUtils.clamp(targetPitch, -limitPitch, limitPitch)
 
         // Smoothing
-        const smoothFactor = 1.0 - Math.exp(-10 * delta)
+        const smoothFactor = 1.0 - Math.exp(-6 * delta) // Slower for smoother feel
         headGroup.current.rotation.y = THREE.MathUtils.lerp(headGroup.current.rotation.y, targetYaw, smoothFactor)
         headGroup.current.rotation.x = THREE.MathUtils.lerp(headGroup.current.rotation.x, targetPitch, smoothFactor)
         headGroup.current.rotation.z = THREE.MathUtils.lerp(headGroup.current.rotation.z, -targetYaw * 0.1, smoothFactor)
+      } else {
+        // Return to center
+        const smoothFactor = 1.0 - Math.exp(-4 * delta)
+        headGroup.current.rotation.y = THREE.MathUtils.lerp(headGroup.current.rotation.y, 0, smoothFactor)
+        headGroup.current.rotation.x = THREE.MathUtils.lerp(headGroup.current.rotation.x, 0, smoothFactor)
+        headGroup.current.rotation.z = THREE.MathUtils.lerp(headGroup.current.rotation.z, 0, smoothFactor)
       }
     }
 
