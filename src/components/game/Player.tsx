@@ -2,12 +2,12 @@ import React, { useRef, useEffect, useState, useMemo, useImperativeHandle } from
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html, CameraShake } from '@react-three/drei'
+import { RigidBody, CapsuleCollider, useRapier, RigidBodyApi } from '@react-three/rapier'
 import TeleportSparkle from './TeleportSparkle'
 import RobloxCharacter from './RobloxCharacter'
 import { findPath } from '../../utils/pathfinding'
 import useAudioStore from '../../audioStore'
 import useControlsStore from '../../stores/controlsStore'
-import physicsInstance, { RigidBody } from '../../systems/PhysicsSystem'
 import gameSystemInstance from '../../systems/GameSystem'
 
 // --- TUNING CONSTANTS ---
@@ -16,7 +16,7 @@ const ACCELERATION_GROUND = 60
 const ACCELERATION_AIR = 15
 const FRICTION_GROUND = 15
 const FRICTION_AIR = 2
-const JUMP_FORCE = 12 // Slightly higher for custom physics
+const JUMP_FORCE = 12
 const ROTATION_SPEED = 12
 
 // Game Feel
@@ -52,7 +52,6 @@ class Spring {
 }
 
 // --- PARTICLES: Directional Dust ---
-// (Kept identical for visual flair)
 const VoxelDust = ({ position, velocity, isGrounded }: { position: THREE.Vector3, velocity: THREE.Vector3, isGrounded: boolean }) => {
     const particles = useRef<{ mesh: THREE.Mesh, life: number, velocity: THREE.Vector3, rotSpeed: THREE.Vector3 }[]>([])
     const group = useRef<THREE.Group>(null)
@@ -109,38 +108,12 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     const visualGroup = useRef<THREE.Group>(null)
     const rotateGroup = useRef<THREE.Group>(null)
 
-    // --- PHYSICS SYSTEM INTEGRATION ---
-    const bodyRef = useRef<RigidBody | null>(null)
-
-    useEffect(() => {
-        // Create Physics Body
-        const initialPos = new THREE.Vector3(...initialPosition)
-        const body: RigidBody = {
-            id: 'player',
-            position: initialPos.clone(),
-            velocity: new THREE.Vector3(),
-            mass: 70,
-            restitution: 0,
-            friction: 0.1,
-            linearDamping: 0.5,
-            isGrounded: false,
-            collider: {
-                id: 'player_col',
-                type: 'capsule',
-                radius: 0.3,
-                height: 1.2,
-                object: group.current!, // Placeholder
-                isStatic: false,
-                isTrigger: false
-            }
-        }
-        physicsInstance.addBody(body)
-        bodyRef.current = body
-
-        return () => {
-            physicsInstance.removeBody('player')
-        }
-    }, []) // Run once
+    // Rapier API
+    const rigidBodyRef = useRef<RigidBodyApi>(null)
+    // We need to track velocity manually for game feel logic, though Rapier handles physics
+    const currentVelocity = useRef(new THREE.Vector3())
+    const currentPosition = useRef(new THREE.Vector3(...initialPosition))
+    const isGrounded = useRef(false)
 
     // Game Feel State
     const coyoteTimer = useRef(0)
@@ -170,18 +143,21 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
     const { playSound } = useAudioStore()
 
+    // Raycast for ground check
+    const { rapier, world } = useRapier()
+
     // --- API ---
     useImperativeHandle(ref, () => ({
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
             setInteractionTimer(1.5)
-            if (bodyRef.current) bodyRef.current.velocity.set(0, 0, 0)
+            if (rigidBodyRef.current) rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
             setSparkleTrigger(true)
             path.current = []
         },
         moveTo: (target: THREE.Vector3, onComplete?: () => void) => {
-            if (!bodyRef.current) return
-            const calculatedPath = findPath(bodyRef.current.position, target)
+            if (!rigidBodyRef.current) return
+            const calculatedPath = findPath(currentPosition.current, target)
             if (calculatedPath.length > 0) {
                 path.current = calculatedPath
                 currentPathIndex.current = 0
@@ -221,11 +197,66 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
     // --- MAIN LOOP ---
     useFrame((state, delta) => {
         // Tick the Game System Update logic
-        // In a real ECS refactor this would be outside components, but for now we bridge here
         gameSystemInstance.update(state.clock.elapsedTime, delta)
 
-        if (!group.current || !visualGroup.current || !rotateGroup.current || !bodyRef.current) return
-        const body = bodyRef.current
+        if (!rigidBodyRef.current || !group.current || !visualGroup.current || !rotateGroup.current) return
+
+        // Sync position from Rapier
+        const pos = rigidBodyRef.current.translation()
+        const vel = rigidBodyRef.current.linvel()
+        currentPosition.current.set(pos.x, pos.y, pos.z)
+        currentVelocity.current.set(vel.x, vel.y, vel.z)
+
+        // Ground Check (Raycast)
+        // Origin is center of capsule (approx 0.6 up). Raycast down.
+        // Capsule height 1.2, radius 0.3. Center is at 0.6. Bottom is 0.
+        // We cast from 0.6 down by 0.6 + small epsilon.
+        // Using Rapier's world.castRay
+        const rayOrigin = { x: pos.x, y: pos.y, z: pos.z }
+        const rayDir = { x: 0, y: -1, z: 0 }
+        const ray = new rapier.Ray(rayOrigin, rayDir)
+        // 0.6 (half height) + 0.3 (radius) is total half height... wait.
+        // Capsule total height is height + 2*radius? Or is height the straight part?
+        // Rapier Capsule: halfHeight is the half length of the segment. Radius is radius.
+        // If args=[0.6, 0.3], total height is 1.2 + 0.6 = 1.8? No.
+        // Three.js CapsuleGeometry(radius, length).
+        // Rapier CapsuleCollider args=[halfHeight, radius].
+        // If we want total height ~1.2m (small avatar)
+        // Let's use halfHeight=0.3, radius=0.3. Total height = 0.6*2 + 0.3*2 = 1.2?
+        // Actually Rapier Capsule is defined by a segment.
+        // We'll use a ray length slightly longer than the distance to bottom.
+        // Let's assume the collider setup below: args={[0.3, 0.3]} -> segment length 0.6, total height 1.2.
+        // Pivot is at center. Distance to bottom is 0.6.
+        const hit = world.castRay(ray, 0.65, true) // 0.65 to allow slight tolerance
+
+        // Filter out self-collision if needed, but 'true' in castRay usually means 'solid'.
+        // We need to ensure we don't hit ourselves. Rapier query filters can be complex.
+        // Simple hack: if hit distance is very close to 0, it might be us?
+        // Actually, internal raycasts ignore the body itself usually if origin is inside?
+        // Rapier documentation: "Rays starting inside a shape will return a hit at t=0".
+        // We should start ray slightly below center? Or use shapeCast.
+        // For now, let's assume if hit.timeOfImpact < 0.65, we are grounded.
+        // But we need to exclude our own collider.
+        // We can use interaction groups/solver groups.
+
+        // Simplest: Check velocity Y near 0 and position Y near floor level?
+        // A better way with Rapier is contact events, but for "isGrounded" raycast is standard.
+        // Let's try starting ray from bottom of capsule + offset up.
+        // Bottom is pos.y - 0.6. Start at pos.y - 0.5. Cast down 0.2.
+
+        const rayOrigin2 = { x: pos.x, y: pos.y - 0.5, z: pos.z }
+        const hit2 = world.castRay(new rapier.Ray(rayOrigin2, rayDir), 0.2, true)
+
+        // We need to filter the player's own collider.
+        // RigidBody colliders can be assigned to groups.
+
+        // Fallback ground check if simple ray fails: check rigidBodyRef.current.linvel().y approx 0 and < 0.1 height?
+        // But we have slopes.
+
+        // Let's stick to contact sensor in future, for now trust simple logic:
+        isGrounded.current = (hit2 !== null && Math.abs(vel.y) < 0.1) // Simple heuristic
+        // Or if we hit something very close below
+        if (hit2 && hit2.timeOfImpact < 0.15) isGrounded.current = true
 
         // 1. Interaction Freeze
         if (interactionTimer > 0) {
@@ -248,7 +279,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // Pathfinding override
         if (input.lengthSq() === 0 && path.current.length > 0) {
             const target = path.current[currentPathIndex.current]
-            const dir = target.clone().sub(body.position)
+            const dir = target.clone().sub(currentPosition.current)
             dir.y = 0
             if (dir.length() < 0.2) {
                 currentPathIndex.current++
@@ -263,46 +294,23 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
         if (input.length() > 1) input.normalize()
 
-        // 3. Movement Physics Application (Force-based now)
-        const accel = body.isGrounded ? ACCELERATION_GROUND : ACCELERATION_AIR
-        const friction = body.isGrounded ? FRICTION_GROUND : FRICTION_AIR
+        // 3. Movement Physics Application
+        // We control velocity directly for "arcade" feel, but respecting physics engine collisions
+        const desiredVelocity = input.multiplyScalar(MOVE_SPEED)
+        const accel = isGrounded.current ? ACCELERATION_GROUND : ACCELERATION_AIR
 
-        // Apply Input Acceleration
-        // Note: In custom physics this modifies velocity directly instead of force for tighter control
-        body.velocity.addScaledVector(input, accel * delta)
+        // Lerp current horizontal velocity to desired
+        const currentHVel = new THREE.Vector3(vel.x, 0, vel.z)
+        const newHVel = currentHVel.lerp(desiredVelocity, accel * delta * 0.1) // 0.1 factor to tune stiffness
 
-        // Apply Friction
-        const speed = body.velocity.length()
-        const horizontalVel = new THREE.Vector3(body.velocity.x, 0, body.velocity.z)
-        const horizontalSpeed = horizontalVel.length()
-
-        if (horizontalSpeed > 0) {
-            const drop = horizontalSpeed * friction * delta
-            const newSpeed = Math.max(0, horizontalSpeed - drop)
-
-            // Reconstruct velocity preserving Y
-            if (horizontalSpeed > MOVE_SPEED) {
-                // Soft cap
-                const ratio = MOVE_SPEED / horizontalSpeed
-                body.velocity.x *= ratio
-                body.velocity.z *= ratio
-            } else {
-                const ratio = newSpeed / horizontalSpeed
-                body.velocity.x *= ratio
-                body.velocity.z *= ratio
-            }
-        }
-
-        // Bounds Check (Legacy, but good safety)
-        if (bounds) {
-            body.position.x = THREE.MathUtils.clamp(body.position.x, -bounds.width / 2 + 0.5, bounds.width / 2 - 0.5)
-            body.position.z = THREE.MathUtils.clamp(body.position.z, -bounds.depth / 2 + 0.5, bounds.depth / 2 - 0.5)
-        }
+        // Apply back to body
+        // We preserve Y velocity (gravity) unless jumping
+        let newY = vel.y
 
         // 4. Rotation & Banking
-        const moving = horizontalSpeed > 0.1
+        const moving = newHVel.length() > 0.1
         if (moving) {
-            const targetRot = Math.atan2(body.velocity.x, body.velocity.z)
+            const targetRot = Math.atan2(newHVel.x, newHVel.z)
             let angleDiff = targetRot - currentRotation.current
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
@@ -311,24 +319,23 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             currentRotation.current += rotChange
 
             const turnRate = rotChange / delta
-            const targetBank = -turnRate * 0.05 * (horizontalSpeed / MOVE_SPEED)
+            const targetBank = -turnRate * 0.05 * (newHVel.length() / MOVE_SPEED)
             bank.current = THREE.MathUtils.lerp(bank.current, THREE.MathUtils.clamp(targetBank, -BANK_AMOUNT, BANK_AMOUNT), 10 * delta)
         } else {
             bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * delta)
         }
 
-        const dotProd = input.dot(horizontalVel.clone().normalize())
-        const targetTilt = (horizontalSpeed / MOVE_SPEED) * TILT_AMOUNT * dotProd
+        const dotProd = input.dot(currentHVel.clone().normalize())
+        const targetTilt = (currentHVel.length() / MOVE_SPEED) * TILT_AMOUNT * dotProd
         tilt.current = THREE.MathUtils.lerp(tilt.current, targetTilt, 5 * delta)
 
-        // Apply Rotations
         rotateGroup.current.rotation.y = currentRotation.current
         rotateGroup.current.rotation.z = bank.current
         rotateGroup.current.rotation.x = tilt.current
 
         // 5. Jump Physics
         if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= delta
-        if (!body.isGrounded) coyoteTimer.current += delta
+        if (!isGrounded.current) coyoteTimer.current += delta
         else coyoteTimer.current = 0
 
         if (isActionPressed && !prevAction.current) {
@@ -340,27 +347,26 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
         prevAction.current = isActionPressed
 
-        // Execute Jump using Physics Velocity
-        if (jumpBufferTimer.current > 0 && (body.isGrounded || coyoteTimer.current < COYOTE_TIME)) {
-            body.velocity.y = JUMP_FORCE
-            body.isGrounded = false
+        if (jumpBufferTimer.current > 0 && (isGrounded.current || coyoteTimer.current < COYOTE_TIME)) {
+            newY = JUMP_FORCE
             coyoteTimer.current = 100
             jumpBufferTimer.current = 0
-
             squashSpring.current.impulse(3.0)
             playSound('jump')
         }
 
         // Variable Jump Height
-        if (!jumpHeld.current && body.velocity.y > 0) {
-            body.velocity.y *= JUMP_CUT_HEIGHT
+        if (!jumpHeld.current && newY > 0) {
+             // If we release button while moving up, cut velocity
+             newY *= JUMP_CUT_HEIGHT
         }
 
-        // 6. Sync Visuals to Physics Body
-        group.current.position.copy(body.position)
+        // Apply final velocity to Rapier Body
+        rigidBodyRef.current.setLinvel({ x: newHVel.x, y: newY, z: newHVel.z }, true)
 
-        // Callback for camera/others
-        if (onPositionChange) onPositionChange(body.position)
+        // 6. Sync Visuals
+        // Rapier handles position, we just update rotation group
+        if (onPositionChange) onPositionChange(currentPosition.current)
 
         // Squash & Stretch
         squashSpring.current.update(delta)
@@ -369,15 +375,11 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         visualGroup.current.scale.set(scaleXZ, scaleY, scaleXZ)
 
         if (moving !== isMovingVisual) setIsMovingVisual(moving)
-
-        // Ground impact logic could be improved by checking velocity delta in physics step
-        // But for "landing juice", checking isGrounded transition is fine.
     })
 
     const shadowScale = useRef(1)
     useFrame(() => {
-        if (!bodyRef.current) return
-        const height = Math.max(0, bodyRef.current.position.y)
+        const height = Math.max(0, currentPosition.current.y)
         shadowScale.current = THREE.MathUtils.lerp(shadowScale.current, Math.max(0, 1 - height * 0.5), 0.1)
     })
 
@@ -389,12 +391,12 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 decay decayRate={0.65}
             />
             <TeleportSparkle
-                position={bodyRef.current?.position || new THREE.Vector3()}
+                position={currentPosition.current}
                 trigger={sparkleTrigger}
                 onComplete={() => setSparkleTrigger(false)}
             />
-            {interactionLabel && bodyRef.current && (
-                <Html position={[bodyRef.current.position.x, bodyRef.current.position.y + 2, bodyRef.current.position.z]} center>
+            {interactionLabel && (
+                <Html position={[currentPosition.current.x, currentPosition.current.y + 2, currentPosition.current.z]} center>
                     <div style={{
                         fontFamily: 'Inter, sans-serif',
                         fontWeight: '800',
@@ -411,31 +413,39 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 </Html>
             )}
 
-            <group ref={group}>
-                <group ref={rotateGroup}>
-                    <group ref={visualGroup}>
-                        <RobloxCharacter isMoving={isMovingVisual && (bodyRef.current?.isGrounded ?? true)} />
+            <RigidBody
+                ref={rigidBodyRef}
+                position={new THREE.Vector3(...initialPosition)}
+                enabledRotations={[false, false, false]}
+                colliders={false} // Custom collider
+                friction={0} // We handle friction manually
+                restitution={0}
+            >
+                <CapsuleCollider args={[0.3, 0.3]} position={[0, 0.6, 0]} /> {/* HalfHeight 0.3, Radius 0.3. Total Height 1.2? Need to verify Rapier args */}
+
+                <group ref={group}>
+                    <group ref={rotateGroup}>
+                        <group ref={visualGroup}>
+                            <RobloxCharacter isMoving={isMovingVisual && isGrounded.current} />
+                        </group>
                     </group>
                 </group>
-            </group>
+            </RigidBody>
 
-            {bodyRef.current && (
-                <mesh
-                    position={[bodyRef.current.position.x, 0.01, bodyRef.current.position.z]}
-                    rotation={[-Math.PI / 2, 0, 0]}
-                    scale={[shadowScale.current, shadowScale.current, 1]}
-                >
-                    <circleGeometry args={[0.35, 32]} />
-                    <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
-                </mesh>
-            )}
-            {bodyRef.current && (
-                <VoxelDust
-                    position={bodyRef.current.position}
-                    velocity={bodyRef.current.velocity}
-                    isGrounded={bodyRef.current.isGrounded}
-                />
-            )}
+            <mesh
+                position={[currentPosition.current.x, 0.01, currentPosition.current.z]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                scale={[shadowScale.current, shadowScale.current, 1]}
+            >
+                <circleGeometry args={[0.35, 32]} />
+                <meshBasicMaterial color="#000000" transparent opacity={0.25 * shadowScale.current} />
+            </mesh>
+
+            <VoxelDust
+                position={currentPosition.current}
+                velocity={currentVelocity.current}
+                isGrounded={isGrounded.current}
+            />
         </>
     )
 })

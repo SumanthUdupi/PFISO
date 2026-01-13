@@ -1,4 +1,4 @@
-import physicsInstance from './PhysicsSystem'
+// import physicsInstance from './PhysicsSystem' // Deprecated
 import gameEventBus from './EventBus'
 
 class GameSystem {
@@ -27,6 +27,9 @@ class GameSystem {
 
         this.accumulator += deltaTime
 
+        // We no longer drive physics here, Rapier handles it in <Physics> component (which uses useFrame internally).
+        // However, we can use this for OTHER fixed-time logic (AI, etc.)
+
         while (this.accumulator >= this.fixedStep) {
             this.fixedUpdate(this.fixedStep)
             this.accumulator -= this.fixedStep
@@ -36,9 +39,9 @@ class GameSystem {
         // const alpha = this.accumulator / this.fixedStep
     }
 
-    // Physics & Logic Update
+    // Logic Update
     fixedUpdate(dt: number) {
-        physicsInstance.step(dt)
+        // physicsInstance.step(dt) // Removed
         gameEventBus.emit('fixed-update', dt)
     }
 }

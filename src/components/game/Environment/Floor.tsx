@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useLayoutEffect } from 'react'
 import * as THREE from 'three'
+import { RigidBody, CuboidCollider } from '@react-three/rapier'
 
 interface FloorProps {
   width: number
   depth: number
   theme?: 'lobby' | 'project' | 'about' | 'contact'
-  onFloorClick: (point: THREE.Vector3) => void
+  onFloorClick: (point: THREE.Vector3) => void // Kept for raycasting logic in parent
 }
 
 const THEME_COLORS = {
@@ -19,7 +20,7 @@ const FloorLayer: React.FC<{
   tiles: { position: [number, number, number], key: string }[]
   material: THREE.Material
   geometry: THREE.BufferGeometry
-  onFloorClick: (point: THREE.Vector3) => void
+  onFloorClick: (e: any) => void
 }> = ({ tiles, material, geometry, onFloorClick }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null)
 
@@ -41,10 +42,7 @@ const FloorLayer: React.FC<{
       ref={meshRef}
       args={[geometry, material, tiles.length]}
       receiveShadow
-      onClick={(e) => {
-        e.stopPropagation()
-        onFloorClick(e.point)
-      }}
+      onClick={onFloorClick}
     />
   )
 }
@@ -108,8 +106,20 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
     return groups
   }, [width, depth])
 
+  // Handle floor click for navigation
+  const handleClick = (e: any) => {
+      e.stopPropagation()
+      // Pass the intersection point up to the Lobby for navigation
+      onFloorClick(e.point)
+  }
+
   return (
     <group position={[0, 0, 0]}>
+      {/* Floor Collider */}
+      <RigidBody type="fixed" colliders={false}>
+          <CuboidCollider args={[width / 2, 0.5, depth / 2]} position={[0, -0.5, 0]} />
+      </RigidBody>
+
       {Object.entries(groupedTiles).map(([index, tiles]) => {
           if (tiles.length === 0) return null
           return (
@@ -118,7 +128,7 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
                 tiles={tiles}
                 material={materials[parseInt(index)]}
                 geometry={geometry}
-                onFloorClick={onFloorClick}
+                onFloorClick={handleClick}
             />
           )
       })}
