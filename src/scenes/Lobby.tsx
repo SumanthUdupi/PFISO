@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
 import InteractiveObject from '../components/game/InteractiveObject'
-import NPC from '../components/game/AI/NPC'
+
 import Modal from '../components/ui/Modal'
 import ProjectModal from '../components/ui/ProjectModal'
 import BioModal from '../components/ui/BioModal'
@@ -336,32 +336,7 @@ const LobbyContent = () => {
                 }}
             />
 
-            <NPC
-                position={[0, 0, -1]}
-                name="Receptionist"
-                playerRef={playerRef}
-            />
 
-            <NPC
-                position={[-5, 0, 5]}
-                name="Visitor"
-                playerRef={playerRef}
-                waypoints={[
-                    [-5, 0, 5],
-                    [5, 0, 5],
-                    [5, 0, 0],
-                    [-5, 0, 0]
-                ]}
-            />
-
-            {/* Guide NPC */}
-            <NPC
-                position={[5, 1, 5]}
-                waypoints={[[5, 1, 5], [8, 1, 5], [8, 1, 2], [5, 1, 2]]}
-                name="Guide"
-                playerRef={playerRef}
-                dialogue={["Welcome!", "Feel free to look around.", "Check out the projects!"]}
-            />
 
             {isMobile && closestObject && !activeModal && (
                 <Html position={[0, -2, 0]} center style={{ pointerEvents: 'none', width: '100vw', height: '100vh', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '100px' }}>

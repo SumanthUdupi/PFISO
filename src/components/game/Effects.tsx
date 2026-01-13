@@ -14,7 +14,7 @@ const Effects = () => {
   }
 
   return (
-    <EffectComposer multisampling={0} disableNormalPass>
+    <EffectComposer multisampling={0}>
       <Bloom
         luminanceThreshold={0.85}
         mipmapBlur

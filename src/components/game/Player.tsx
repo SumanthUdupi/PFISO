@@ -364,14 +364,19 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         }
 
         // 5. Rotation
+        // 5. Rotation - MECH-FIX: Smooth Damping
         if (moving) {
             const targetRot = Math.atan2(input.x, input.z)
+            // Shortest angle interpolation
             let angleDiff = targetRot - currentRotation.current
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-            const rotChange = angleDiff * ROTATION_SPEED * delta
-            currentRotation.current += rotChange
-            const turnRate = rotChange / delta
+
+            // Use exponential smoothing instead of linear for better feel
+            const smoothFactor = 1.0 - Math.exp(-ROTATION_SPEED * delta)
+            currentRotation.current += angleDiff * smoothFactor
+
+            const turnRate = angleDiff * smoothFactor / delta
             const targetBank = -turnRate * 0.05 * (newVel.length() / MOVE_SPEED)
             bank.current = THREE.MathUtils.lerp(bank.current, THREE.MathUtils.clamp(targetBank, -BANK_AMOUNT, BANK_AMOUNT), 10 * delta)
         } else {
@@ -474,12 +479,17 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 restitution={0}
                 linearDamping={0.5}
             >
-                <CapsuleCollider args={[0.3, 0.3]} position={[0, 0.6, 0]} />
+                {/* MECH-FIX: Adjusted collider to be slightly thinner to avoid wall clipping */}
+                <CapsuleCollider args={[0.25, 0.3]} position={[0, 0.6, 0]} />
 
                 <group ref={group}>
                     <group ref={rotateGroup}>
                         <group ref={visualGroup}>
-                            <RobloxCharacter isMoving={isMovingVisual && isGrounded.current} />
+                            {/* MECH-FIX: Pass actual speed for animation sync */}
+                            <RobloxCharacter
+                                isMoving={isMovingVisual && isGrounded.current}
+                                speed={new THREE.Vector3(currentVelocity.current.x, 0, currentVelocity.current.z).length()}
+                            />
                         </group>
                     </group>
                 </group>
