@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Html, Float } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { Select } from '@react-three/postprocessing'
 import useGameStore, { SkillTier } from '../../store'
 import useCursorStore from '../../stores/CursorStore'
+import useInteractionStore from '../../stores/interactionStore'
 import InteractionParticles from './InteractionParticles'
 
 interface InteractiveObjectProps {
@@ -13,7 +15,7 @@ interface InteractiveObjectProps {
   onClick: () => void
   playerPosition?: THREE.Vector3
   visibleMesh?: boolean
-  isFocused?: boolean
+  isFocused?: boolean // Deprecated, but keeping for compatibility if needed. Store takes precedence.
   castShadow?: boolean
   requiredSkill?: { name: string, tier: SkillTier }
 }
@@ -25,17 +27,47 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
   color = '#7ED321',
   label,
   onClick,
-  playerPosition,
+  playerPosition, // Still useful for "InRange" distance check visual fallback
   visibleMesh = true,
-  isFocused = false,
   castShadow = true,
   requiredSkill
 }) => {
-  const [hovered, setHovered] = useState(false)
+  // Store integration
+  const { registerObject, unregisterObject, setHovered, getActiveId } = useInteractionStore()
+  const { setCursor } = useCursorStore()
+  const { unlockedSkills } = useGameStore()
+
+  // Use label as ID for now (assuming unique)
+  const id = label
+  const activeId = useInteractionStore(state => state.getActiveId())
+  const isStoreActive = activeId === id
+
+  const meshRef = useRef<THREE.Mesh>(null)
+
+  // Stable callback ref to prevent infinite loop updates
+  const onClickRef = useRef(onClick)
+  useEffect(() => { onClickRef.current = onClick }, [onClick])
+
+  // Register on mount
+  useEffect(() => {
+      // We pass a dummy RefObject if visibleMesh is false, or real one.
+      // Actually we need position.
+      const pos = new THREE.Vector3(...position)
+      registerObject(id, {
+          id,
+          position: pos,
+          label,
+          type: 'custom', // Generic
+          onInteract: () => onClickRef.current(),
+          ref: { current: null } // We don't necessarily need the ref for logic, just position
+      })
+      return () => unregisterObject(id)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, label, position[0], position[1], position[2], registerObject, unregisterObject])
+
+  // Local state for visuals
   const [inRange, setInRange] = useState(false)
   const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
-  const { unlockedSkills } = useGameStore();
-  const { setCursor } = useCursorStore()
 
   // Check if locked
   const isLocked = useMemo(() => {
@@ -61,7 +93,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
     else setAnchorX('center')
   }, [position])
 
-  const isActive = (hovered || isFocused) && !isLocked;
+  const isActive = isStoreActive && !isLocked;
   const [triggerBurst, setTriggerBurst] = useState(false);
 
   const handleInteraction = () => {
@@ -73,12 +105,12 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
 
   const handlePointerOver = () => {
     setCursor(isLocked ? 'not-allowed' : 'pointer')
-    setHovered(true)
+    setHovered(id)
   }
 
   const handlePointerOut = () => {
     setCursor('default')
-    setHovered(false)
+    setHovered(null)
   }
 
   return (
@@ -87,31 +119,23 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
       <group>
         {visibleMesh ? (
           <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
-            <mesh
-              castShadow={castShadow}
-              onPointerOver={handlePointerOver}
-              onPointerOut={handlePointerOut}
-              onClick={handleInteraction}
-            >
-              <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial
-                color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
-                emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
-                emissiveIntensity={isLocked ? 0.2 : 0.5}
-              />
-            </mesh>
-
-            {/* Outline Effect */}
-            {isActive && !isLocked && (
-              <mesh position={[0, 0, 0]}>
-                <boxGeometry args={[1.05, 1.05, 1.05]} />
-                <meshBasicMaterial
-                  color={isFocused ? "#00ffff" : "white"}
-                  side={THREE.BackSide}
-                  toneMapped={false}
-                />
-              </mesh>
-            )}
+            {/* MECH-014: Wrap in Select for Outline effect */}
+            <Select enabled={isActive}>
+                <mesh
+                  ref={meshRef}
+                  castShadow={castShadow}
+                  onPointerOver={handlePointerOver}
+                  onPointerOut={handlePointerOut}
+                  onClick={handleInteraction}
+                >
+                  <boxGeometry args={[1, 1, 1]} />
+                  <meshStandardMaterial
+                    color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
+                    emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                    emissiveIntensity={isLocked ? 0.2 : 0.5}
+                  />
+                </mesh>
+            </Select>
 
             {/* Permanent Visual Identifier */}
             {!isActive && !isLocked && (
@@ -179,7 +203,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
                 </span>
               ) : (
                 <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
-                  {isFocused ? 'PRESS ENTER' : 'CLICK / WALK NEAR'}
+                  {isActive ? 'PRESS ENTER / CLICK' : 'WALK CLOSER'}
                 </span>
               )}
             </div>
