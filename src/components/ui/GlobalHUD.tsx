@@ -44,10 +44,16 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
             }}
             whileTap={{ scale: 0.95 }}
             style={{
-              background: activeSection === item.id ? '#ffa726' : '#4b3b60',
-              color: activeSection === item.id ? '#333' : 'white',
-              border: isMobile ? '2px solid #fff' : '4px solid #fff',
-              boxShadow: isMobile ? '2px 2px 0px #000' : '4px 4px 0px #000',
+              background: activeSection === item.id ? '#ffa726' : '#2c3e50',
+              color: activeSection === item.id ? '#333' : '#ecf0f1',
+              borderTop: '4px solid #34495e',
+              borderLeft: '4px solid #34495e',
+              borderRight: '4px solid #1a252f',
+              borderBottom: '4px solid #1a252f',
+              boxShadow: activeSection === item.id
+                ? 'inset 2px 2px 0px rgba(0,0,0,0.2)'
+                : '4px 4px 0px rgba(0,0,0,0.5)',
+              transform: activeSection === item.id ? 'translate(2px, 2px)' : 'none',
               padding: isMobile ? '10px' : '10px 15px',
               minWidth: isMobile ? '48px' : 'auto',
               minHeight: isMobile ? '48px' : 'auto',
@@ -58,6 +64,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
+              transition: 'all 0.1s'
             }}
           >
             <SpriteIcon

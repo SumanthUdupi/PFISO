@@ -4,8 +4,8 @@ import { useFrame } from '@react-three/fiber'
 import { WobbleMaterial } from './WobbleMaterial'
 
 interface DecorProps {
-  width: number
-  depth: number
+    width: number
+    depth: number
 }
 
 // 2.2 Environmental Scatter (Props)
@@ -52,15 +52,15 @@ const Decor: React.FC<DecorProps> = ({ width, depth }) => {
                 })
             } else if (type < 0.8) {
                 // Box
-                 items.push({
+                items.push({
                     key: `box-${i}`,
                     position: [x, -0.25, z] as [number, number, number],
                     scale: [0.4, 0.5, 0.4] as [number, number, number],
                     color: '#d35400'
                 })
             } else {
-                 // Can
-                 items.push({
+                // Can
+                items.push({
                     key: `can-${i}`,
                     position: [x, -0.35, z] as [number, number, number],
                     scale: [0.15, 0.3, 0.15] as [number, number, number],
@@ -74,11 +74,11 @@ const Decor: React.FC<DecorProps> = ({ width, depth }) => {
     return (
         <group>
             {/* Rugs */}
-            {/* Center Rug */}
-            <Rug position={[0, 0, 0]} size={[4, 4]} color="#8e44ad" />
+            {/* Center Rug - Deep Green/Teal to match 'Project' theme or just neutral */}
+            <Rug position={[0, 0, 0]} size={[4, 4]} color="#004d40" />
 
-            {/* Entrance Rug (South) */}
-            <Rug position={[0, 0, 6]} size={[3, 2]} color="#c0392b" />
+            {/* Entrance Rug (South) - Darker warm tone */}
+            <Rug position={[0, 0, 6]} size={[3, 2]} color="#3e2723" />
 
             {/* Scatter */}
             {scatterItems.map(({ key, ...item }) => (

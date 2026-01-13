@@ -50,19 +50,19 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
 
   // Register on mount
   useEffect(() => {
-      // We pass a dummy RefObject if visibleMesh is false, or real one.
-      // Actually we need position.
-      const pos = new THREE.Vector3(...position)
-      registerObject(id, {
-          id,
-          position: pos,
-          label,
-          type: 'custom', // Generic
-          onInteract: () => onClickRef.current(),
-          ref: { current: null } // We don't necessarily need the ref for logic, just position
-      })
-      return () => unregisterObject(id)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    // We pass a dummy RefObject if visibleMesh is false, or real one.
+    // Actually we need position.
+    const pos = new THREE.Vector3(...position)
+    registerObject(id, {
+      id,
+      position: pos,
+      label,
+      type: 'custom', // Generic
+      onInteract: () => onClickRef.current(),
+      ref: { current: null } // We don't necessarily need the ref for logic, just position
+    })
+    return () => unregisterObject(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, label, position[0], position[1], position[2], registerObject, unregisterObject])
 
   // Local state for visuals
@@ -121,20 +121,20 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
           <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
             {/* MECH-014: Wrap in Select for Outline effect */}
             <Select enabled={isActive}>
-                <mesh
-                  ref={meshRef}
-                  castShadow={castShadow}
-                  onPointerOver={handlePointerOver}
-                  onPointerOut={handlePointerOut}
-                  onClick={handleInteraction}
-                >
-                  <boxGeometry args={[1, 1, 1]} />
-                  <meshStandardMaterial
-                    color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
-                    emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
-                    emissiveIntensity={isLocked ? 0.2 : 0.5}
-                  />
-                </mesh>
+              <mesh
+                ref={meshRef}
+                castShadow={castShadow}
+                onPointerOver={handlePointerOver}
+                onPointerOut={handlePointerOut}
+                onClick={handleInteraction}
+              >
+                <boxGeometry args={[1, 1, 1]} />
+                <meshStandardMaterial
+                  color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
+                  emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                  emissiveIntensity={isLocked ? 0.2 : 0.5}
+                />
+              </mesh>
             </Select>
 
             {/* Permanent Visual Identifier */}
@@ -183,29 +183,53 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
           }}>
             <div style={{
               color: '#333',
-              background: 'rgba(255, 255, 255, 0.95)',
-              padding: '8px 16px',
-              borderRadius: '20px',
+              background: '#fff',
+              padding: '12px 18px',
+              borderRadius: '8px',
               fontFamily: '"Press Start 2P", cursive',
               fontSize: '10px',
               whiteSpace: 'nowrap',
-              border: `2px solid ${isLocked ? '#7f8c8d' : color}`,
-              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+              border: `3px solid #333`,
+              boxShadow: '4px 4px 0px rgba(0,0,0,0.5)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px'
+              gap: '6px',
+              transform: 'translateY(-10px)'
             }}>
-              <span style={{ fontWeight: 'bold' }}>{label}</span>
+              <span style={{ fontWeight: 'bold', fontSize: '12px', textTransform: 'uppercase' }}>{label}</span>
               {isLocked ? (
-                <span style={{ fontSize: '8px', color: '#e74c3c', background: '#fadbd8', padding: '2px 6px', borderRadius: '10px' }}>
-                  REQUIRES: {requiredSkill?.name} ({requiredSkill?.tier})
+                <span style={{ fontSize: '8px', color: '#c0392b', background: '#fadbd8', padding: '4px 8px', borderRadius: '4px', border: '1px solid #c0392b' }}>
+                  REQ: {requiredSkill?.name} ({requiredSkill?.tier})
                 </span>
               ) : (
-                <span style={{ fontSize: '8px', color: '#666', background: '#eee', padding: '2px 6px', borderRadius: '10px' }}>
-                  {isActive ? 'PRESS ENTER / CLICK' : 'WALK CLOSER'}
+                <span style={{ fontSize: '8px', color: '#666', marginTop: '2px' }}>
+                  {isActive ? '[ENTER] to INTERACT' : 'WALK CLOSER'}
                 </span>
               )}
+              {/* Little tail for speech bubble */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '0',
+                height: '0',
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderTop: '8px solid #333'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '-3px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '0',
+                height: '0',
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: '5px solid #fff'
+              }} />
             </div>
           </Html>
         )}

@@ -4,15 +4,15 @@ import useGameStore, { SkillTier } from '../../store';
 import SpriteIcon from './SpriteIcon';
 
 interface SkillItem {
-    name: string;
-    level: string;
-    description: string;
-    certification?: string;
+  name: string;
+  level: string;
+  description: string;
+  certification?: string;
 }
 
 interface SkillCategory {
-    category: string;
-    items: SkillItem[];
+  category: string;
+  items: SkillItem[];
 }
 
 interface SkillInventoryProps {
@@ -31,10 +31,10 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
 
   const getTierColor = (tier: SkillTier) => {
     switch (tier) {
-        case 'Master': return '#F1C40F'; // Gold
-        case 'Proficient': return '#3498DB'; // Blue
-        case 'Novice': return '#2ECC71'; // Green
-        default: return '#95A5A6'; // Grey (Locked)
+      case 'Master': return '#F1C40F'; // Gold
+      case 'Proficient': return '#3498DB'; // Blue
+      case 'Novice': return '#2ECC71'; // Green
+      default: return '#95A5A6'; // Grey (Locked)
     }
   };
 
@@ -60,12 +60,13 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
         const isLocked = currentTier === 'Locked';
 
         return (
-            <div key={index} style={{
+          <div key={index} style={{
             position: 'relative',
             width: '40px',
             height: '40px',
             background: isLocked ? '#2c3e50' : getTierColor(currentTier),
-            border: isLocked ? '2px dashed #7f8c8d' : '2px solid #fff',
+            border: isLocked ? '2px dashed #95a5a6' : '3px solid #fff',
+            boxShadow: '2px 2px 0px #000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -75,34 +76,34 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
             flexShrink: 0,
             opacity: isLocked ? 0.5 : 1,
             transition: 'all 0.3s ease'
-            }}
+          }}
             title={isLocked ? '???' : `${skill.name} (${currentTier}): ${skill.description}`}
-            >
+          >
             {isLocked ? (
-                <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>?</span>
+              <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>?</span>
             ) : (
-                <SpriteIcon
-                    src="./assets/sprites/skill-icons.webp"
-                    size={32}
-                    sheetSize={128}
-                    iconSize={32}
-                    index={index}
-                />
+              <SpriteIcon
+                src="./assets/sprites/skill-icons.webp"
+                size={32}
+                sheetSize={128}
+                iconSize={32}
+                index={index}
+              />
             )}
             {/* Tiny tier indicator dot */}
             {!isLocked && (
-                <div style={{
-                    position: 'absolute',
-                    bottom: '2px',
-                    right: '2px',
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: 'white',
-                    border: '1px solid black'
-                }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '2px',
+                right: '2px',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: 'white',
+                border: '1px solid black'
+              }} />
             )}
-            </div>
+          </div>
         );
       })}
       <div style={{

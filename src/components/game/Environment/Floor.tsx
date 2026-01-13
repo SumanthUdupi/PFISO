@@ -10,10 +10,10 @@ interface FloorProps {
 }
 
 const THEME_COLORS = {
-  lobby: { primary: '#455A64', secondary: '#546E7A' },
-  project: { primary: '#27AE60', secondary: '#2ECC71' },
-  about: { primary: '#D35400', secondary: '#E67E22' },
-  contact: { primary: '#C0392B', secondary: '#E74C3C' }
+  lobby: { primary: '#8d6e63', secondary: '#a1887f' }, // Warm Wood
+  project: { primary: '#2e7d32', secondary: '#388e3c' }, // Deep Green (Office plant vibe)
+  about: { primary: '#d84315', secondary: '#e64a19' }, // Burnt Orange
+  contact: { primary: '#c62828', secondary: '#d32f2f' } // Deep Red
 }
 
 const FloorLayer: React.FC<{
@@ -56,27 +56,27 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
     const secondary = new THREE.Color(colors.secondary)
 
     const createMat = (baseColor: THREE.Color, roughness: number) => {
-        return new THREE.MeshStandardMaterial({
-            color: baseColor,
-            roughness
-        })
+      return new THREE.MeshStandardMaterial({
+        color: baseColor,
+        roughness
+      })
     }
 
     const pVar = primary.clone().offsetHSL(0, 0, -0.02)
     const sVar = secondary.clone().offsetHSL(0, 0, -0.02)
 
     return [
-        createMat(primary, 0.8),         // 0: P Base
-        createMat(pVar, 0.9),            // 1: P Var
-        createMat(secondary, 0.8),       // 2: S Base
-        createMat(sVar, 0.9),            // 3: S Var
-        createMat(primary.clone().offsetHSL(0,0,0.05), 0.7), // 4: P Light
+      createMat(primary, 0.8),         // 0: P Base
+      createMat(pVar, 0.9),            // 1: P Var
+      createMat(secondary, 0.8),       // 2: S Base
+      createMat(sVar, 0.9),            // 3: S Var
+      createMat(primary.clone().offsetHSL(0, 0, 0.05), 0.7), // 4: P Light
     ]
   }, [theme])
 
   const groupedTiles = useMemo(() => {
     const groups: { [key: number]: { position: [number, number, number], key: string }[] } = {
-        0: [], 1: [], 2: [], 3: [], 4: []
+      0: [], 1: [], 2: [], 3: [], 4: []
     }
     const wStart = -Math.floor(width / 2)
     const dStart = -Math.floor(depth / 2)
@@ -91,15 +91,15 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
         let matIndex = isSecondary ? 2 : 0
 
         if (rand > 0.8) {
-            matIndex = isSecondary ? 3 : 1
+          matIndex = isSecondary ? 3 : 1
         }
         if (!isSecondary && rand > 0.95) {
-            matIndex = 4
+          matIndex = 4
         }
 
         groups[matIndex].push({
-            key: `${wx}-${wz}`,
-            position: [wx, 0, wz] as [number, number, number]
+          key: `${wx}-${wz}`,
+          position: [wx, 0, wz] as [number, number, number]
         })
       }
     }
@@ -108,35 +108,35 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
 
   // Handle floor click for navigation
   const handleClick = (e: any) => {
-      e.stopPropagation()
-      // Pass the intersection point up to the Lobby for navigation
-      onFloorClick(e.point)
+    e.stopPropagation()
+    // Pass the intersection point up to the Lobby for navigation
+    onFloorClick(e.point)
   }
 
   return (
     <group position={[0, 0, 0]}>
       {/* Floor Collider */}
       <RigidBody type="fixed" colliders={false}>
-          <CuboidCollider args={[width / 2, 0.5, depth / 2]} position={[0, -0.5, 0]} />
+        <CuboidCollider args={[width / 2, 0.5, depth / 2]} position={[0, -0.5, 0]} />
       </RigidBody>
 
       {Object.entries(groupedTiles).map(([index, tiles]) => {
-          if (tiles.length === 0) return null
-          return (
-            <FloorLayer
-                key={index}
-                tiles={tiles}
-                material={materials[parseInt(index)]}
-                geometry={geometry}
-                onFloorClick={handleClick}
-            />
-          )
+        if (tiles.length === 0) return null
+        return (
+          <FloorLayer
+            key={index}
+            tiles={tiles}
+            material={materials[parseInt(index)]}
+            geometry={geometry}
+            onFloorClick={handleClick}
+          />
+        )
       })}
-       {/* Decorative border */}
-       <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[width + 1, depth + 1]} />
-          <meshStandardMaterial color="#1a1a1a" />
-       </mesh>
+      {/* Decorative border */}
+      <mesh position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[width + 1, depth + 1]} />
+        <meshStandardMaterial color="#1a1a1a" />
+      </mesh>
     </group>
   )
 }

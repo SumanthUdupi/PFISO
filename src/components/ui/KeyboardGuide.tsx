@@ -24,9 +24,9 @@ const KeyboardGuide = () => {
     return {
       width: '32px',
       height: '32px',
-      background: active ? '#E74C3C' : '#ecf0f1',
-      color: active ? 'white' : '#333',
-      border: '4px solid #333',
+      background: active ? '#E74C3C' : '#fff', // White instead of grey
+      color: active ? 'white' : '#111', // Darker text
+      border: '4px solid #111',
       borderBottomWidth: active ? '4px' : '8px',
       display: 'flex',
       alignItems: 'center',
