@@ -12,20 +12,21 @@ import useCameraStore from '../../stores/cameraStore'
 import gameSystemInstance from '../../systems/GameSystem'
 
 // --- TUNING CONSTANTS ---
+// MECH-FIX: Tuned for non-lerp physics (units/sec^2)
 const MOVE_SPEED = 6
-const ACCELERATION_GROUND = 60
-const ACCELERATION_AIR = 15
-const FRICTION_GROUND = 15
-const FRICTION_AIR = 2
-const JUMP_FORCE = 12
-const ROTATION_SPEED = 12
+const ACCELERATION_GROUND = 35.0 // Snappy start
+const ACCELERATION_AIR = 10.0   // Lower air control
+const FRICTION_GROUND = 25.0    // Quick stops
+const FRICTION_AIR = 2.0        // Low drag in air
+const JUMP_FORCE = 13.0         // Slightly higher to compensate for gravity
+const ROTATION_SPEED = 18.0     // Schnappy turning
 
 // Game Feel
 const COYOTE_TIME = 0.15
 const JUMP_BUFFER = 0.15
-const JUMP_CUT_HEIGHT = 0.5
-const TILT_AMOUNT = 0.15
-const BANK_AMOUNT = 0.15
+const JUMP_CUT_HEIGHT = 0.6
+const TILT_AMOUNT = 0.08
+const BANK_AMOUNT = 0.08
 
 // --- HELPER: Spring Physics for Squash/Stretch ---
 class Spring {
@@ -62,7 +63,8 @@ const VoxelDust = ({ position, velocity, isGrounded }: { position: THREE.Vector3
     useFrame((state, delta) => {
         if (!group.current) return
         const speed = new THREE.Vector3(velocity.x, 0, velocity.z).length()
-        if (isGrounded && speed > 2 && Math.random() < 0.4) {
+        // MECH-FIX: Tune dust threshold
+        if (isGrounded && speed > 4 && Math.random() < 0.3) {
             const mesh = new THREE.Mesh(geometry, material.clone())
             const kickDir = velocity.clone().normalize().negate().multiplyScalar(0.2)
             const spread = new THREE.Vector3((Math.random() - 0.5) * 0.3, 0, (Math.random() - 0.5) * 0.3)
@@ -166,6 +168,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         triggerInteraction: (label: string) => {
             setInteractionLabel(label)
             setInteractionTimer(1.5)
+            // Stop movement immediately on interaction
             if (rigidBodyRef.current) rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
             setSparkleTrigger(true)
             path.current = []
@@ -179,12 +182,19 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             commandQueue.current = []
             currentCommand.current = null
             path.current = []
+            currentPathIndex.current = 0
         },
         moveTo: (target: THREE.Vector3, onComplete?: () => void) => {
-            // Legacy support mapping to Queue
+            // MECH-FIX: Robust state reset for Click-To-Move
             commandQueue.current = []
             currentCommand.current = null
-            commandQueue.current.push({ type: 'MOVE', target })
+            path.current = []
+            currentPathIndex.current = 0
+            
+            // Validate
+            if (!target) return;
+
+            commandQueue.current.push({ type: 'MOVE', target: target.clone() })
             if (onComplete) {
                 commandQueue.current.push({ type: 'CALLBACK', fn: onComplete })
             }
@@ -207,6 +217,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 path.current = []
                 commandQueue.current = []
                 currentCommand.current = null
+                currentPathIndex.current = 0
             }
         }
         const onKeyUp = (e: KeyboardEvent) => {
@@ -226,12 +237,16 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             path.current = []
             commandQueue.current = []
             currentCommand.current = null
+            currentPathIndex.current = 0
         }
     }, [joystick])
 
     // --- MAIN LOOP ---
     useFrame((state, delta) => {
-        gameSystemInstance.update(state.clock.elapsedTime, delta)
+        // Cap Delta to avoid explosions on lag spikes
+        const dt = Math.min(delta, 0.1)
+
+        gameSystemInstance.update(state.clock.elapsedTime, dt)
 
         if (!rigidBodyRef.current || !group.current || !visualGroup.current || !rotateGroup.current) return
 
@@ -242,15 +257,19 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         currentVelocity.current.set(vel.x, vel.y, vel.z)
 
         // Ground Check
-        const rayOrigin = { x: pos.x, y: pos.y, z: pos.z }
+        const rayOrigin = { x: pos.x, y: pos.y + 0.1, z: pos.z } // Offset slightly up
         let groundNormal = new THREE.Vector3(0, 1, 0)
         let hit = null
         if (world) {
-            hit = world.castRay(new rapier.Ray(rayOrigin, { x: 0, y: -1, z: 0 }), 2.0, true)
+            // Cast down
+            hit = world.castRay(new rapier.Ray(rayOrigin, { x: 0, y: -1, z: 0 }), 1.5, true)
         }
         let onGround = false
         if (hit) {
-            if (hit.toi < 0.2 && Math.abs(vel.y) < 0.5) {
+            // Distance of Ray - Offset
+            const dist = hit.toi - 0.1 
+            // Allow slightly higher tolerance for slopes
+            if (dist < 0.25 && vel.y < 0.5) {
                 onGround = true
                 if (hit.normal) groundNormal.set(hit.normal.x, hit.normal.y, hit.normal.z)
             }
@@ -260,142 +279,197 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // MECH-023: Landing Trauma
         if (onGround && !wasGrounded.current) {
             // Landed
-            if (Math.abs(currentVelocity.current.y) < -5) { // Hard landing check
+            if (vel.y < -8) { // Hard landing check
                 addTrauma(0.4)
-            } else if (Math.abs(currentVelocity.current.y) < -2) {
+                squashSpring.current.impulse(-4.0)
+            } else if (vel.y < -2) {
                 addTrauma(0.15)
+                squashSpring.current.impulse(-2.0)
             }
         }
         wasGrounded.current = onGround
 
         // 1. Interaction Freeze
         if (interactionTimer > 0) {
-            setInteractionTimer(t => t - delta)
+            setInteractionTimer(t => t - dt)
             if (interactionTimer < 0) setInteractionLabel(null)
-            visualGroup.current.rotation.y += 10 * delta
+            visualGroup.current.rotation.y += 10 * dt
             return
         }
 
-        // 2. Command Queue Processing (MECH-012)
+        // 2. Command Queue Processing
         if (!currentCommand.current && commandQueue.current.length > 0) {
             currentCommand.current = commandQueue.current.shift()!
 
             // Initialize Command
             if (currentCommand.current.type === 'MOVE') {
                 const target = currentCommand.current.target
-                const calculatedPath = findPath(currentPosition.current, target)
-                if (calculatedPath.length > 0) {
-                    path.current = calculatedPath
-                    currentPathIndex.current = 0
+                // Ensure target is valid
+                if (target) {
+                    const calculatedPath = findPath(currentPosition.current, target)
+                    if (calculatedPath.length > 0) {
+                        path.current = calculatedPath
+                        currentPathIndex.current = 0
+                    } else {
+                        console.warn("Pathfinding failed or target invalid", target)
+                        currentCommand.current = null
+                    }
                 } else {
-                    // Failed to find path, abort
                     currentCommand.current = null
                 }
             } else if (currentCommand.current.type === 'CALLBACK') {
-                currentCommand.current.fn()
+                try {
+                    currentCommand.current.fn()
+                } catch (e) {
+                    console.error("Command Callback Error", e)
+                }
                 currentCommand.current = null
             } else if (currentCommand.current.type === 'INTERACT') {
-                // Just trigger visual for now, actual logic usually handled by callback or event
-                // setInteractionLabel(currentCommand.current.label!)
-                // setInteractionTimer(1.5)
-                // setSparkleTrigger(true)
-                // But wait, the requirement says "Click to move then interact".
-                // Usually the interaction happens via callback or event.
-                // We'll treat this command as instantaneous
                 currentCommand.current = null
             }
         }
 
         // 3. Input Calculation
         const input = new THREE.Vector3(0, 0, 0)
+        
+        // Keyboard
         if (keys.current['w'] || keys.current['ArrowUp']) input.z -= 1
         if (keys.current['s'] || keys.current['ArrowDown']) input.z += 1
         if (keys.current['a'] || keys.current['ArrowLeft']) input.x -= 1
         if (keys.current['d'] || keys.current['ArrowRight']) input.x += 1
-
+        
+        // Joystick
         if (Math.abs(joystick.x) > 0.1) input.x += joystick.x
         if (Math.abs(joystick.y) > 0.1) input.z += joystick.y
 
-        // Pathfinding override (Processing MOVE command)
-        if (input.lengthSq() === 0 && path.current.length > 0) {
-            const target = path.current[currentPathIndex.current]
-            const dir = target.clone().sub(currentPosition.current)
-            dir.y = 0
-            if (dir.length() < 0.2) {
-                currentPathIndex.current++
-                if (currentPathIndex.current >= path.current.length) {
-                    path.current = []
-                    // Move Complete
-                    if (currentCommand.current?.type === 'MOVE') {
-                        currentCommand.current = null // Command finished
+        // Normalize Input (Fix Diagonal Speed)
+        if (input.lengthSq() > 1) input.normalize()
+
+        // Pathfinding Input Override
+        if (input.lengthSq() < 0.01 && path.current.length > 0) {
+            // We have a path and no user input
+            if (currentPathIndex.current < path.current.length) {
+                const target = path.current[currentPathIndex.current]
+                const dir = target.clone().sub(currentPosition.current)
+                dir.y = 0
+                
+                // Distance Check
+                const dist = dir.length()
+                if (dist < 0.4) {
+                    // Reached waypoint
+                    currentPathIndex.current++
+                    // If finished
+                    if (currentPathIndex.current >= path.current.length) {
+                        path.current = []
+                        if (currentCommand.current?.type === 'MOVE') {
+                            currentCommand.current = null
+                        }
                     }
+                } else {
+                    input.copy(dir.normalize())
                 }
             } else {
-                input.copy(dir.normalize())
+                // Safety cleanup
+                path.current = []
             }
         }
 
-        if (input.length() > 1) input.normalize()
+        // 4. Physics Movement Calculation (Kinematic-Style)
+        const isMoving = input.lengthSq() > 0.01
 
-        // 4. Movement Physics Application
-        const moving = input.lengthSq() > 0.01
+        let targetVelocity = new THREE.Vector3()
 
-        // Slope Logic
-        let moveDir = input.clone()
-        if (isGrounded.current && moving) {
-            moveDir = input.clone().projectOnPlane(groundNormal).normalize()
-            const slopeAngle = groundNormal.angleTo(new THREE.Vector3(0, 1, 0))
-            if (slopeAngle > Math.PI / 4) {
-                moveDir = input.clone()
+        if (isMoving) {
+            // Slope Projection (MECH-FIX)
+            if (isGrounded.current) {
+                // Calculate "slope forward" direction based on input
+                // Cross product approach to align with surface
+                // Right vector relative to input and Up
+                const right = new THREE.Vector3(input.z, 0, -input.x).normalize() 
+                // Actual forward aligned to slope
+                const slopeForward = new THREE.Vector3().crossVectors(right, groundNormal).normalize()
+                
+                // Verify direction
+                if (slopeForward.dot(input) < 0) slopeForward.negate()
+                
+                // Steep Slope Check (> 45 degrees)
+                const slopeAngle = groundNormal.angleTo(new THREE.Vector3(0, 1, 0))
+                if (slopeAngle > Math.PI / 3) { // 60 deg max?
+                    // Too steep, slide down? Or just block?
+                    // Reducing speed significantly on steep slopes
+                    targetVelocity.copy(slopeForward).multiplyScalar(MOVE_SPEED * 0.1)
+                } else {
+                    targetVelocity.copy(slopeForward).multiplyScalar(MOVE_SPEED)
+                }
+            } else {
+                // Air Movement
+                targetVelocity.set(input.x * MOVE_SPEED, 0, input.z * MOVE_SPEED)
             }
         }
-
-        const desiredVelocity = moveDir.multiplyScalar(MOVE_SPEED)
+        
         const accel = isGrounded.current ? ACCELERATION_GROUND : ACCELERATION_AIR
+        const friction = isGrounded.current ? FRICTION_GROUND : FRICTION_AIR
 
-        let newVel = new THREE.Vector3()
-        if (isGrounded.current) {
-            newVel.copy(currentVelocity.current).lerp(desiredVelocity, accel * delta * 0.1)
+        // Explicit Integration: v = v + a * dt
+        const currentH = new THREE.Vector3(vel.x, 0, vel.z)
+        let newH = currentH.clone()
+
+        if (isMoving) {
+            // Accelerate towards target
+            const diff = targetVelocity.clone().sub(newH)
+            const maxChange = accel * dt
+            
+            if (diff.length() <= maxChange) {
+                newH.copy(targetVelocity)
+            } else {
+                newH.add(diff.normalize().multiplyScalar(maxChange))
+            }
         } else {
-            const currentH = new THREE.Vector3(vel.x, 0, vel.z)
-            const desiredH = new THREE.Vector3(desiredVelocity.x, 0, desiredVelocity.z)
-            const newH = currentH.lerp(desiredH, accel * delta * 0.1)
-            newVel.set(newH.x, vel.y, newH.z)
+            // Friction / Deceleration
+            const speed = newH.length()
+            if (speed > 0) {
+                const drop = friction * dt
+                const newSpeed = Math.max(0, speed - drop)
+                newH.multiplyScalar(newSpeed / speed)
+            }
         }
 
-        // 5. Rotation
-        // 5. Rotation - MECH-FIX: Smooth Damping
-        if (moving) {
+        let newVelY = vel.y
+
+        // 5. Rotation (Smoothed)
+        if (isMoving) {
             const targetRot = Math.atan2(input.x, input.z)
-            // Shortest angle interpolation
+            
+            // Shortest angle
             let angleDiff = targetRot - currentRotation.current
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-
-            // Use exponential smoothing instead of linear for better feel
-            const smoothFactor = 1.0 - Math.exp(-ROTATION_SPEED * delta)
-            currentRotation.current += angleDiff * smoothFactor
-
-            const turnRate = angleDiff * smoothFactor / delta
-            const targetBank = -turnRate * 0.05 * (newVel.length() / MOVE_SPEED)
-            bank.current = THREE.MathUtils.lerp(bank.current, THREE.MathUtils.clamp(targetBank, -BANK_AMOUNT, BANK_AMOUNT), 10 * delta)
+            
+            // Frame-independent smoothing
+            const t = 1.0 - Math.pow(0.01, dt * 2) // Tuned Damping
+            currentRotation.current += angleDiff * Math.min(1, ROTATION_SPEED * dt)
+            
+            // Banking
+            const turnRate = angleDiff * 5.0 // Estimation
+            const targetBank = -Math.max(-1, Math.min(1, turnRate)) * BANK_AMOUNT * (newH.length()/MOVE_SPEED)
+            bank.current = THREE.MathUtils.lerp(bank.current, targetBank, 10 * dt)
         } else {
-            bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * delta)
+            bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * dt)
         }
 
-        const dotProd = input.dot(new THREE.Vector3(newVel.x, 0, newVel.z).normalize())
-        const targetTilt = (newVel.length() / MOVE_SPEED) * TILT_AMOUNT * dotProd
-        tilt.current = THREE.MathUtils.lerp(tilt.current, targetTilt, 5 * delta)
+        const speedRatio = newH.length() / MOVE_SPEED
+        const tiltTarget = speedRatio * TILT_AMOUNT
+        tilt.current = THREE.MathUtils.lerp(tilt.current, tiltTarget, 5 * dt)
 
         rotateGroup.current.rotation.y = currentRotation.current
         rotateGroup.current.rotation.z = bank.current
         rotateGroup.current.rotation.x = tilt.current
 
         // 6. Jump Physics
-        if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= delta
-        if (interactBufferTimer.current > 0) interactBufferTimer.current -= delta
+        if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= dt
+        if (interactBufferTimer.current > 0) interactBufferTimer.current -= dt
 
-        if (!isGrounded.current) coyoteTimer.current += delta
+        if (!isGrounded.current) coyoteTimer.current += dt
         else coyoteTimer.current = 0
 
         if (isActionPressed && !prevAction.current) {
@@ -408,30 +482,35 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         prevAction.current = isActionPressed
 
         if (jumpBufferTimer.current > 0 && (isGrounded.current || coyoteTimer.current < COYOTE_TIME)) {
-            newVel.y = JUMP_FORCE
-            coyoteTimer.current = 100
+            newVelY = JUMP_FORCE
+            coyoteTimer.current = 100 // invalidate coyote
             jumpBufferTimer.current = 0
-            squashSpring.current.impulse(3.0)
+            squashSpring.current.impulse(3.0) // Stretch
             playSound('jump')
-            // MECH-023: Jump Trauma
-            addTrauma(0.1)
+            addTrauma(0.2) // Increased trauma on jump
         }
 
-        if (!jumpHeld.current && newVel.y > 0) {
-            newVel.y *= JUMP_CUT_HEIGHT
+        // Variable Jump Height
+        if (!jumpHeld.current && newVelY > 0) {
+            newVelY *= Math.pow(1.0 - 15.0 * dt, 2) // Smooth cut-off vs linear set
+            // or just simple default:
+             if (newVelY > 0) newVelY *= JUMP_CUT_HEIGHT // fallback if logic complex
         }
 
-        rigidBodyRef.current.setLinvel(newVel, true)
+        // Apply
+        rigidBodyRef.current.setLinvel(new THREE.Vector3(newH.x, newVelY, newH.z), true)
 
+        // Events
         if (onPositionChange) onPositionChange(currentPosition.current)
-        if (onRotationChange) onRotationChange(rotateGroup.current.rotation) // MECH-015
+        if (onRotationChange) onRotationChange(rotateGroup.current.rotation)
 
-        squashSpring.current.update(delta)
+        // Visuals
+        squashSpring.current.update(dt)
         const scaleY = squashSpring.current.val
-        const scaleXZ = 1 / Math.sqrt(scaleY)
+        const scaleXZ = 1 / Math.sqrt(Math.max(0.1, scaleY))
         visualGroup.current.scale.set(scaleXZ, scaleY, scaleXZ)
 
-        if (moving !== isMovingVisual) setIsMovingVisual(moving)
+        if (isMoving !== isMovingVisual) setIsMovingVisual(isMoving)
     })
 
     const shadowScale = useRef(1)
@@ -475,12 +554,12 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 position={new THREE.Vector3(...initialPosition)}
                 enabledRotations={[false, false, false]}
                 colliders={false} // Custom collider
-                friction={0}
+                friction={0} // We handle friction manually
                 restitution={0}
-                linearDamping={0.5}
+                linearDamping={0} // We handle damping manually
             >
                 {/* MECH-FIX: Adjusted collider to be slightly thinner to avoid wall clipping */}
-                <CapsuleCollider args={[0.25, 0.3]} position={[0, 0.6, 0]} />
+                <CapsuleCollider args={[0.25, 0.25]} position={[0, 0.6, 0]} />
 
                 <group ref={group}>
                     <group ref={rotateGroup}>

@@ -10,13 +10,15 @@ interface WallsProps {
 }
 
 const Walls: React.FC<WallsProps> = ({ width, depth, height }) => {
-  // Use a warmer, lighter color for the walls
-  const wallColor = '#fdfbf7' // Warm off-white
-  const baseboardColor = '#5d4037' // Dark wood baseboard
+  // COZY: Eggshell/Cream Walls
+  const wallColor = '#FFF8E7' // Cosmic Latte / Cream
+  // COZY: Warm Wood Baseboard
+  const baseboardColor = '#D7CCC8' // Light Oak
+
   const wallHeight = height
-  const wallThickness = 1 // Visual thickness
-  const baseboardHeight = 0.4
-  const baseboardThickness = 1.1 // Slightly thicker than wall to pop out
+  const wallThickness = 1.0
+  const baseboardHeight = 0.5
+  const baseboardThickness = 1.1
 
   return (
     <group>

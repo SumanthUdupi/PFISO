@@ -22,33 +22,35 @@ const KeyboardGuide = () => {
   const getKeyStyle = (codes: string[]) => {
     const active = codes.some(code => keys[code]);
     return {
-      width: '32px',
-      height: '32px',
-      background: active ? '#E74C3C' : '#fff', // White instead of grey
-      color: active ? 'white' : '#111', // Darker text
-      border: '4px solid #111',
-      borderBottomWidth: active ? '4px' : '8px',
+      width: '40px',
+      height: '40px',
+      background: active ? '#FFAB91' : '#FFF8E1', // Pastel Orange / Cream
+      color: '#5D4037', // Dark Brown
+      borderRadius: '12px', // COZY: Rounded
+      border: 'none',
+      borderBottom: active ? 'none' : '4px solid #D7CCC8', // Soft shadow
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: '"Press Start 2P", cursive',
-      fontSize: '10px',
-      margin: '2px',
-      boxShadow: active ? 'none' : '0 4px 0 rgba(0,0,0,0.2)',
+      fontFamily: '"Fredoka", sans-serif',
+      fontWeight: '600',
+      fontSize: '14px',
+      margin: '4px',
       transform: active ? 'translateY(4px)' : 'none',
-      transition: 'all 0.05s',
+      transition: 'all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      boxShadow: active ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : '0 4px 0 rgba(0,0,0,0.05)'
     };
   };
 
   return (
     <div style={{
       position: 'absolute',
-      bottom: '20px',
-      left: '20px',
+      bottom: '30px',
+      left: '30px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      pointerEvents: 'none', // Allow clicks to pass through
+      pointerEvents: 'none',
       zIndex: 100
     }}>
       <div style={getKeyStyle(['KeyW', 'ArrowUp'])}>W</div>
@@ -57,7 +59,14 @@ const KeyboardGuide = () => {
         <div style={getKeyStyle(['KeyS', 'ArrowDown'])}>S</div>
         <div style={getKeyStyle(['KeyD', 'ArrowRight'])}>D</div>
       </div>
-      <div style={{ marginTop: '8px', fontSize: '10px', color: 'white', textShadow: '2px 2px #000', fontFamily: '"Press Start 2P", cursive' }}>
+      <div style={{
+        marginTop: '10px',
+        fontSize: '12px',
+        color: '#5D4037',
+        fontFamily: '"Fredoka", sans-serif',
+        fontWeight: 'bold',
+        opacity: 0.8
+      }}>
         MOVE
       </div>
     </div>

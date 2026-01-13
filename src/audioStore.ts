@@ -3,11 +3,13 @@ import { create } from 'zustand';
 interface AudioState {
     muted: boolean;
     volume: number;
+    audioContextReady: boolean;
     toggleMute: () => void;
     setVolume: (v: number) => void;
     playSound: (sound: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success') => void;
     startAmbient: () => void;
     stopAmbient: () => void;
+    initAudio: () => Promise<void>;
 }
 
 // Lazy AudioContext initialization
@@ -16,16 +18,11 @@ let ambientOsc: OscillatorNode | null = null;
 let ambientGain: GainNode | null = null;
 
 const getAudioContext = () => {
-    if (!audioCtx) {
-        // Handle browser compatibility
+    if (!audioCtx && typeof window !== 'undefined') {
         const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioContext) {
             audioCtx = new AudioContext();
         }
-    }
-    // Resume if suspended (browser autoplay policy)
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
     }
     return audioCtx;
 };
@@ -35,7 +32,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
 
     try {
         const ctx = getAudioContext();
-        if (!ctx) return;
+        if (!ctx || ctx.state !== 'running') return; // Don't play if not ready
 
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -91,7 +88,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.start(now);
                 osc.stop(now + 0.2);
                 break;
-             case 'land':
+            case 'land':
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(100, now);
                 osc.frequency.linearRampToValueAtTime(50, now + 0.1);
@@ -119,14 +116,14 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.stop(now + 0.4);
                 break;
             case 'success':
-                 osc.type = 'sine';
-                 osc.frequency.setValueAtTime(440, now); // A4
-                 osc.frequency.setValueAtTime(554, now + 0.1); // C#5
-                 gain.gain.setValueAtTime(volume * 0.2, now);
-                 gain.gain.linearRampToValueAtTime(0, now + 0.5);
-                 osc.start(now);
-                 osc.stop(now + 0.5);
-                 break;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.setValueAtTime(554, now + 0.1); // C#5
+                gain.gain.setValueAtTime(volume * 0.2, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                break;
         }
     } catch (e) {
         console.warn("Audio play failed", e);
@@ -136,6 +133,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
 const useAudioStore = create<AudioState>((set, get) => ({
     muted: false,
     volume: 0.5,
+    audioContextReady: false,
     toggleMute: () => {
         const newMuted = !get().muted;
         set({ muted: newMuted });
@@ -144,7 +142,24 @@ const useAudioStore = create<AudioState>((set, get) => ({
     },
     setVolume: (v) => {
         set({ volume: v });
-        if (ambientGain) ambientGain.gain.setValueAtTime(v * 0.05, audioCtx!.currentTime);
+        if (ambientGain && audioCtx) ambientGain.gain.setValueAtTime(v * 0.05, audioCtx.currentTime);
+    },
+    initAudio: async () => {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+            try {
+                await ctx.resume();
+                set({ audioContextReady: true });
+                // If not muted, start ambient now
+                if (!get().muted) {
+                    get().startAmbient();
+                }
+            } catch (e) {
+                console.warn("Audio resume failed", e);
+            }
+        } else if (ctx && ctx.state === 'running') {
+            set({ audioContextReady: true });
+        }
     },
     playSound: (type) => {
         const { muted, volume } = get();
@@ -153,27 +168,44 @@ const useAudioStore = create<AudioState>((set, get) => ({
     },
     startAmbient: () => {
         if (typeof window === 'undefined') return;
+        const { muted } = get();
+        if (muted) return;
+
         const ctx = getAudioContext();
-        if (!ctx || ambientOsc) return;
 
-        // Soft low pad
-        ambientOsc = ctx.createOscillator();
-        ambientOsc.type = 'sine';
-        ambientOsc.frequency.setValueAtTime(50, ctx.currentTime);
+        // If context isn't ready or suspended, try to resume if we supposedly initialized, 
+        // else wait for user interaction (handled by initAudio)
+        if (!ctx) return;
 
-        ambientGain = ctx.createGain();
-        ambientGain.gain.setValueAtTime(get().volume * 0.05, ctx.currentTime); // Very quiet
+        if (ctx.state !== 'running') {
+            // Can't start yet
+            return;
+        }
 
-        ambientOsc.connect(ambientGain);
-        ambientGain.connect(ctx.destination);
-        ambientOsc.start();
+        if (ambientOsc) return; // Already playing
 
-        // Add subtle LFO for movement? Not for now, keep it simple.
+        try {
+            // Soft low pad
+            ambientOsc = ctx.createOscillator();
+            ambientOsc.type = 'sine';
+            ambientOsc.frequency.setValueAtTime(50, ctx.currentTime);
+
+            ambientGain = ctx.createGain();
+            ambientGain.gain.setValueAtTime(get().volume * 0.05, ctx.currentTime); // Very quiet
+
+            ambientOsc.connect(ambientGain);
+            ambientGain.connect(ctx.destination);
+            ambientOsc.start();
+        } catch (e) {
+            console.warn("Failed to start ambient audio", e);
+        }
     },
     stopAmbient: () => {
         if (ambientOsc) {
-            ambientOsc.stop();
-            ambientOsc.disconnect();
+            try {
+                ambientOsc.stop();
+                ambientOsc.disconnect();
+            } catch (e) { /* ignore */ }
             ambientOsc = null;
         }
         if (ambientGain) {

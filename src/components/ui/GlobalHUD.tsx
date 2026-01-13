@@ -16,9 +16,9 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   // Icons from ui-icons.webp (128x128, assumed 2x2 grid of 64x64 icons)
   // 0: Projects, 1: About, 2: Contact, 3: Resume
   const navItems = [
-    { id: 'projects', label: 'MY WORK', iconIndex: 0 },
-    { id: 'about', label: 'ABOUT ME', iconIndex: 1 },
-    { id: 'contact', label: 'CONTACT', iconIndex: 2 },
+    { id: 'projects', label: 'WORK', iconIndex: 0, color: '#80CBC4' }, // Pastel Teal
+    { id: 'about', label: 'ABOUT', iconIndex: 1, color: '#FFCC80' },   // Pastel Orange
+    { id: 'contact', label: 'CONTACT', iconIndex: 2, color: '#EF9A9A' }, // Pastel Red
   ] as const;
 
   return (
@@ -31,7 +31,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
         right: 'calc(20px + env(safe-area-inset-right, 0px))',
         display: 'flex',
         flexDirection: isMobile ? 'row' : 'row',
-        gap: isMobile ? '16px' : '12px',
+        gap: isMobile ? '12px' : '16px',
         zIndex: 1000,
         pointerEvents: 'auto',
       }}>
@@ -42,23 +42,23 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
               playSound('click');
               onNavigate(item.id);
             }}
+            whileHover={{ scale: 1.05, rotate: isMobile ? 0 : [0, -2, 2, 0] }}
             whileTap={{ scale: 0.95 }}
             style={{
-              background: activeSection === item.id ? '#ffa726' : '#2c3e50',
-              color: activeSection === item.id ? '#333' : '#ecf0f1',
-              borderTop: '4px solid #34495e',
-              borderLeft: '4px solid #34495e',
-              borderRight: '4px solid #1a252f',
-              borderBottom: '4px solid #1a252f',
+              background: activeSection === item.id ? item.color : '#FFF8E1', // Active color or Cream
+              color: '#3E2723', // Darker Brown text for contrast
+              border: activeSection === item.id ? '3px solid #fff' : `3px solid ${item.color}`,
+              borderRadius: '20px', // Rounded
               boxShadow: activeSection === item.id
-                ? 'inset 2px 2px 0px rgba(0,0,0,0.2)'
-                : '4px 4px 0px rgba(0,0,0,0.5)',
-              transform: activeSection === item.id ? 'translate(2px, 2px)' : 'none',
-              padding: isMobile ? '10px' : '10px 15px',
+                ? 'inset 2px 2px 5px rgba(0,0,0,0.1)'
+                : '0px 4px 0px rgba(0,0,0,0.1)', // Soft shadow
+              transform: activeSection === item.id ? 'translate(0px, 2px)' : 'none',
+              padding: isMobile ? '8px' : '10px 18px',
               minWidth: isMobile ? '48px' : 'auto',
               minHeight: isMobile ? '48px' : 'auto',
-              fontFamily: '"Press Start 2P", cursive',
-              fontSize: isMobile ? '12px' : '10px',
+              fontFamily: '"Fredoka", sans-serif',
+              fontWeight: '600',
+              fontSize: isMobile ? '12px' : '14px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -69,7 +69,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           >
             <SpriteIcon
               src="./assets/sprites/ui-icons.webp"
-              size={isMobile ? 32 : 24}
+              size={isMobile ? 28 : 24}
               sheetSize={128}
               iconSize={64}
               index={item.iconIndex}
@@ -88,15 +88,18 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
         <motion.a
           href="./assets/resume.pdf"
           download
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           style={{
-            background: '#26a69a',
-            color: 'white',
-            border: '4px solid #fff',
-            boxShadow: '4px 4px 0px #000',
+            background: '#81D4FA', // Pastel Blue
+            color: '#FFFFFF',
+            border: '3px solid #FFF',
+            borderRadius: '20px',
+            boxShadow: '0px 4px 0px rgba(0,0,0,0.1)',
             padding: '10px 15px',
-            fontFamily: '"Press Start 2P", cursive',
-            fontSize: '10px',
+            fontFamily: '"Fredoka", sans-serif',
+            fontWeight: '600',
+            fontSize: '14px',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -107,7 +110,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
         >
           <SpriteIcon
             src="./assets/sprites/ui-icons.webp"
-            size={isMobile ? 32 : 24}
+            size={isMobile ? 28 : 24}
             sheetSize={128}
             iconSize={64}
             index={3}

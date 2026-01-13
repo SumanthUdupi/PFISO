@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { Html, Text, Float, Environment } from '@react-three/drei'
+import { Html, Text, Float } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
@@ -242,19 +242,23 @@ const LobbyContent = () => {
 
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
-            <ambientLight intensity={0.6} color="#4b3b60" />
+            {/* COZY: Balanced Soft Lighting */}
+            <ambientLight intensity={0.6} color="#FFF8E7" /> {/* Cosmic Latte Ambient */}
             <directionalLight
-                position={[-5, 10, -5]}
+                position={[-8, 12, -8]}
                 intensity={0.8}
                 castShadow
                 shadow-mapSize={[2048, 2048]}
-                shadow-bias={-0.0001}
-                color="#ff9966"
+                shadow-bias={-0.0005}
+                color="#FFECB3" // Very Soft Champagne Sun
             />
-            <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffaa55" distance={15} decay={2} />
+            {/* Fill Light - Soft Warmth from below/side */}
+            <hemisphereLight args={['#FFF3E0', '#E3F2FD', 0.4]} />
 
-            <pointLight position={[4, 2, -3]} intensity={0.8} color="#26a69a" distance={5} decay={2} />
-            <pointLight position={[-4, 2, -3]} intensity={0.8} color="#ffa726" distance={5} decay={2} />
+            <pointLight position={[0, 5, 0]} intensity={0.2} color="#FFD54F" distance={15} decay={2} />
+
+            <pointLight position={[4, 2, -3]} intensity={0.3} color="#FFE0B2" distance={5} decay={2} />
+            <pointLight position={[-4, 2, -3]} intensity={0.3} color="#FFE0B2" distance={5} decay={2} />
 
             <Effects />
 
@@ -279,12 +283,12 @@ const LobbyContent = () => {
                 onClick={() => handleInteraction('projects', 'Projects', projectPos)}
             />
 
-            <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#26a69a" distance={3} decay={2} />
+            <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#FFD54F" distance={3} decay={2} />
 
             <InteractiveObject
                 position={[4, 0.5, -3]}
                 label="Projects"
-                color="#26a69a"
+                color="#FFD54F" // Warm Gold instead of Cyan
                 onClick={() => handleInteraction('projects', 'Projects', projectPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
@@ -443,9 +447,7 @@ const Lobby = () => {
     return (
         <Physics gravity={[0, -30, 0]} timeStep={1 / 60}>
             <LobbyContent />
-            <Environment preset="city" />
-
-
+            {/* FIXED: Use sunset for lighting, but disable background to use our Custom Background.tsx */}
         </Physics>
     )
 }
