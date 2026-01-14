@@ -71,7 +71,6 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
 
   // Local state for visuals
   const [inRange, setInRange] = useState(false)
-  const [anchorX, setAnchorX] = useState<'center' | 'left' | 'right'>('center')
 
   // Check if locked
   const isLocked = useMemo(() => {
@@ -90,12 +89,6 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
       if (inRange !== newInRange) setInRange(newInRange)
     }
   })
-
-  useEffect(() => {
-    if (position[0] > 2) setAnchorX('right')
-    else if (position[0] < -2) setAnchorX('left')
-    else setAnchorX('center')
-  }, [position])
 
   const isActive = isStoreActive && !isLocked;
   const [triggerBurst, setTriggerBurst] = useState(false);
@@ -134,8 +127,8 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
               >
                 <boxGeometry args={[1, 1, 1]} />
                 <meshStandardMaterial
-                  color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
-                  emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                  color={isLocked ? '#5d4037' : (isActive ? '#fcf4e8' : color)} // Locked: Dark Brown, Active: Warm Cream
+                  emissive={isLocked ? '#2d2424' : (isActive ? color : '#000000')} // Locked: Charcoal
                   emissiveIntensity={isLocked ? 0.2 : 0.5}
                 />
               </mesh>
@@ -179,62 +172,47 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
           <meshBasicMaterial color={isLocked ? '#7f8c8d' : color} transparent opacity={inRange ? 0.8 : 0.3} />
         </mesh>
 
-        {(isActive || inRange) && (
-          <Html position={[0, 1.5, 0]} center={anchorX === 'center'} style={{
-            transform: anchorX === 'left' ? 'translateX(0%)' : anchorX === 'right' ? 'translateX(-100%)' : 'translateX(-50%)',
-            pointerEvents: 'none',
-            zIndex: 1000
-          }}>
-            <div style={{
-              color: '#333',
-              background: '#fff',
-              padding: '12px 18px',
-              borderRadius: '8px',
-              fontFamily: '"Press Start 2P", cursive',
-              fontSize: '10px',
-              whiteSpace: 'nowrap',
-              border: `3px solid #333`,
-              boxShadow: '4px 4px 0px rgba(0,0,0,0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              transform: 'translateY(-10px)'
-            }}>
-              <span style={{ fontWeight: 'bold', fontSize: '12px', textTransform: 'uppercase' }}>{label}</span>
-              {isLocked ? (
-                <span style={{ fontSize: '8px', color: '#c0392b', background: '#fadbd8', padding: '4px 8px', borderRadius: '4px', border: '1px solid #c0392b' }}>
-                  REQ: {requiredSkill?.name} ({requiredSkill?.tier})
-                </span>
-              ) : (
-                <span style={{ fontSize: '8px', color: '#666', marginTop: '2px' }}>
-                  {isActive ? '[ENTER] to INTERACT' : 'WALK CLOSER'}
-                </span>
-              )}
-              {/* Little tail for speech bubble */}
-              <div style={{
-                position: 'absolute',
-                bottom: '-8px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '0',
-                height: '0',
-                borderLeft: '8px solid transparent',
-                borderRight: '8px solid transparent',
-                borderTop: '8px solid #333'
-              }} />
-              <div style={{
-                position: 'absolute',
-                bottom: '-3px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '0',
-                height: '0',
-                borderLeft: '5px solid transparent',
-                borderRight: '5px solid transparent',
-                borderTop: '5px solid #fff'
-              }} />
-            </div>
+        {isActive && (
+          <Html position={[0, 1.5, 0]} center style={{ pointerEvents: 'none', zIndex: 1000 }}>
+             <div style={{
+               display: 'flex',
+               flexDirection: 'column',
+               alignItems: 'center',
+               animation: 'float 2s ease-in-out infinite'
+             }}>
+               {/* Minimal Key Prompt */}
+               <div style={{
+                 background: '#fcf4e8',
+                 border: '2px solid #4a3728',
+                 borderRadius: '4px',
+                 boxShadow: '0 2px 0 #4a3728',
+                 width: '24px',
+                 height: '24px',
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 fontFamily: '"Press Start 2P", cursive',
+                 fontSize: '10px',
+                 color: '#4a3728',
+                 marginBottom: '4px'
+               }}>
+                 E
+               </div>
+               <span style={{
+                 fontFamily: '"Press Start 2P", cursive',
+                 fontSize: '10px',
+                 color: '#fcf4e8',
+                 textShadow: '1px 1px 0 #4a3728, -1px -1px 0 #4a3728, 1px -1px 0 #4a3728, -1px 1px 0 #4a3728',
+               }}>
+                 {label}
+               </span>
+             </div>
+             <style>{`
+               @keyframes float {
+                 0%, 100% { transform: translateY(0); }
+                 50% { transform: translateY(-5px); }
+               }
+             `}</style>
           </Html>
         )}
       </group>

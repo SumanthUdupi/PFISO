@@ -9,35 +9,38 @@ const QuestTracker: React.FC = () => {
       position: 'absolute',
       top: '20px',
       left: '20px',
-      padding: '10px 15px',
-      background: 'rgba(0, 0, 0, 0.7)',
-      border: '2px solid #F39C12', // Orange for visibility
-      borderRadius: '8px',
-      color: '#fff',
-      fontFamily: '"Press Start 2P", cursive',
-      fontSize: '10px',
+      padding: '12px 18px',
+      background: 'rgba(255, 253, 240, 0.9)', // Cream
+      border: '3px solid #E6B0AA', // Pastel Pink / soft red
+      borderRadius: '20px', // Rounded
+      color: '#5D4037', // Dark Wood Text
+      fontFamily: '"Fredoka", sans-serif',
+      fontSize: '14px',
+      fontWeight: '600',
       maxWidth: '300px',
       zIndex: 100,
-      boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+      boxShadow: '0 4px 10px rgba(93, 64, 55, 0.1)', // Soft shadow
       transition: 'all 0.5s ease',
       transform: isObjectiveComplete ? 'scale(0.95)' : 'scale(1)',
-      opacity: isObjectiveComplete ? 0.7 : 1
+      opacity: isObjectiveComplete ? 0.8 : 1
     }}>
       <div style={{
-          color: '#F39C12',
-          marginBottom: '5px',
-          borderBottom: '1px solid #F39C12',
-          paddingBottom: '2px'
+        color: '#D84315', // Burnt Orange
+        marginBottom: '5px',
+        borderBottom: '2px dashed #D84315',
+        paddingBottom: '4px',
+        fontSize: '12px',
+        letterSpacing: '1px'
       }}>
-        CURRENT OBJECTIVE
+        CURRENT GOAL
       </div>
-      <div style={{ lineHeight: '1.5', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 'bold' }}>
+      <div style={{ lineHeight: '1.4' }}>
         {currentObjective}
       </div>
       {isObjectiveComplete && (
-          <div style={{ marginTop: '5px', color: '#2ECC71' }}>
-              ✓ COMPLETED
-          </div>
+        <div style={{ marginTop: '5px', color: '#66BB6A', fontWeight: 'bold' }}>
+          ✓ DONE!
+        </div>
       )}
     </div>
   );

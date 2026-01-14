@@ -25,35 +25,34 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
 
   if (isMobile) return null;
 
-  // Flatten skills for the inventory bar, or pick top skills?
-  // Let's flatten all items to show in the bar.
   const allSkills = skills.flatMap(cat => cat.items);
 
   const getTierColor = (tier: SkillTier) => {
     switch (tier) {
-      case 'Master': return '#F1C40F'; // Gold
-      case 'Proficient': return '#3498DB'; // Blue
-      case 'Novice': return '#2ECC71'; // Green
-      default: return '#95A5A6'; // Grey (Locked)
+      case 'Master': return '#FFD54F'; // Pastel Gold
+      case 'Proficient': return '#90CAF9'; // Pastel Blue
+      case 'Novice': return '#A5D6A7'; // Pastel Green
+      default: return '#E0E0E0'; // Light Grey
     }
   };
 
   return (
     <div style={{
       position: 'absolute',
-      bottom: '20px',
+      bottom: '30px',
       left: '50%',
       transform: 'translateX(-50%)',
       display: 'flex',
-      gap: '8px',
-      padding: '8px',
-      background: 'rgba(0,0,0,0.8)',
-      border: '4px solid #333',
-      borderRadius: '4px',
+      gap: '12px',
+      padding: '12px 20px',
+      background: 'rgba(255, 253, 240, 0.95)', // Cream background
+      borderRadius: '24px', // Rounded pill shape
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', // Soft diffuse shadow
       pointerEvents: 'auto',
       zIndex: 100,
       maxWidth: '90vw',
-      overflowX: 'auto'
+      overflowX: 'auto',
+      border: '4px solid #FFE0B2' // Soft Orange Border
     }}>
       {allSkills.map((skill, index) => {
         const currentTier = unlockedSkills[skill.name] || 'Locked';
@@ -62,25 +61,25 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
         return (
           <div key={index} style={{
             position: 'relative',
-            width: '40px',
-            height: '40px',
-            background: isLocked ? '#2c3e50' : getTierColor(currentTier),
-            border: isLocked ? '2px dashed #95a5a6' : '3px solid #fff',
-            boxShadow: '2px 2px 0px #000',
+            width: '48px',
+            height: '48px',
+            background: isLocked ? '#F5F5F5' : getTierColor(currentTier),
+            borderRadius: '12px',
+            border: isLocked ? '2px dashed #BDBDBD' : '3px solid #fff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: isLocked ? '#7f8c8d' : 'white',
-            fontSize: '16px',
+            color: isLocked ? '#BDBDBD' : '#5D4037',
             cursor: 'help',
             flexShrink: 0,
-            opacity: isLocked ? 0.5 : 1,
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            transform: isLocked ? 'scale(0.9)' : 'scale(1)',
+            boxShadow: isLocked ? 'none' : '0 4px 10px rgba(0,0,0,0.1)'
           }}
             title={isLocked ? '???' : `${skill.name} (${currentTier}): ${skill.description}`}
           >
             {isLocked ? (
-              <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '10px' }}>?</span>
+              <span style={{ fontFamily: '"Fredoka", sans-serif', fontSize: '14px', fontWeight: 'bold' }}>?</span>
             ) : (
               <SpriteIcon
                 src="./assets/sprites/skill-icons.webp"
@@ -90,34 +89,42 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
                 index={index}
               />
             )}
-            {/* Tiny tier indicator dot */}
+
+            {/* Status Dot */}
             {!isLocked && (
               <div style={{
                 position: 'absolute',
-                bottom: '2px',
-                right: '2px',
-                width: '6px',
-                height: '6px',
+                top: '-4px',
+                right: '-4px',
+                width: '12px',
+                height: '12px',
                 borderRadius: '50%',
-                background: 'white',
-                border: '1px solid black'
+                background: getTierColor(currentTier), // Match tier color
+                border: '2px solid white',
               }} />
             )}
           </div>
         );
       })}
+
       <div style={{
         position: 'absolute',
-        top: '-25px',
+        top: '-32px',
         left: '0',
         width: '100%',
         textAlign: 'center',
-        color: 'white',
-        fontFamily: '"Press Start 2P", cursive',
-        fontSize: '10px',
-        textShadow: '2px 2px #000'
+        color: '#5D4037', // Dark Brown
+        fontFamily: '"Fredoka", sans-serif',
+        fontWeight: 'bold',
+        fontSize: '14px',
+        background: 'rgba(255, 255, 255, 0.8)',
+        padding: '4px 12px',
+        borderRadius: '12px',
+        width: 'fit-content',
+        left: '50%',
+        transform: 'translateX(-50%)'
       }}>
-        INVENTORY (SKILLS)
+        🎒 SKILLS
       </div>
     </div>
   );

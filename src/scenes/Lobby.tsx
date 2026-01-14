@@ -1,12 +1,9 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { Html, Text, Float, Environment } from '@react-three/drei'
+import { Html, SoftShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
+import { Physics } from '@react-three/rapier'
 import InteractiveObject from '../components/game/InteractiveObject'
-import NPC from '../components/game/AI/NPC'
-import UsableObject from '../components/game/Usables/UsableObject'
-import DebugStairs from '../components/game/Environment/DebugStairs'
 
 import Modal from '../components/ui/Modal'
 import ProjectModal from '../components/ui/ProjectModal'
@@ -218,14 +215,14 @@ const LobbyContent = () => {
                 onPointerOver={() => setCursor('crosshair')}
                 onPointerOut={() => setCursor('default')}
             >
-                <planeGeometry args={[15, 15]} />
+                <planeGeometry args={[12, 12]} />
                 <meshBasicMaterial transparent opacity={0} castShadow={false} />
             </mesh>
 
-            <Floor width={15} depth={15} theme={floorTheme} onFloorClick={handleFloorClick} />
-            <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
-            <Decor width={15} depth={15} />
-            <Motes count={100} area={[20, 10, 20]} />
+            <Floor width={12} depth={12} theme={floorTheme} onFloorClick={handleFloorClick} />
+            <Walls width={12} depth={12} height={4} playerPosition={playerPosition.current} />
+            <Decor width={12} depth={12} />
+            <Motes count={80} area={[15, 10, 15]} />
 
             {motes.map(mote => (
                 <InspirationMote
@@ -240,41 +237,41 @@ const LobbyContent = () => {
                 ref={playerRef}
                 onPositionChange={(pos) => playerPosition.current.copy(pos)}
                 initialPosition={[0, 0.5, 0]}
-                bounds={{ width: 15, depth: 15 }}
+                bounds={{ width: 12, depth: 12 }}
             />
 
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
-            <ambientLight intensity={0.6} color="#4b3b60" />
+            {/* LIGHTING & ATMOSPHERE */}
+            <SoftShadows size={15} samples={16} focus={0.5} />
+
+            <ambientLight intensity={0.3} color="#e6cba8" />
+
             <directionalLight
-                position={[-5, 10, -5]}
+                position={[-8, 12, -8]}
                 intensity={0.8}
                 castShadow
                 shadow-mapSize={[2048, 2048]}
-                shadow-bias={-0.0001}
-                color="#ff9966"
+                shadow-bias={-0.0005}
+                color="#ffcc80" // Warmer Sun
             />
-            <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffaa55" distance={15} decay={2} />
 
-            <pointLight position={[4, 2, -3]} intensity={0.8} color="#26a69a" distance={5} decay={2} />
-            <pointLight position={[-4, 2, -3]} intensity={0.8} color="#ffa726" distance={5} decay={2} />
+            {/* Fill Light - Cool tone to contrast warm sun */}
+            <directionalLight
+                position={[8, 5, 8]}
+                intensity={0.4}
+                color="#b0bec5" // Cool Blue Gray
+                castShadow={false}
+            />
+
+            <hemisphereLight args={['#d88c5a', '#4a3728', 0.2]} />
+
+            <pointLight position={[0, 5, 0]} intensity={0.1} color="#d88c5a" distance={15} decay={2} />
+
+            <pointLight position={[4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
+            <pointLight position={[-4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
 
             <Effects />
-
-            {!isMobile && (
-                <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5} position={[0, 3, -2]}>
-                    <Text
-                        fontSize={0.4}
-                        color="white"
-                        anchorX="center"
-                        anchorY="middle"
-                        outlineWidth={0.02}
-                        outlineColor="#4b3b60"
-                    >
-                        USE WASD TO MOVE | ENTER TO INTERACT
-                    </Text>
-                </Float>
-            )}
 
             <StrategyBoard
                 position={[4, 0, -3]}
@@ -282,18 +279,17 @@ const LobbyContent = () => {
                 onClick={() => handleInteraction('projects', 'Projects', projectPos)}
             />
 
-            <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#26a69a" distance={3} decay={2} />
+            <pointLight ref={pulseRef} position={[4, 2, -3]} intensity={1.5} color="#FFD54F" distance={3} decay={2} />
 
             <InteractiveObject
                 position={[4, 0.5, -3]}
                 label="Projects"
-                color="#26a69a"
+                color="#e67e22" // Burnt Orange
                 onClick={() => handleInteraction('projects', 'Projects', projectPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
                 isFocused={closestObject === 'projects'}
                 castShadow={false}
-                type="inspect"
             />
 
             <InspirationBoard
@@ -305,13 +301,12 @@ const LobbyContent = () => {
             <InteractiveObject
                 position={[-4, 0.5, -3]}
                 label="About Me"
-                color="#ffa726"
+                color="#d88c5a" // Terracotta
                 onClick={() => handleInteraction('about', 'About Me', aboutPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
                 isFocused={closestObject === 'about'}
                 castShadow={false}
-                type="talk"
             />
 
             <SupplyShelf position={[0, 0, -5.5]} rotation={[0, 0, 0]} />
@@ -325,13 +320,12 @@ const LobbyContent = () => {
             <InteractiveObject
                 position={[2, 0.5, -4.8]}
                 label="Contact"
-                color="#ef5350"
+                color="#e67e22" // Burnt Orange
                 onClick={() => handleInteraction('contact', 'Contact', contactPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
                 isFocused={closestObject === 'contact'}
                 castShadow={false}
-                type="talk"
             />
 
             <ReceptionDesk
@@ -417,14 +411,14 @@ const LobbyContent = () => {
                                     style={{
                                         display: 'block',
                                         width: '100%',
-                                        background: '#26a69a',
+                                        background: '#e67e22', // Burnt Orange
                                         color: 'white',
                                         padding: '15px',
                                         textAlign: 'center',
                                         textDecoration: 'none',
                                         fontFamily: '"Press Start 2P", cursive',
-                                        border: '4px solid #1abc9c',
-                                        boxShadow: '0 4px 0 #16a085',
+                                        border: '4px solid #fcf4e8', // Warm Cream Border
+                                        boxShadow: '0 4px 0 #bf360c', // Darker Orange Shadow
                                         marginBottom: '20px'
                                     }}
                                 >
@@ -445,27 +439,11 @@ const LobbyContent = () => {
     )
 }
 
-
-
 const Lobby = () => {
     return (
         <Physics gravity={[0, -30, 0]} timeStep={1 / 60}>
             <LobbyContent />
-            <DebugStairs position={[-6, 0, 2]} />
-            <NPC startPos={[3, 1, 3]} />
-
-            {/* MECH-016: Usable Lamp */}
-            <UsableObject
-                id="lamp_1"
-                position={[-6, 0, -5]}
-                label="Desk Lamp"
-                initialState={false}
-                type="switch"
-            />
-
-            <Environment preset="city" />
-
-
+            {/* FIXED: Use sunset for lighting, but disable background to use our Custom Background.tsx */}
         </Physics>
     )
 }

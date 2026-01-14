@@ -124,13 +124,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               <button
                 onClick={() => setSelectedProject(null)}
                 style={{
-                  background: '#f1f1f1',
-                  border: '2px solid #ccc',
+                  background: '#e7dcc9',
+                  border: '2px solid #d7ccc8',
                   borderRadius: '8px',
                   fontFamily: '"Press Start 2P", cursive',
                   cursor: 'pointer',
                   marginBottom: '20px',
-                  color: '#2C3E50',
+                  color: '#4a3728',
                   textDecoration: 'none',
                   padding: '12px 16px',
                   width: isMobile ? '100%' : 'auto',
@@ -181,11 +181,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
 
               {/* Research / Approach */}
               <section style={{ marginBottom: '40px' }}>
-                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #3498DB', display: 'inline-block', paddingBottom: '5px' }}>APPROACH & SOLUTION</h2>
+                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #8D6E63', display: 'inline-block', paddingBottom: '5px' }}>APPROACH & SOLUTION</h2>
                 <p style={{ fontFamily: 'var(--font-body)', lineHeight: 1.6, marginTop: '15px' }}>{selectedProject.research.summary}</p>
 
                 {selectedProject.research.insights.length > 0 && (
-                  <div style={{ marginTop: '20px', background: '#eef', padding: '15px', borderRadius: '8px' }}>
+                  <div style={{ marginTop: '20px', background: '#efebe9', padding: '15px', borderRadius: '8px' }}>
                     <h4 style={{ margin: '0 0 10px 0', fontFamily: 'var(--font-body)' }}>Key Insights</h4>
                     <ul style={{ paddingLeft: '20px', margin: 0 }}>
                       {selectedProject.research.insights.map((insight, i) => (
@@ -228,12 +228,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               )}
 
               {/* Outcomes */}
-              <section style={{ marginBottom: '40px', background: '#2C3E50', color: 'white', padding: '30px', borderRadius: '8px' }}>
-                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #2ECC71', display: 'inline-block', paddingBottom: '5px', color: '#2ECC71' }}>IMPACT & RESULTS</h2>
+              <section style={{ marginBottom: '40px', background: '#2d2424', color: '#fcf4e8', padding: '30px', borderRadius: '8px' }}>
+                <h2 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '4px solid #9CCC65', display: 'inline-block', paddingBottom: '5px', color: '#9CCC65' }}>IMPACT & RESULTS</h2>
                 <div style={{ display: 'flex', gap: '20px', marginTop: '20px', flexWrap: 'wrap' }}>
                   {selectedProject.outcomes.metrics.map((metric, i) => (
-                    <div key={i} style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #2ECC71', paddingLeft: '15px' }}>
-                      <p style={{ fontSize: '16px', color: '#fff', margin: 0, fontFamily: 'var(--font-body)', fontWeight: 'bold' }}>{metric}</p>
+                    <div key={i} style={{ flex: 1, minWidth: '200px', borderLeft: '4px solid #9CCC65', paddingLeft: '15px' }}>
+                      <p style={{ fontSize: '16px', color: '#fcf4e8', margin: 0, fontFamily: 'var(--font-body)', fontWeight: 'bold' }}>{metric}</p>
                     </div>
                   ))}
                 </div>

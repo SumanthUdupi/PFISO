@@ -19,25 +19,25 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
             {/* Table Top */}
             <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 0.1, 1]} />
-                <meshStandardMaterial color="#8e44ad" /> {/* Purple-ish desk */}
+                <meshStandardMaterial color="#4a3728" /> {/* Dark Coffee Brown */}
             </mesh>
 
             {/* Legs */}
             <mesh position={[-0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#1e1616" /> {/* Deep Warm Brown */}
             </mesh>
             <mesh position={[0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
             <mesh position={[-0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
             <mesh position={[0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
 
             {/* Clutter */}
@@ -46,12 +46,12 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
                     {/* Monitor Stand */}
                     <mesh position={[0, 0.8, -0.3]} castShadow receiveShadow>
                         <boxGeometry args={[0.2, 0.1, 0.2]} />
-                        <meshStandardMaterial color="#2c3e50" />
+                        <meshStandardMaterial color="#4a3728" />
                     </mesh>
                     {/* Monitor Screen Frame */}
                     <mesh position={[0, 1.0, -0.3]} rotation={[0, 0, 0]} castShadow receiveShadow>
                          <boxGeometry args={[0.8, 0.5, 0.05]} />
-                         <meshStandardMaterial color="#2c3e50" />
+                         <meshStandardMaterial color="#4a3728" />
                     </mesh>
                     {/* Active Screen */}
                     <ActiveScreen
@@ -69,7 +69,7 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
                     {/* Papers */}
                     <mesh position={[-0.5, 0.76, 0.1]} rotation={[0, 0.2, 0]} receiveShadow>
                          <boxGeometry args={[0.2, 0.02, 0.3]} />
-                         <meshStandardMaterial color="#ecf0f1" />
+                         <meshStandardMaterial color="#fcf4e8" /> {/* Warm Cosmic Latte */}
                     </mesh>
                 </>
             )}

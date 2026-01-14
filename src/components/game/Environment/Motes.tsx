@@ -31,16 +31,16 @@ const Motes: React.FC<MotesProps> = ({ count = 100, area = [20, 10, 20] }) => {
     const positions = pointsRef.current.geometry.attributes.position.array as Float32Array
 
     for (let i = 0; i < count; i++) {
-        // Move slightly in some direction (e.g. up or swirl)
-        // Here we just drift them slowly
+      // Move slightly in some direction (e.g. up or swirl)
+      // Here we just drift them slowly
 
-        // Update Y (drift up/down)
-        positions[i * 3 + 1] += speeds[i] * delta * 0.5
+      // Update Y (drift up/down)
+      positions[i * 3 + 1] += speeds[i] * delta * 0.5
 
-        // Reset if out of bounds
-        if (positions[i * 3 + 1] > area[1]) {
-            positions[i * 3 + 1] = 0
-        }
+      // Reset if out of bounds
+      if (positions[i * 3 + 1] > area[1]) {
+        positions[i * 3 + 1] = 0
+      }
     }
 
     pointsRef.current.geometry.attributes.position.needsUpdate = true
@@ -58,7 +58,7 @@ const Motes: React.FC<MotesProps> = ({ count = 100, area = [20, 10, 20] }) => {
       </bufferGeometry>
       <pointsMaterial
         size={0.05}
-        color="white"
+        color="#FFCC80"
         transparent
         opacity={0.6}
         sizeAttenuation

@@ -8,20 +8,20 @@ interface NineSlicePanelProps {
 const NineSlicePanel: React.FC<NineSlicePanelProps> = ({ children, style }) => {
   // A 24x24 SVG for a retro "raised" button/window look.
   // 8px corners/edges.
-  // Colors: #FFF (Light), #dcd0c0 (Shadow), #fffbf0 (Face)
+  // Colors: #FFF (Light), #d7ccc8 (Shadow), #fcf4e8 (Face)
   const svgData = `
 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Background Face -->
-  <rect x="0" y="0" width="24" height="24" fill="#fffbf0"/>
+  <rect x="0" y="0" width="24" height="24" fill="#fcf4e8"/>
 
   <!-- Top Highlight -->
   <path d="M0 0H24V8H8V24H0V0Z" fill="white"/>
 
   <!-- Bottom Shadow -->
-  <path d="M24 24H0V16H16V0H24V24Z" fill="#dcd0c0"/>
+  <path d="M24 24H0V16H16V0H24V24Z" fill="#d7ccc8"/>
 
   <!-- Inner Face (Center 8x8) -->
-  <rect x="8" y="8" width="8" height="8" fill="#fffbf0"/>
+  <rect x="8" y="8" width="8" height="8" fill="#fcf4e8"/>
 </svg>
 `;
 

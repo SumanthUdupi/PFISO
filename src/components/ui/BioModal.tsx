@@ -54,7 +54,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                             </div>
 
                             <div style={{ flex: 1, minWidth: '300px' }}>
-                                <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>ABOUT ME</h3>
+                                <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #d7ccc8', paddingBottom: '10px' }}>ABOUT ME</h3>
                                 <div style={{ fontFamily: 'var(--font-body)', fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
                                     {bio.summary.map((paragraph, idx) => (
                                         <p key={idx} style={{ marginBottom: '15px' }}>
@@ -63,7 +63,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                     ))}
                                 </div>
 
-                                <div style={{ background: '#f0f8ff', padding: '15px', borderLeft: '4px solid #3498db', marginBottom: '20px' }}>
+                                <div style={{ background: '#fff3e0', padding: '15px', borderLeft: '4px solid #ffb74d', marginBottom: '20px' }}>
                                     <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginBottom: '10px' }}>TARGET AUDIENCE</h4>
                                     <p style={{ fontFamily: 'var(--font-body)', fontSize: '14px', fontStyle: 'italic' }}>{bio.targetAudience}</p>
                                 </div>
@@ -72,15 +72,15 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
 
                         {/* What I Do / Competencies */}
                         <div>
-                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '10px' }}>WHAT I DO</h3>
+                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #d7ccc8', paddingBottom: '10px', marginTop: '10px' }}>WHAT I DO</h3>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '15px' }}>
                                 {bio.competencies.map((comp, i) => (
-                                    <div key={i} style={{ background: '#fff', padding: '15px', border: '1px solid #ddd', borderRadius: '4px' }}>
-                                        <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#2c3e50', marginBottom: '10px' }}>{comp.title}</h4>
+                                    <div key={i} style={{ background: '#fff', padding: '15px', border: '1px solid #d7ccc8', borderRadius: '4px' }}>
+                                        <h4 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', color: '#4a3728', marginBottom: '10px' }}>{comp.title}</h4>
                                         <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', marginBottom: '10px' }}>{comp.description}</p>
                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                                             {comp.keywords.map((kw, k) => (
-                                                <span key={k} style={{ background: '#ecf0f1', padding: '2px 6px', fontSize: '10px', borderRadius: '3px', fontFamily: 'var(--font-body)' }}>{kw}</span>
+                                                <span key={k} style={{ background: '#efebe9', padding: '2px 6px', fontSize: '10px', borderRadius: '3px', fontFamily: 'var(--font-body)' }}>{kw}</span>
                                             ))}
                                         </div>
                                     </div>
@@ -90,7 +90,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
 
                         {/* Domain Expertise */}
                         <div>
-                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>DOMAIN EXPERTISE</h3>
+                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #d7ccc8', paddingBottom: '10px', marginTop: '30px' }}>DOMAIN EXPERTISE</h3>
                             <div style={{ marginTop: '15px' }}>
                                 {bio.domainExpertise.map((exp, i) => (
                                     <div key={i} style={{ marginBottom: '10px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
@@ -103,18 +103,18 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
 
                         {/* Skills Detail View */}
                         <div>
-                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #ccc', paddingBottom: '10px', marginTop: '30px' }}>TECHNICAL TOOLKIT</h3>
+                            <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '16px', borderBottom: '2px solid #d7ccc8', paddingBottom: '10px', marginTop: '30px' }}>TECHNICAL TOOLKIT</h3>
                             {bio.skills.map((category, i) => (
                                 <div key={i} style={{ marginBottom: '20px' }}>
-                                    <h4 style={{ fontFamily: 'var(--font-body)', fontWeight: 'bold', fontSize: '16px', color: '#34495e', marginBottom: '10px', borderLeft: '4px solid #ffa726', paddingLeft: '10px' }}>{category.category}</h4>
+                                    <h4 style={{ fontFamily: 'var(--font-body)', fontWeight: 'bold', fontSize: '16px', color: '#4a3728', marginBottom: '10px', borderLeft: '4px solid #ffa726', paddingLeft: '10px' }}>{category.category}</h4>
                                     <div style={{ display: 'grid', gap: '10px' }}>
                                         {category.items.map((skill, j) => (
-                                            <div key={j} style={{ background: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
+                                            <div key={j} style={{ background: '#efebe9', padding: '10px', borderRadius: '4px' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                                                     <span style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px' }}>{skill.name}</span>
-                                                    <span style={{ fontSize: '10px', background: '#3498db', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{skill.level}</span>
+                                                    <span style={{ fontSize: '10px', background: '#9CCC65', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{skill.level}</span>
                                                 </div>
-                                                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', margin: 0, color: '#555' }}>{skill.description}</p>
+                                                <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', margin: 0, color: '#4a3728' }}>{skill.description}</p>
                                                 {skill.certification && (
                                                     <div style={{ marginTop: '5px', fontSize: '11px', color: '#27ae60', fontStyle: 'italic' }}>Verified: {skill.certification}</div>
                                                 )}
@@ -148,7 +148,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                             <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px' }}>
                                 {bio.testimonials.map((t, i) => (
                                     <div key={i} style={{
-                                        background: '#F1C40F',
+                                        background: '#FFD54F',
                                         padding: '20px',
                                         width: '300px',
                                         flexShrink: 0,

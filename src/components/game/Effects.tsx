@@ -14,29 +14,34 @@ const Effects = () => {
   }
 
   return (
-    <EffectComposer multisampling={0}>
+    <EffectComposer multisampling={4}>
       <Bloom
-        luminanceThreshold={0.85}
+        luminanceThreshold={1.1} // Raised to prevent background blowout
         mipmapBlur
-        intensity={0.6}
+        intensity={0.2}
         radius={0.5}
       />
       <SSAO
-        radius={0.4}
-        intensity={50}
+        radius={0.1}
+        intensity={5}
         luminanceInfluence={0.4}
         color={undefined}
+        worldDistanceThreshold={10}
+        worldDistanceFalloff={10}
+        worldProximityThreshold={1}
+        worldProximityFalloff={1}
       />
       <Vignette eskil={false} offset={0.1} darkness={0.3} />
-      <HueSaturation saturation={0.1} hue={0} />
+      {/* HueSaturation disabled to prevent color shifting artifacts */}
+      {/* <HueSaturation saturation={0.2} hue={0} /> */}
 
-      {/* MECH-014: Object Highlight / Outline Shader */}
+      {/* MECH-014: Object Highlight / Outline Shader - Darker Edges */}
       <Outline
         blur
         edgeStrength={2.5}
         width={1000}
-        visibleEdgeColor={0xffffff}
-        hiddenEdgeColor={0xffffff}
+        visibleEdgeColor={0x4a4a4a} // Dark Gray Outline
+        hiddenEdgeColor={0x4a4a4a}
         xRay={false}
       />
     </EffectComposer>
