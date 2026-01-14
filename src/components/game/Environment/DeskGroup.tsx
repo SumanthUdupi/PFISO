@@ -19,25 +19,25 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
             {/* Table Top */}
             <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 0.1, 1]} />
-                <meshStandardMaterial color="#8e44ad" /> {/* Purple-ish desk */}
+                <meshStandardMaterial color="#8d6e63" /> {/* Warm Wood Desk */}
             </mesh>
 
             {/* Legs */}
             <mesh position={[-0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#3e2723" />
             </mesh>
             <mesh position={[0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#3e2723" />
             </mesh>
             <mesh position={[-0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#3e2723" />
             </mesh>
             <mesh position={[0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#34495e" />
+                <meshStandardMaterial color="#3e2723" />
             </mesh>
 
             {/* Clutter */}
@@ -46,12 +46,12 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
                     {/* Monitor Stand */}
                     <mesh position={[0, 0.8, -0.3]} castShadow receiveShadow>
                         <boxGeometry args={[0.2, 0.1, 0.2]} />
-                        <meshStandardMaterial color="#2c3e50" />
+                        <meshStandardMaterial color="#4a3728" />
                     </mesh>
                     {/* Monitor Screen Frame */}
                     <mesh position={[0, 1.0, -0.3]} rotation={[0, 0, 0]} castShadow receiveShadow>
                          <boxGeometry args={[0.8, 0.5, 0.05]} />
-                         <meshStandardMaterial color="#2c3e50" />
+                         <meshStandardMaterial color="#4a3728" />
                     </mesh>
                     {/* Active Screen */}
                     <ActiveScreen

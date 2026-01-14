@@ -130,8 +130,8 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
               >
                 <boxGeometry args={[1, 1, 1]} />
                 <meshStandardMaterial
-                  color={isLocked ? '#7f8c8d' : (isActive ? '#ecf0f1' : color)}
-                  emissive={isLocked ? '#2c3e50' : (isActive ? color : '#000000')}
+                  color={isLocked ? '#5d4037' : (isActive ? '#fcf4e8' : color)} // Locked: Dark Brown, Active: Warm Cream
+                  emissive={isLocked ? '#2d2424' : (isActive ? color : '#000000')} // Locked: Charcoal
                   emissiveIntensity={isLocked ? 0.2 : 0.5}
                 />
               </mesh>

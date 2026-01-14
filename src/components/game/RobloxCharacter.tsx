@@ -31,11 +31,11 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
   const materials = useMemo(() => {
     return {
       skin: new THREE.MeshStandardMaterial({ color: '#ffdbac', roughness: 0.3 }),
-      suit: new THREE.MeshStandardMaterial({ color: '#2c3e50', roughness: 0.8 }),
-      shirt: new THREE.MeshStandardMaterial({ color: '#f0f0f0', roughness: 0.6 }),
-      tie: new THREE.MeshStandardMaterial({ color: '#e74c3c', roughness: 0.4 }),
-      shoe: new THREE.MeshStandardMaterial({ color: '#111111', roughness: 0.1 }),
-      hair: new THREE.MeshStandardMaterial({ color: '#3d2314', roughness: 0.9 }),
+      suit: new THREE.MeshStandardMaterial({ color: '#4a3728', roughness: 0.9 }), // Dark Coffee Suit
+      shirt: new THREE.MeshStandardMaterial({ color: '#fff3e0', roughness: 0.6 }), // Warm Cream Shirt
+      tie: new THREE.MeshStandardMaterial({ color: '#e67e22', roughness: 0.4 }), // Burnt Orange Tie
+      shoe: new THREE.MeshStandardMaterial({ color: '#3e2723', roughness: 0.2 }), // Dark Leather
+      hair: new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.9 }), // Dark Charcoal Hair
       eyes: new THREE.MeshStandardMaterial({ color: '#000000', roughness: 0.1, emissive: '#000000' })
     }
   }, [])
