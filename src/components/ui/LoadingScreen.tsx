@@ -52,7 +52,7 @@ export const LoadingScreen = () => {
          <div style={{
             width: '128px',
             height: '128px',
-            backgroundImage: 'url(./assets/sprites/player-walk.webp)',
+            backgroundImage: `url(${import.meta.env.BASE_URL}assets/sprites/player-walk.webp)`,
             backgroundPosition: `-${frame * 128}px -128px`,
             backgroundSize: '1024px 512px',
             backgroundRepeat: 'no-repeat',
