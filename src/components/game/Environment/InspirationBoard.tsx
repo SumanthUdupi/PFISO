@@ -53,7 +53,7 @@ const InspirationBoard: React.FC<InspirationBoardProps> = ({ position, rotation 
              {/* Simple line implementation using a thin cylinder or tube */}
              <mesh position={[-0.05, 1.6, 0.07]} rotation={[0, 0, -0.3]}>
                 <cylinderGeometry args={[0.005, 0.005, 1.2, 4]} />
-                <meshStandardMaterial color="white" />
+                <meshStandardMaterial color="#fcf4e8" />
              </mesh>
         </group>
     )

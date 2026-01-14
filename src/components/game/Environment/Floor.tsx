@@ -46,11 +46,11 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
   const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), [])
 
   const materials = useMemo(() => {
-    // COZY WARM HONEY PALETTE (Low Contrast to avoid strobe)
-    // Warm, inviting colors that blend well
-    const woodMedium = new THREE.MeshStandardMaterial({ color: '#E6C9A8', roughness: 0.8 }) // Warm Beige
-    const woodDark = new THREE.MeshStandardMaterial({ color: '#Dcb38e', roughness: 0.85 })   // Soft Caramel
-    const woodLight = new THREE.MeshStandardMaterial({ color: '#F0D5B6', roughness: 0.75 })  // Pale Honey
+    // WARM & COZY PALETTE - Updated to reduce brightness
+    // Uses strictly authorized colors from Req/03
+    const woodMedium = new THREE.MeshStandardMaterial({ color: '#4a3728', roughness: 0.8 }) // Dark Coffee Brown
+    const woodDark = new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.85 })   // Warm Dark Charcoal
+    const woodLight = new THREE.MeshStandardMaterial({ color: '#d88c5a', roughness: 0.75 })  // Terracotta
 
     return [woodMedium, woodDark, woodLight]
   }, [theme])
@@ -84,7 +84,7 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
         const rand = Math.random()
         let matIndex = 0 // Medium
         if (rand > 0.6) matIndex = 2 // Light
-        // Removed high contrast dark option
+        if (rand < 0.2) matIndex = 1 // Dark
 
         groups[matIndex].push({
           position: [x, 0, z] as [number, number, number],
@@ -114,7 +114,7 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
       {/* Base Plane to catch raycasts in gaps */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} onClick={handleClick}>
         <planeGeometry args={[width, depth]} />
-        <meshStandardMaterial color="#5D4037" />
+        <meshStandardMaterial color="#1e1616" /> {/* Abyss / Deep Warm Brown */}
       </mesh>
 
       {Object.entries(groupedTiles).map(([index, tiles]) => {
