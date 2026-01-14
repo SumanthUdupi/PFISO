@@ -242,18 +242,18 @@ const LobbyContent = () => {
 
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
-            {/* COZY: Balanced Soft Lighting */}
-            <ambientLight intensity={0.6} color="#FFF8E7" /> {/* Cosmic Latte Ambient */}
+            {/* COZY: Balanced Soft Lighting - WARM EDITION */}
+            <ambientLight intensity={0.6} color="#FFEDCC" /> {/* Warmer Cream Ambient */}
             <directionalLight
                 position={[-8, 12, -8]}
                 intensity={0.8}
                 castShadow
                 shadow-mapSize={[2048, 2048]}
                 shadow-bias={-0.0005}
-                color="#FFECB3" // Very Soft Champagne Sun
+                color="#FFD580" // Warm Orange Sun
             />
             {/* Fill Light - Soft Warmth from below/side */}
-            <hemisphereLight args={['#FFF3E0', '#E3F2FD', 0.4]} />
+            <hemisphereLight args={['#FFF3E0', '#FCE4EC', 0.4]} /> {/* Ground: Warm, Sky: Pale Pink */}
 
             <pointLight position={[0, 5, 0]} intensity={0.2} color="#FFD54F" distance={15} decay={2} />
 
@@ -266,11 +266,11 @@ const LobbyContent = () => {
                 <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5} position={[0, 3, -2]}>
                     <Text
                         fontSize={0.4}
-                        color="white"
+                        color="#fcf4e8"
                         anchorX="center"
                         anchorY="middle"
                         outlineWidth={0.02}
-                        outlineColor="#4b3b60"
+                        outlineColor="#3e2723"
                     >
                         USE WASD TO MOVE | ENTER TO INTERACT
                     </Text>

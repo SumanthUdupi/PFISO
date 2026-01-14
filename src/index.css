@@ -3,24 +3,21 @@
   --font-body: 'VT323', monospace;
   /* Secondary pixel font for readability */
 
-  /* Palette */
-  --color-primary-glow: #ffa726;
-  /* Warm Orange */
-  --color-ui-bg: #fffbf0;
-  /* Warm Cream */
-  --color-ui-border: #dcd0c0;
-  --color-ui-text: #2c3e50;
-  /* Midnight Blue */
+  /* Palette - Warm & Cozy "Autumn Evening" Theme */
+  --color-primary-glow: #e67e22; /* Rich Burnt Orange */
+  --color-ui-bg: #fcf4e8; /* Warm Cosmic Latte / Parchment */
+  --color-ui-border: #d7ccc8; /* Warm Grey-Brown */
+  --color-ui-text: #4a3728; /* Dark Coffee Brown */
 
-  --color-sky-zenith: #1a1a2e;
-  --color-sky-horizon: #e67e22;
-  --color-sky-abyss: #4b3b60;
+  /* Background / Sky Palette */
+  --color-sky-zenith: #2d2424; /* Warm Dark Charcoal */
+  --color-sky-horizon: #d88c5a; /* Terracotta */
+  --color-sky-abyss: #1e1616; /* Deep Warm Brown */
 
-  --color-interactive-highlight: #00ffff;
-  /* Cyan for interactive highlight */
+  --color-interactive-highlight: #ffb74d; /* Warm Amber */
 
-  --color-scrollbar-track: #fffbf0;
-  --color-scrollbar-thumb: #ff9966;
+  --color-scrollbar-track: #fcf4e8;
+  --color-scrollbar-thumb: #e67e22;
 }
 
 * {
@@ -30,7 +27,7 @@
 body {
   margin: 0;
   background: var(--color-sky-zenith);
-  color: white;
+  color: #fcf4e8; /* Off-white for text on dark background */
   user-select: none;
   cursor: crosshair;
   /* Fallback retro cursor */
@@ -44,7 +41,7 @@ body {
 /* Custom Selection Color */
 ::selection {
   background: var(--color-primary-glow);
-  color: white;
+  color: #fff;
 }
 
 /* Custom Scrollbars */
@@ -95,23 +92,16 @@ button,
 .mobile-content-list {
   /* Height is managed by inline styles in App.tsx for transitions */
   overflow-y: auto;
-  background: #111;
-  color: white;
+  background: #2d2424; /* Match Zenith */
+  color: #fcf4e8;
   /* Padding is managed by inline styles for transitions */
   padding-bottom: calc(20px + var(--safe-area-bottom));
   font-family: 'Press Start 2P', cursive;
-  border-top: 4px solid #333;
+  border-top: 4px solid #4a3728;
   box-sizing: border-box;
   /* Ensure scrolling feels native */
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
-
-  /* Absolute positioning to slide up/down if needed, but flex/flow layout in App.tsx works too.
-     Currently it is just below the canvas.
-     Wait, if I want it to slide up OVER the canvas or push the canvas?
-     The current App.tsx structure has them as siblings.
-     So when one shrinks, the other grows.
-  */
 }
 
 /* Mobile Typography Scale */
@@ -130,7 +120,7 @@ button,
 }
 
 .skill-card {
-  background: #2c3e50;
+  background: #4a3728; /* Dark Coffee */
   padding: 16px;
   border-radius: 8px;
   text-align: center;
@@ -138,16 +128,17 @@ button,
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  border: 1px solid #5d4037;
 }
 
 /* Mobile Project Card Polish */
 .mobile-project-card {
-  background: #222;
+  background: #3e2723; /* Even darker brown */
   padding: 0;
   /* Remove padding to let image flush with edges */
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #333;
+  border: 1px solid #5d4037;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   margin-bottom: 24px;
 }
@@ -157,7 +148,7 @@ button,
   height: 180px;
   object-fit: cover;
   display: block;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #5d4037;
 }
 
 .mobile-card-content {
@@ -165,12 +156,12 @@ button,
 }
 
 .mobile-tech-tag {
-  background: #333;
+  background: #5d4037;
   padding: 6px 12px;
   font-size: 12px;
   border-radius: 100px;
   /* Pill shape */
-  color: #fff;
+  color: #fcf4e8;
   font-family: 'Inter', system-ui, sans-serif;
-  border: 1px solid #444;
+  border: 1px solid #795548;
 }

@@ -106,8 +106,8 @@ function App() {
                             left: '50%',
                             transform: 'translateX(-50%) translateY(-100%)',
                             zIndex: 1000,
-                            background: '#333',
-                            color: 'white',
+                            background: '#4a3728',
+                            color: '#fcf4e8',
                             border: 'none',
                             borderTopLeftRadius: '10px',
                             borderTopRightRadius: '10px',
@@ -128,7 +128,7 @@ function App() {
                         overflow: 'hidden', // Hide overflow when closed
                         overflowY: isProjectSectionOpen ? 'auto' : 'hidden'
                     }}>
-                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px' }}>Projects</h2>
+                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', color: '#fcf4e8' }}>Projects</h2>
                         <div>
                             {projectsData.map((project: any) => (
                                 <article key={project.id} className="mobile-project-card">
@@ -143,11 +143,11 @@ function App() {
                                         />
                                     )}
                                     <div className="mobile-card-content">
-                                        <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD700', lineHeight: '1.4' }}>{project.title}</h3>
+                                        <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD54F', lineHeight: '1.4' }}>{project.title}</h3>
                                         {/* Improved typography for body text */}
                                         <p className="mobile-text-body" style={{
                                             fontSize: '14px', // Fallback
-                                            color: '#ccc',
+                                            color: '#fcf4e8',
                                             fontFamily: 'Inter, system-ui, sans-serif',
                                             marginBottom: '15px'
                                         }}>
@@ -165,7 +165,7 @@ function App() {
                             ))}
                         </div>
 
-                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #333', paddingBottom: '10px', marginTop: '40px' }}>Skills</h2>
+                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', marginTop: '40px', color: '#fcf4e8' }}>Skills</h2>
                         <div className="mobile-skills-grid">
                             {flattenedSkills.map((skill: any) => (
                                 <div key={skill.name} className="skill-card">
@@ -173,13 +173,13 @@ function App() {
                                         {/* Default icon if none provided */}
                                         {skill.icon || '🔹'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#ecf0f1', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
-                                    {skill.level && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '4px' }}>{skill.level}</div>}
+                                    <div style={{ fontSize: '12px', color: '#fcf4e8', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
+                                    {skill.level && <div style={{ fontSize: '10px', color: '#d7ccc8', marginTop: '4px' }}>{skill.level}</div>}
                                 </div>
                             ))}
                         </div>
 
-                        <div style={{ height: '80px', textAlign: 'center', marginTop: '40px', fontSize: '12px', color: '#666' }}>
+                        <div style={{ height: '80px', textAlign: 'center', marginTop: '40px', fontSize: '12px', color: '#a1887f' }}>
                             Swipe up for more...
                         </div>
                     </div>

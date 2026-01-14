@@ -32,11 +32,11 @@ const Background: React.FC = () => {
       float y = normalize(vPosition).y;
 
       // COZY PASTEL PALETTE
-      // COZY COOL PASTEL PALETTE
-      vec3 skyTop = vec3(0.5, 0.6, 0.8);     // Cool Slate Blue
-      vec3 midSky = vec3(0.7, 0.8, 0.9);     // Soft Cloud Blue
-      vec3 horizon = vec3(0.85, 0.87, 0.9);  // Misty White (Darkened)
-      vec3 abyss = vec3(0.15, 0.2, 0.3);    // Deep Cool Gray (Darkened)
+      // WARM SUNSET PALETTE
+      vec3 skyTop = vec3(0.45, 0.35, 0.4);   // Warm Muted Mauve
+      vec3 midSky = vec3(0.8, 0.6, 0.5);     // Muted Coral/Salmon
+      vec3 horizon = vec3(0.95, 0.85, 0.7);  // Warm Parchment/Gold
+      vec3 abyss = vec3(0.15, 0.1, 0.1);     // Deep Cocoa
 
       vec3 color;
 
@@ -58,7 +58,7 @@ const Background: React.FC = () => {
       // Soft Stars (fewer, warmer)
       if (abs(y) > 0.3 && random(vUv * 50.0) > 0.99) {
           float twinkle = sin(time * 2.0 + vUv.x * 10.0) * 0.5 + 0.5;
-          color += vec3(0.9, 0.9, 0.8) * twinkle * 0.4; // Warm white stars
+          color += vec3(1.0, 0.95, 0.8) * twinkle * 0.4; // Warm white stars
       }
 
       gl_FragColor = vec4(color, 1.0);
