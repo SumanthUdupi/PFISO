@@ -11,9 +11,9 @@ interface WallsProps {
 
 const Walls: React.FC<WallsProps> = ({ width, depth, height }) => {
   // COZY: Eggshell/Cream Walls
-  const wallColor = '#FFF8E7' // Cosmic Latte / Cream
+  const wallColor = '#fcf4e8' // Warm Cosmic Latte / Parchment
   // COZY: Warm Wood Baseboard
-  const baseboardColor = '#D7CCC8' // Light Oak
+  const baseboardColor = '#d7ccc8' // Light Oak
 
   const wallHeight = height
   const wallThickness = 1.0

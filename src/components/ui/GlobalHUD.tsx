@@ -16,9 +16,9 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   // Icons from ui-icons.webp (128x128, assumed 2x2 grid of 64x64 icons)
   // 0: Projects, 1: About, 2: Contact, 3: Resume
   const navItems = [
-    { id: 'projects', label: 'WORK', iconIndex: 0, color: '#80CBC4' }, // Pastel Teal
-    { id: 'about', label: 'ABOUT', iconIndex: 1, color: '#FFCC80' },   // Pastel Orange
-    { id: 'contact', label: 'CONTACT', iconIndex: 2, color: '#EF9A9A' }, // Pastel Red
+    { id: 'projects', label: 'WORK', iconIndex: 0, color: '#FFD54F' }, // Warm Gold
+    { id: 'about', label: 'ABOUT', iconIndex: 1, color: '#FFB74D' },   // Warm Orange
+    { id: 'contact', label: 'CONTACT', iconIndex: 2, color: '#E57373' }, // Warm Red
   ] as const;
 
   return (
@@ -45,8 +45,8 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
             whileHover={{ scale: 1.05, rotate: isMobile ? 0 : [0, -2, 2, 0] }}
             whileTap={{ scale: 0.95 }}
             style={{
-              background: activeSection === item.id ? item.color : '#FFF8E1', // Active color or Cream
-              color: '#3E2723', // Darker Brown text for contrast
+              background: activeSection === item.id ? item.color : '#fcf4e8', // Active color or Warm Cream
+              color: '#4a3728', // Dark Coffee Brown text
               border: activeSection === item.id ? '3px solid #fff' : `3px solid ${item.color}`,
               borderRadius: '20px', // Rounded
               boxShadow: activeSection === item.id
@@ -91,7 +91,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           style={{
-            background: '#81D4FA', // Pastel Blue
+            background: '#9CCC65', // Earthy Green
             color: '#FFFFFF',
             border: '3px solid #FFF',
             borderRadius: '20px',

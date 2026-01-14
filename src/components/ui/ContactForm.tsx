@@ -59,7 +59,7 @@ const ContactForm = () => {
             required
             aria-label="Your Name"
             placeholder="John Doe"
-            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #ccc' }}
+            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #d7ccc8' }}
             />
         </div>
         <div>
@@ -71,7 +71,7 @@ const ContactForm = () => {
             required
             aria-label="Your Email"
             placeholder="john@example.com"
-            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #ccc' }}
+            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #d7ccc8' }}
             />
         </div>
         <div>
@@ -83,14 +83,14 @@ const ContactForm = () => {
             aria-label="Your Message"
             placeholder="How can I help you?"
             rows={5}
-            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #ccc' }}
+            style={{ width: '100%', padding: '10px', fontFamily: 'var(--font-body)', border: '2px solid #d7ccc8' }}
             />
         </div>
         <button
             type="submit"
             disabled={status === 'sending'}
             style={{
-            background: status === 'sending' ? '#95A5A6' : '#4A90E2',
+            background: status === 'sending' ? '#d7ccc8' : '#e67e22',
             color: 'white',
             border: 'none',
             padding: '15px',
@@ -110,7 +110,7 @@ const ContactForm = () => {
         )}
 
         {status === 'demo-success' && (
-            <div style={{ padding: '10px', background: '#FCF8E3', border: '2px solid #8A6D3B', color: '#8A6D3B', fontFamily: 'var(--font-body)' }}>
+            <div style={{ padding: '10px', background: '#FFF3E0', border: '2px solid #8A6D3B', color: '#8A6D3B', fontFamily: 'var(--font-body)' }}>
                 <strong>Message received!</strong> (Demo Mode: Backend simulation successful). I'll get back to you within 24 hours.
             </div>
         )}

@@ -45,7 +45,7 @@ const MailSlots: React.FC<MailSlotsProps> = ({ position, rotation = [0, 0, 0], o
             {/* Mail Envelopes sticking out */}
              <mesh position={[-0.4, 1.3, 0.2]} rotation={[0.5, 0, 0]}>
                 <boxGeometry args={[0.2, 0.1, 0.01]} />
-                <meshStandardMaterial color="#ecf0f1" />
+                <meshStandardMaterial color="#fcf4e8" />
             </mesh>
 
             {/* Icons floating above */}
