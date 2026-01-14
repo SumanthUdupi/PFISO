@@ -415,14 +415,14 @@ const LobbyContent = () => {
                                     style={{
                                         display: 'block',
                                         width: '100%',
-                                        background: '#26a69a',
+                                        background: '#e67e22', // Burnt Orange
                                         color: 'white',
                                         padding: '15px',
                                         textAlign: 'center',
                                         textDecoration: 'none',
                                         fontFamily: '"Press Start 2P", cursive',
-                                        border: '4px solid #1abc9c',
-                                        boxShadow: '0 4px 0 #16a085',
+                                        border: '4px solid #fcf4e8', // Warm Cream Border
+                                        boxShadow: '0 4px 0 #bf360c', // Darker Orange Shadow
                                         marginBottom: '20px'
                                     }}
                                 >

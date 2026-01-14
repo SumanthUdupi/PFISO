@@ -32,11 +32,11 @@ const Background: React.FC = () => {
       float y = normalize(vPosition).y;
 
       // COZY PASTEL PALETTE
-      // WARM SUNSET PALETTE
-      vec3 skyTop = vec3(0.45, 0.35, 0.4);   // Warm Muted Mauve
-      vec3 midSky = vec3(0.8, 0.6, 0.5);     // Muted Coral/Salmon
-      vec3 horizon = vec3(0.95, 0.85, 0.7);  // Warm Parchment/Gold
-      vec3 abyss = vec3(0.15, 0.1, 0.1);     // Deep Cocoa
+      // WARM SUNSET PALETTE - Updated to match Spec
+      vec3 skyTop = vec3(0.18, 0.14, 0.14);   // Warm Dark Charcoal (#2d2424)
+      vec3 midSky = vec3(0.90, 0.49, 0.13);   // Rich Burnt Orange (#e67e22)
+      vec3 horizon = vec3(0.85, 0.55, 0.35);  // Terracotta (#d88c5a)
+      vec3 abyss = vec3(0.12, 0.09, 0.09);    // Deep Warm Brown (#1e1616)
 
       vec3 color;
 
