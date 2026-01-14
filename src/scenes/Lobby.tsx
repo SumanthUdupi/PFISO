@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react'
-import { Html, Text, Float } from '@react-three/drei'
+import { Html, SoftShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
+import { Physics } from '@react-three/rapier'
 import InteractiveObject from '../components/game/InteractiveObject'
 
 import Modal from '../components/ui/Modal'
@@ -215,14 +215,14 @@ const LobbyContent = () => {
                 onPointerOver={() => setCursor('crosshair')}
                 onPointerOut={() => setCursor('default')}
             >
-                <planeGeometry args={[15, 15]} />
+                <planeGeometry args={[12, 12]} />
                 <meshBasicMaterial transparent opacity={0} castShadow={false} />
             </mesh>
 
-            <Floor width={15} depth={15} theme={floorTheme} onFloorClick={handleFloorClick} />
-            <Walls width={15} depth={15} height={4} playerPosition={playerPosition.current} />
-            <Decor width={15} depth={15} />
-            <Motes count={100} area={[20, 10, 20]} />
+            <Floor width={12} depth={12} theme={floorTheme} onFloorClick={handleFloorClick} />
+            <Walls width={12} depth={12} height={4} playerPosition={playerPosition.current} />
+            <Decor width={12} depth={12} />
+            <Motes count={80} area={[15, 10, 15]} />
 
             {motes.map(mote => (
                 <InspirationMote
@@ -237,45 +237,41 @@ const LobbyContent = () => {
                 ref={playerRef}
                 onPositionChange={(pos) => playerPosition.current.copy(pos)}
                 initialPosition={[0, 0.5, 0]}
-                bounds={{ width: 15, depth: 15 }}
+                bounds={{ width: 12, depth: 12 }}
             />
 
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
-            {/* COZY: Balanced Soft Lighting - WARM EDITION */}
-            <ambientLight intensity={0.4} color="#e6cba8" /> {/* Dimmer Warm Ambient */}
+            {/* LIGHTING & ATMOSPHERE */}
+            <SoftShadows size={15} samples={16} focus={0.5} />
+
+            <ambientLight intensity={0.3} color="#e6cba8" />
+
             <directionalLight
                 position={[-8, 12, -8]}
-                intensity={0.6}
+                intensity={0.8}
                 castShadow
                 shadow-mapSize={[2048, 2048]}
                 shadow-bias={-0.0005}
-                color="#e67e22" // Burnt Orange Sun
+                color="#ffcc80" // Warmer Sun
             />
-            {/* Fill Light - Soft Warmth from below/side */}
-            <hemisphereLight args={['#d88c5a', '#4a3728', 0.2]} /> {/* Ground: Terracotta, Sky: Dark Coffee */}
 
-            <pointLight position={[0, 5, 0]} intensity={0.15} color="#d88c5a" distance={15} decay={2} />
+            {/* Fill Light - Cool tone to contrast warm sun */}
+            <directionalLight
+                position={[8, 5, 8]}
+                intensity={0.4}
+                color="#b0bec5" // Cool Blue Gray
+                castShadow={false}
+            />
+
+            <hemisphereLight args={['#d88c5a', '#4a3728', 0.2]} />
+
+            <pointLight position={[0, 5, 0]} intensity={0.1} color="#d88c5a" distance={15} decay={2} />
 
             <pointLight position={[4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
             <pointLight position={[-4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
 
             <Effects />
-
-            {!isMobile && (
-                <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5} position={[0, 3, -2]}>
-                    <Text
-                        fontSize={0.4}
-                        color="#fcf4e8"
-                        anchorX="center"
-                        anchorY="middle"
-                        outlineWidth={0.02}
-                        outlineColor="#3e2723"
-                    >
-                        USE WASD TO MOVE | ENTER TO INTERACT
-                    </Text>
-                </Float>
-            )}
 
             <StrategyBoard
                 position={[4, 0, -3]}

@@ -35,6 +35,41 @@ const Walls: React.FC<WallsProps> = ({ width, depth, height }) => {
             <boxGeometry args={[width, baseboardHeight, baseboardThickness]} />
             <meshStandardMaterial color={baseboardColor} />
           </mesh>
+
+          {/* Window Frame */}
+          <group position={[3, 0.5, 0.1]}>
+             <mesh receiveShadow castShadow>
+                <boxGeometry args={[3, 2, 0.2]} />
+                <meshStandardMaterial color="#4a3728" /> {/* Dark Wood Frame */}
+             </mesh>
+             {/* Glass / Light */}
+             <mesh position={[0, 0, 0.05]}>
+                <planeGeometry args={[2.6, 1.6]} />
+                <meshBasicMaterial color="#b0bec5" /> {/* Cool light from outside */}
+             </mesh>
+              {/* Window Pane Bars */}
+             <mesh position={[0, 0, 0.06]}>
+                 <boxGeometry args={[0.1, 1.6, 0.05]} />
+                 <meshStandardMaterial color="#4a3728" />
+             </mesh>
+             <mesh position={[0, 0, 0.06]}>
+                 <boxGeometry args={[2.6, 0.1, 0.05]} />
+                 <meshStandardMaterial color="#4a3728" />
+             </mesh>
+          </group>
+
+           {/* Poster */}
+           <group position={[-3, 0.5, 0.1]}>
+              <mesh receiveShadow>
+                 <boxGeometry args={[1.5, 2, 0.05]} />
+                 <meshStandardMaterial color="#fff" />
+              </mesh>
+              <mesh position={[0, 0, 0.03]}>
+                  <planeGeometry args={[1.3, 1.8]} />
+                  <meshBasicMaterial color="#e67e22" /> {/* Abstract Art */}
+              </mesh>
+           </group>
+
         </group>
       </RigidBody>
 

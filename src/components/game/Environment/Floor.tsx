@@ -46,11 +46,11 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
   const geometry = useMemo(() => new THREE.PlaneGeometry(1, 1), [])
 
   const materials = useMemo(() => {
-    // WARM & COZY PALETTE - Updated to reduce brightness
-    // Uses strictly authorized colors from Req/03
-    const woodMedium = new THREE.MeshStandardMaterial({ color: '#4a3728', roughness: 0.8 }) // Dark Coffee Brown
-    const woodDark = new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.85 })   // Warm Dark Charcoal
-    const woodLight = new THREE.MeshStandardMaterial({ color: '#d88c5a', roughness: 0.75 })  // Terracotta
+    // REDUCED NOISE PALETTE
+    // Using subtle variations of warm brown to prevent moiré patterns
+    const woodMedium = new THREE.MeshStandardMaterial({ color: '#5D4037', roughness: 0.8 }) // Brown 700
+    const woodDark = new THREE.MeshStandardMaterial({ color: '#4E342E', roughness: 0.85 })   // Brown 800
+    const woodLight = new THREE.MeshStandardMaterial({ color: '#6D4C41', roughness: 0.8 })  // Brown 600
 
     return [woodMedium, woodDark, woodLight]
   }, [theme])
@@ -61,12 +61,11 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
       0: [], 1: [], 2: []
     }
 
-    // Reverted to Small/Detailed Planks
-    const plankW = 0.25
-    const plankL = 1.0
+    // Larger planks to reduce visual frequency/noise
+    const plankW = 0.6
 
     const rows = Math.ceil(depth / plankW)
-    const startZ = -depth / 2
+    const startZ = -depth / 2 + (plankW / 2) // Center alignment
     const startX = -width / 2
 
     for (let r = 0; r < rows; r++) {
@@ -76,20 +75,23 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
       let currentX = startX - stagger
 
       while (currentX < width / 2) {
-        const l = 3.0 + (Math.random() * 0.5) // Variable length
+        const l = 3.0 + (Math.random() * 1.0) // Longer planks (3.0 - 4.0)
         const x = currentX + l / 2
 
         if (x > width / 2) break; // Clip edge
 
         const rand = Math.random()
         let matIndex = 0 // Medium
-        if (rand > 0.6) matIndex = 2 // Light
-        if (rand < 0.2) matIndex = 1 // Dark
+        if (rand > 0.7) matIndex = 2 // Light (Subtle highlight)
+        if (rand < 0.3) matIndex = 1 // Dark (Subtle shadow)
 
-        groups[matIndex].push({
-          position: [x, 0, z] as [number, number, number],
-          scale: [l * 0.98, plankW * 0.98, 1] // Minimal Gap
-        })
+        // Only add if within bounds (approx)
+        if (currentX + l > -width/2 - 2) {
+             groups[matIndex].push({
+              position: [x, 0, z] as [number, number, number],
+              scale: [l * 0.98, plankW * 0.98, 1] // Minimal Gap
+            })
+        }
 
         currentX += l
       }
@@ -114,7 +116,7 @@ const Floor: React.FC<FloorProps> = ({ width, depth, theme = 'lobby', onFloorCli
       {/* Base Plane to catch raycasts in gaps */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} onClick={handleClick}>
         <planeGeometry args={[width, depth]} />
-        <meshStandardMaterial color="#1e1616" /> {/* Abyss / Deep Warm Brown */}
+        <meshStandardMaterial color="#3E2723" /> {/* Dark foundation */}
       </mesh>
 
       {Object.entries(groupedTiles).map(([index, tiles]) => {
