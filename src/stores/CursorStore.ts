@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type CursorType = 'default' | 'pointer' | 'grab' | 'text' | 'crosshair'
+export type CursorType = 'default' | 'pointer' | 'grab' | 'text' | 'crosshair' | 'not-allowed'
 
 interface CursorState {
     cursor: CursorType
