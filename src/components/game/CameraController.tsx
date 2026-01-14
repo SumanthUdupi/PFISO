@@ -38,47 +38,58 @@ const CameraController: React.FC<CameraControllerProps> = ({ targetRef }) => {
         camera.updateProjectionMatrix()
     }, [isMobile, camera])
 
+    // State for Mechanics
+    const lastPos = useRef(new THREE.Vector3())
+    const currentVelocity = useRef(new THREE.Vector3())
+
     useFrame((state, delta) => {
         if (!targetRef.current) return
 
-        const playerPos = targetRef.current.position
+        const playerPos = targetRef.current.position.clone()
+
+        // Inference of Velocity for Look Ahead & FOV
+        // Calculate velocity based on position change just for camera smoothing
+        const distMoved = playerPos.clone().sub(lastPos.current)
+        const vel = distMoved.divideScalar(Math.max(delta, 0.001))
+
+        // Smooth velocity signal
+        currentVelocity.current.lerp(vel, 5 * delta)
+        lastPos.current.copy(playerPos)
+
+        const speed = currentVelocity.current.length()
 
         // 1. Calculate Target Position with Look Ahead (MECH-022)
-        // We need velocity. If we don't have direct access, we can infer or pass it.
-        // But targetRef is Object3D, not RigidBody directly.
-        // Assuming targetRef updates every frame.
-        // Actually, Player component updates playerPosition ref in Lobby, we can use that?
-        // But passing ref is cleaner.
+        // Add a portion of velocity to the look target (horizontal only usually)
+        const lookAheadOffset = new THREE.Vector3(currentVelocity.current.x, 0, currentVelocity.current.z).multiplyScalar(LOOK_AHEAD_FACTOR)
+        // Clamp look ahead to avoid craziness
+        lookAheadOffset.clampLength(0, 3.0)
 
-        // Let's assume standard offset for now.
-        const idealPos = playerPos.clone().add(BASE_OFFSET)
+        const focusPoint = playerPos.clone().add(lookAheadOffset)
+
+        // Ideal Camera Position based on Focus Point
+        const idealPos = focusPoint.clone().add(BASE_OFFSET)
 
         // 2. Spring Arm / Collision (MECH-021)
-        // Raycast from Player to Camera Ideal.
+        // Raycast from Focus Point to Ideal Camera Position
+        let finalPos = idealPos.clone()
+
         if (world) {
-            const dir = idealPos.clone().sub(playerPos)
-            const length = dir.length()
+            const dir = idealPos.clone().sub(focusPoint)
+            const maxDist = dir.length()
             dir.normalize()
 
-            // Raycast from Camera TO Player (Reverse check usually safer to prevent clipping into player)
-            // Or Player TO Camera (to check obstruction).
-            // Let's do Player TO Camera.
-            // We need to import RAPIER from @react-three/rapier or use the hook properly.
-            // import { rapier } from '@react-three/rapier' is not how it works usually.
-            // We can get RAPIER instance from useRapier().rapier
+            // Cast ray
+            const ray = new state.rapier.Ray(focusPoint, dir)
+            const hit = world.castRay(ray, maxDist, true)
 
-            // We need to verify if we can access the RAPIER namespace.
-            // For now, assume we accept it doesn't collide with walls because walls are back-faced/culled usually?
-            // "MECH-021: Implement collision-aware camera that zooms in when obstructed by walls."
-
-            // Note: In an Isometric view, usually walls are cut away or transparent. 
-            // Zooming in might feel claustrophobic.
-            // Let's implement transparency fading instead? 
-            // This is harder without a custom shader or materialref management.
-
-            // Let's stick to the plan: Zoom in.
-            // If `rapier` instance is available.
-            // `const { rapier, world } = useRapier()`
+            if (hit && hit.toi < maxDist) {
+                // Wall detected, bring camera in
+                const collisionPoint = focusPoint.clone().add(dir.multiplyScalar(hit.toi - 0.5)) // 0.5 buffer
+                // Ensure we don't go INSIDE the player or too close
+                if (collisionPoint.distanceTo(focusPoint) > 2.0) {
+                    finalPos.copy(collisionPoint)
+                }
+            }
         }
 
         // 3. Screen Shake (MECH-023)
@@ -90,19 +101,22 @@ const CameraController: React.FC<CameraControllerProps> = ({ targetRef }) => {
             (Math.random() - 0.5) * shake
         )
 
-        // Apply
-        const damp = 1.0 - Math.exp(-3 * delta) // Smoother, less jerky than 5
-        camera.position.lerp(idealPos, damp).add(shakeOffset)
-        camera.lookAt(playerPos)
+        // Apply Position with Damping
+        // Use different damping for position vs collision to avoid clipping latency?
+        // Actually simple lerp is fine if update rate matches.
+        const damp = 1.0 - Math.exp(-4 * delta)
+        camera.position.lerp(finalPos.add(shakeOffset), damp)
+
+        // Look At Focus Point (Smoothly)
+        // We can't lerp lookAt directly easily, usually we lerp the quaternion or just lookAt every frame.
+        // lookAt every frame at the smoothed Focus Point is good.
+        camera.lookAt(focusPoint)
 
         // 4. Dynamic FOV (MECH-024)
-        // Need velocity magnitude.
-        // Approximation: Distance from last frame or passing velocity.
-        // For now skip velocity-based FOV unless we pass velocity.
         if (camera instanceof THREE.PerspectiveCamera) {
-            // Lerp FOV
-            // camera.fov = THREE.MathUtils.lerp(camera.fov, BASE_FOV, delta)
-            // camera.updateProjectionMatrix()
+            const targetFov = BASE_FOV + (Math.min(speed, 10) / 10) * (SPRINT_FOV - BASE_FOV)
+            camera.fov = THREE.MathUtils.lerp(camera.fov, targetFov, delta * 2)
+            camera.updateProjectionMatrix()
         }
     })
 

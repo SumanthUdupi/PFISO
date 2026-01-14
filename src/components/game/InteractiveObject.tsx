@@ -8,6 +8,8 @@ import useCursorStore from '../../stores/CursorStore'
 import useInteractionStore from '../../stores/interactionStore'
 import InteractionParticles from './InteractionParticles'
 
+import InteractiveHighlight from './InteractiveHighlight'
+
 interface InteractiveObjectProps {
   position: [number, number, number]
   color?: string
@@ -18,6 +20,7 @@ interface InteractiveObjectProps {
   isFocused?: boolean // Deprecated, but keeping for compatibility if needed. Store takes precedence.
   castShadow?: boolean
   requiredSkill?: { name: string, tier: SkillTier }
+  type?: 'inspect' | 'talk' | 'grab'
 }
 
 const INTERACTION_RADIUS = 2.5
@@ -30,7 +33,8 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
   playerPosition, // Still useful for "InRange" distance check visual fallback
   visibleMesh = true,
   castShadow = true,
-  requiredSkill
+  requiredSkill,
+  type = 'inspect'
 }) => {
   // Store integration
   const { registerObject, unregisterObject, setHovered, getActiveId } = useInteractionStore()
@@ -57,13 +61,13 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
       id,
       position: pos,
       label,
-      type: 'custom', // Generic
+      type, // Register Type
       onInteract: () => onClickRef.current(),
       ref: { current: null } // We don't necessarily need the ref for logic, just position
     })
     return () => unregisterObject(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, label, position[0], position[1], position[2], registerObject, unregisterObject])
+  }, [id, label, position[0], position[1], position[2], registerObject, unregisterObject, type])
 
   // Local state for visuals
   const [inRange, setInRange] = useState(false)
@@ -120,7 +124,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
         {visibleMesh ? (
           <Float speed={isLocked ? 0 : 2} rotationIntensity={isLocked ? 0 : 0.2} floatIntensity={isLocked ? 0 : 0.2}>
             {/* MECH-014: Wrap in Select for Outline effect */}
-            <Select enabled={isActive}>
+            <InteractiveHighlight id={id} enabled={isActive}>
               <mesh
                 ref={meshRef}
                 castShadow={castShadow}
@@ -135,7 +139,7 @@ const InteractiveObject: React.FC<InteractiveObjectProps> = ({
                   emissiveIntensity={isLocked ? 0.2 : 0.5}
                 />
               </mesh>
-            </Select>
+            </InteractiveHighlight>
 
             {/* Permanent Visual Identifier */}
             {!isActive && !isLocked && (

@@ -4,6 +4,9 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
 import InteractiveObject from '../components/game/InteractiveObject'
+import NPC from '../components/game/AI/NPC'
+import UsableObject from '../components/game/Usables/UsableObject'
+import DebugStairs from '../components/game/Environment/DebugStairs'
 
 import Modal from '../components/ui/Modal'
 import ProjectModal from '../components/ui/ProjectModal'
@@ -290,6 +293,7 @@ const LobbyContent = () => {
                 visibleMesh={false}
                 isFocused={closestObject === 'projects'}
                 castShadow={false}
+                type="inspect"
             />
 
             <InspirationBoard
@@ -307,6 +311,7 @@ const LobbyContent = () => {
                 visibleMesh={false}
                 isFocused={closestObject === 'about'}
                 castShadow={false}
+                type="talk"
             />
 
             <SupplyShelf position={[0, 0, -5.5]} rotation={[0, 0, 0]} />
@@ -326,6 +331,7 @@ const LobbyContent = () => {
                 visibleMesh={false}
                 isFocused={closestObject === 'contact'}
                 castShadow={false}
+                type="talk"
             />
 
             <ReceptionDesk
@@ -439,10 +445,24 @@ const LobbyContent = () => {
     )
 }
 
+
+
 const Lobby = () => {
     return (
         <Physics gravity={[0, -30, 0]} timeStep={1 / 60}>
             <LobbyContent />
+            <DebugStairs position={[-6, 0, 2]} />
+            <NPC startPos={[3, 1, 3]} />
+
+            {/* MECH-016: Usable Lamp */}
+            <UsableObject
+                id="lamp_1"
+                position={[-6, 0, -5]}
+                label="Desk Lamp"
+                initialState={false}
+                type="switch"
+            />
+
             <Environment preset="city" />
 
 
