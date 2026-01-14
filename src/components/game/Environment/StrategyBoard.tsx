@@ -22,26 +22,26 @@ const StrategyBoard: React.FC<StrategyBoardProps> = ({ position, rotation = [0, 
             {/* Stand Legs */}
             <mesh position={[-0.9, 1, 0]} castShadow>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" metalness={0.8} roughness={0.2} />
+                <meshStandardMaterial color="#3e2723" metalness={0.4} roughness={0.6} />
             </mesh>
             <mesh position={[0.9, 1, 0]} castShadow>
                 <boxGeometry args={[0.05, 2, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" metalness={0.8} roughness={0.2} />
+                <meshStandardMaterial color="#3e2723" metalness={0.4} roughness={0.6} />
             </mesh>
             {/* Crossbar */}
             <mesh position={[0, 0.5, 0]} castShadow>
                 <boxGeometry args={[1.8, 0.05, 0.05]} />
-                <meshStandardMaterial color="#7f8c8d" metalness={0.8} roughness={0.2} />
+                <meshStandardMaterial color="#3e2723" metalness={0.4} roughness={0.6} />
             </mesh>
             <mesh position={[0, 0.1, 0.3]} castShadow>
                 <boxGeometry args={[1.8, 0.05, 0.6]} />
-                <meshStandardMaterial color="#7f8c8d" metalness={0.8} roughness={0.2} />
+                <meshStandardMaterial color="#3e2723" metalness={0.4} roughness={0.6} />
             </mesh>
 
             {/* Board Frame */}
             <mesh position={[0, 1.5, 0]}>
                 <boxGeometry args={[2, 1.2, 0.05]} />
-                <meshStandardMaterial color="#ecf0f1" />
+                <meshStandardMaterial color="#8d6e63" />
             </mesh>
 
             {/* Glass Panel (Simulated with transparency) */}

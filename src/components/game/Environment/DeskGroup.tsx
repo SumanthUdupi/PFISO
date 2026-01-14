@@ -19,25 +19,25 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
             {/* Table Top */}
             <mesh position={[0, 0.7, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 0.1, 1]} />
-                <meshStandardMaterial color="#8d6e63" /> {/* Warm Wood Desk */}
+                <meshStandardMaterial color="#4a3728" /> {/* Dark Coffee Brown */}
             </mesh>
 
             {/* Legs */}
             <mesh position={[-0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#3e2723" />
+                <meshStandardMaterial color="#1e1616" /> {/* Deep Warm Brown */}
             </mesh>
             <mesh position={[0.9, 0.35, 0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#3e2723" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
             <mesh position={[-0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#3e2723" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
             <mesh position={[0.9, 0.35, -0.4]} castShadow receiveShadow>
                 <boxGeometry args={[0.1, 0.7, 0.1]} />
-                <meshStandardMaterial color="#3e2723" />
+                <meshStandardMaterial color="#1e1616" />
             </mesh>
 
             {/* Clutter */}
@@ -69,7 +69,7 @@ const DeskGroup: React.FC<DeskGroupProps> = ({ position, rotation = [0, 0, 0], v
                     {/* Papers */}
                     <mesh position={[-0.5, 0.76, 0.1]} rotation={[0, 0.2, 0]} receiveShadow>
                          <boxGeometry args={[0.2, 0.02, 0.3]} />
-                         <meshStandardMaterial color="#ecf0f1" />
+                         <meshStandardMaterial color="#fcf4e8" /> {/* Warm Cosmic Latte */}
                     </mesh>
                 </>
             )}

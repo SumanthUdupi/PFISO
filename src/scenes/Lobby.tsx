@@ -243,22 +243,22 @@ const LobbyContent = () => {
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
             {/* COZY: Balanced Soft Lighting - WARM EDITION */}
-            <ambientLight intensity={0.6} color="#FFEDCC" /> {/* Warmer Cream Ambient */}
+            <ambientLight intensity={0.4} color="#e6cba8" /> {/* Dimmer Warm Ambient */}
             <directionalLight
                 position={[-8, 12, -8]}
-                intensity={0.8}
+                intensity={0.6}
                 castShadow
                 shadow-mapSize={[2048, 2048]}
                 shadow-bias={-0.0005}
-                color="#FFD580" // Warm Orange Sun
+                color="#e67e22" // Burnt Orange Sun
             />
             {/* Fill Light - Soft Warmth from below/side */}
-            <hemisphereLight args={['#FFF3E0', '#FCE4EC', 0.4]} /> {/* Ground: Warm, Sky: Pale Pink */}
+            <hemisphereLight args={['#d88c5a', '#4a3728', 0.2]} /> {/* Ground: Terracotta, Sky: Dark Coffee */}
 
-            <pointLight position={[0, 5, 0]} intensity={0.2} color="#FFD54F" distance={15} decay={2} />
+            <pointLight position={[0, 5, 0]} intensity={0.15} color="#d88c5a" distance={15} decay={2} />
 
-            <pointLight position={[4, 2, -3]} intensity={0.3} color="#FFE0B2" distance={5} decay={2} />
-            <pointLight position={[-4, 2, -3]} intensity={0.3} color="#FFE0B2" distance={5} decay={2} />
+            <pointLight position={[4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
+            <pointLight position={[-4, 2, -3]} intensity={0.2} color="#fcf4e8" distance={5} decay={2} />
 
             <Effects />
 
@@ -288,7 +288,7 @@ const LobbyContent = () => {
             <InteractiveObject
                 position={[4, 0.5, -3]}
                 label="Projects"
-                color="#FFD54F" // Warm Gold instead of Cyan
+                color="#e67e22" // Burnt Orange
                 onClick={() => handleInteraction('projects', 'Projects', projectPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
@@ -305,7 +305,7 @@ const LobbyContent = () => {
             <InteractiveObject
                 position={[-4, 0.5, -3]}
                 label="About Me"
-                color="#ffa726"
+                color="#d88c5a" // Terracotta
                 onClick={() => handleInteraction('about', 'About Me', aboutPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}
@@ -324,7 +324,7 @@ const LobbyContent = () => {
             <InteractiveObject
                 position={[2, 0.5, -4.8]}
                 label="Contact"
-                color="#ef5350"
+                color="#e67e22" // Burnt Orange
                 onClick={() => handleInteraction('contact', 'Contact', contactPos)}
                 playerPosition={playerPosition.current}
                 visibleMesh={false}

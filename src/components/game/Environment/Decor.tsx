@@ -28,7 +28,7 @@ const CoffeeMug = ({ position }: { position: [number, number, number] }) => (
     <group position={position}>
         <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
             <cylinderGeometry args={[0.08, 0.08, 0.2, 16]} />
-            <meshStandardMaterial color="#90CAF9" />
+            <meshStandardMaterial color="#fcf4e8" />
         </mesh>
         {/* Steam */}
         <mesh position={[0, 0.3, 0]}>
@@ -43,11 +43,11 @@ const BookStack = ({ position }: { position: [number, number, number] }) => (
     <group position={position} rotation={[0, Math.random() * Math.PI, 0]}>
         <mesh position={[0, 0.05, 0]} castShadow>
             <boxGeometry args={[0.4, 0.1, 0.3]} />
-            <meshStandardMaterial color="#FFCC80" />
+            <meshStandardMaterial color="#d88c5a" />
         </mesh>
         <mesh position={[0.05, 0.15, 0]} rotation={[0, 0.2, 0]} castShadow>
             <boxGeometry args={[0.35, 0.1, 0.25]} />
-            <meshStandardMaterial color="#CE93D8" />
+            <meshStandardMaterial color="#8d6e63" />
         </mesh>
     </group>
 )
@@ -88,11 +88,11 @@ const Decor: React.FC<DecorProps> = ({ width, depth }) => {
 
     return (
         <group>
-            {/* Center RUG: Sage Green (Solid) */}
-            <CozyRug position={[0, 0, 0]} size={[5, 4]} color="#A5D6A7" />
+            {/* Center RUG: Terracotta (Solid) */}
+            <CozyRug position={[0, 0, 0]} size={[5, 4]} color="#d88c5a" />
 
-            {/* Entrance RUG: Warm Beige */}
-            <CozyRug position={[0, 0, 6]} size={[3, 2]} color="#FFECB3" />
+            {/* Entrance RUG: Darker Beige */}
+            <CozyRug position={[0, 0, 6]} size={[3, 2]} color="#e6cba8" />
 
             {/* PLANTS */}
             <Plant position={[-6, -0.5, -6]} />

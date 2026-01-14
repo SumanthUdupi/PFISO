@@ -34,14 +34,14 @@ const ReceptionDesk: React.FC<ReceptionDeskProps> = ({ position, rotation = [0, 
             {/* Desk Body */}
             <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
                 <boxGeometry args={[2, 1, 0.8]} />
-                <meshStandardMaterial color="#fcf4e8" />
+                <meshStandardMaterial color="#fcf4e8" /> {/* Warm Cosmic Latte */}
             </mesh>
 
             {/* Nameplate */}
             <group position={[0.6, 1.05, 0.2]} rotation={[-Math.PI/6, 0, 0]}>
                 <mesh>
                     <boxGeometry args={[0.6, 0.15, 0.05]} />
-                    <meshStandardMaterial color="#3e2723" metalness={0.8} roughness={0.2} />
+                    <meshStandardMaterial color="#4a3728" metalness={0.8} roughness={0.2} /> {/* Dark Coffee Brown */}
                 </mesh>
                  <Text
                     position={[0, 0, 0.03]}
@@ -59,7 +59,7 @@ const ReceptionDesk: React.FC<ReceptionDeskProps> = ({ position, rotation = [0, 
                 {/* Stand */}
                 <mesh position={[0, 0.1, 0]}>
                     <cylinderGeometry args={[0.05, 0.05, 0.2]} />
-                    <meshStandardMaterial color="#d7ccc8" />
+                    <meshStandardMaterial color="#4a3728" /> {/* Dark Coffee Brown */}
                 </mesh>
                 {/* Screen */}
                 <mesh position={[0, 0.35, 0]} rotation={[-0.1, 0, 0]}>
@@ -77,7 +77,7 @@ const ReceptionDesk: React.FC<ReceptionDeskProps> = ({ position, rotation = [0, 
                     position={[0, 0.35, 0.04]}
                     rotation={[-0.1, 0, 0]}
                     fontSize={0.08}
-                    color={hovered ? "#9CCC65" : "#fcf4e8"}
+                    color={hovered ? "#2ecc71" : "#fcf4e8"} // Updated success green
                     anchorX="center"
                     anchorY="middle"
                 >
