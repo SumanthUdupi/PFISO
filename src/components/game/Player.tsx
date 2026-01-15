@@ -190,7 +190,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             currentCommand.current = null
             path.current = []
             currentPathIndex.current = 0
-            
+
             // Validate
             if (!target) return;
 
@@ -267,7 +267,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         let onGround = false
         if (hit) {
             // Distance of Ray - Offset
-            const dist = hit.toi - 0.1 
+            const dist = hit.toi - 0.1
             // Allow slightly higher tolerance for slopes
             if (dist < 0.25 && vel.y < 0.5) {
                 onGround = true
@@ -331,13 +331,13 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
 
         // 3. Input Calculation
         const input = new THREE.Vector3(0, 0, 0)
-        
+
         // Keyboard
         if (keys.current['w'] || keys.current['ArrowUp']) input.z -= 1
         if (keys.current['s'] || keys.current['ArrowDown']) input.z += 1
         if (keys.current['a'] || keys.current['ArrowLeft']) input.x -= 1
         if (keys.current['d'] || keys.current['ArrowRight']) input.x += 1
-        
+
         // Joystick
         if (Math.abs(joystick.x) > 0.1) input.x += joystick.x
         if (Math.abs(joystick.y) > 0.1) input.z += joystick.y
@@ -352,7 +352,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 const target = path.current[currentPathIndex.current]
                 const dir = target.clone().sub(currentPosition.current)
                 dir.y = 0
-                
+
                 // Distance Check
                 const dist = dir.length()
                 if (dist < 0.4) {
@@ -385,13 +385,13 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 // Calculate "slope forward" direction based on input
                 // Cross product approach to align with surface
                 // Right vector relative to input and Up
-                const right = new THREE.Vector3(input.z, 0, -input.x).normalize() 
+                const right = new THREE.Vector3(input.z, 0, -input.x).normalize()
                 // Actual forward aligned to slope
                 const slopeForward = new THREE.Vector3().crossVectors(right, groundNormal).normalize()
-                
+
                 // Verify direction
                 if (slopeForward.dot(input) < 0) slopeForward.negate()
-                
+
                 // Steep Slope Check (> 45 degrees)
                 const slopeAngle = groundNormal.angleTo(new THREE.Vector3(0, 1, 0))
                 if (slopeAngle > Math.PI / 3) { // 60 deg max?
@@ -406,7 +406,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 targetVelocity.set(input.x * MOVE_SPEED, 0, input.z * MOVE_SPEED)
             }
         }
-        
+
         const accel = isGrounded.current ? ACCELERATION_GROUND : ACCELERATION_AIR
         const friction = isGrounded.current ? FRICTION_GROUND : FRICTION_AIR
 
@@ -418,7 +418,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
             // Accelerate towards target
             const diff = targetVelocity.clone().sub(newH)
             const maxChange = accel * dt
-            
+
             if (diff.length() <= maxChange) {
                 newH.copy(targetVelocity)
             } else {
@@ -439,19 +439,19 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         // 5. Rotation (Smoothed)
         if (isMoving) {
             const targetRot = Math.atan2(input.x, input.z)
-            
+
             // Shortest angle
             let angleDiff = targetRot - currentRotation.current
             while (angleDiff > Math.PI) angleDiff -= Math.PI * 2
             while (angleDiff < -Math.PI) angleDiff += Math.PI * 2
-            
+
             // Frame-independent smoothing
             const t = 1.0 - Math.pow(0.01, dt * 2) // Tuned Damping
             currentRotation.current += angleDiff * Math.min(1, ROTATION_SPEED * dt)
-            
+
             // Banking
             const turnRate = angleDiff * 5.0 // Estimation
-            const targetBank = -Math.max(-1, Math.min(1, turnRate)) * BANK_AMOUNT * (newH.length()/MOVE_SPEED)
+            const targetBank = -Math.max(-1, Math.min(1, turnRate)) * BANK_AMOUNT * (newH.length() / MOVE_SPEED)
             bank.current = THREE.MathUtils.lerp(bank.current, targetBank, 10 * dt)
         } else {
             bank.current = THREE.MathUtils.lerp(bank.current, 0, 5 * dt)
@@ -494,7 +494,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
         if (!jumpHeld.current && newVelY > 0) {
             newVelY *= Math.pow(1.0 - 15.0 * dt, 2) // Smooth cut-off vs linear set
             // or just simple default:
-             if (newVelY > 0) newVelY *= JUMP_CUT_HEIGHT // fallback if logic complex
+            if (newVelY > 0) newVelY *= JUMP_CUT_HEIGHT // fallback if logic complex
         }
 
         // Apply
@@ -557,6 +557,7 @@ const Player = React.forwardRef<PlayerHandle, PlayerProps>(({ onPositionChange, 
                 friction={0} // We handle friction manually
                 restitution={0}
                 linearDamping={0} // We handle damping manually
+                name="player"
             >
                 {/* MECH-FIX: Adjusted collider to be slightly thinner to avoid wall clipping */}
                 <CapsuleCollider args={[0.25, 0.25]} position={[0, 0.6, 0]} />

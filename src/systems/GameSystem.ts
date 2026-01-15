@@ -1,5 +1,7 @@
 // import physicsInstance from './PhysicsSystem' // Deprecated
 import gameEventBus from './EventBus'
+import inputs from './InputManager'
+import useGameStore from '../stores/gameStore'
 
 class GameSystem {
     lastTime = 0
@@ -21,6 +23,15 @@ class GameSystem {
     // Called by React's useFrame
     update(time: number, deltaTime: number) {
         if (!this.isRunning) return
+
+        // Global Inputs
+        inputs.update() // Update input state once per frame
+        if (inputs.justPressed('INVENTORY')) {
+            useGameStore.getState().toggleInventory()
+        }
+        if (inputs.justPressed('MENU')) {
+            useGameStore.getState().togglePause()
+        }
 
         // Prevent spiral of death on lag spikes
         if (deltaTime > 0.25) deltaTime = 0.25

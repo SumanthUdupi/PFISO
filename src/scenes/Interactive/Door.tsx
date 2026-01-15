@@ -6,6 +6,7 @@ import { Html } from '@react-three/drei'
 import GameEntity from '../../components/game/ECS/GameEntity'
 import globalEvents from '../../systems/EventManager'
 import PositionalSound from '../../components/audio/PositionalSound'
+import useInventoryStore from '../../stores/inventoryStore'
 
 // CONT-004: Door System
 
@@ -35,18 +36,19 @@ const Door: React.FC<DoorProps> = ({
         const handleInteraction = (payload: any) => {
             if (payload.label === label) {
                 if (locked) {
-                    // Check Inventory (Mock)
+                    // Check Inventory
                     // In real system: inventory.hasItem(keyId)
-                    const hasKey = keyId === 'test_key' // Mock check
+                    const hasKey = useInventoryStore.getState().hasItem(keyId!)
 
                     if (hasKey) {
                         setLocked(false)
                         setFeedback("Unlocked")
-                        setPlaySound('open') // unlock sound?
+                        console.log("Door Unlocked") // Debug
+                        setPlaySound('unlock') // Use correct sound key 'unlock' from audioStore
                         setTimeout(() => setFeedback(null), 1000)
                     } else {
-                        setFeedback("Locked")
-                        setPlaySound('locked')
+                        setFeedback("Locked - Need Key")
+                        setPlaySound('error')
                         setTimeout(() => setFeedback(null), 1000)
                     }
                 } else {

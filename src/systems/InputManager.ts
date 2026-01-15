@@ -2,14 +2,14 @@ import * as THREE from 'three'
 
 // MECH-044: Input Manager
 
-export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU'
+export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU' | 'INVENTORY'
 export type AxisType = 'MOVE_X' | 'MOVE_Y' | 'LOOK_X' | 'LOOK_Y'
 
 class InputManager {
     // State
     private keys: { [key: string]: boolean } = {}
     private actions: { [key in ActionType]: boolean } = {
-        JUMP: false, DASH: false, INTERACT: false, MENU: false
+        JUMP: false, DASH: false, INTERACT: false, MENU: false, INVENTORY: false
     }
     // Previous frame state for "Just Pressed" detection
     private prevActions: { [key in ActionType]: boolean } = { ...this.actions }
@@ -48,6 +48,7 @@ class InputManager {
         this.actions.DASH = this.keys['shift'] || this.keys['shiftleft'] || this.keys['shiftright'] || false
         this.actions.INTERACT = this.keys['e'] || this.keys['enter'] || false
         this.actions.MENU = this.keys['escape'] || false
+        this.actions.INVENTORY = this.keys['i'] || this.keys['tab'] || false
 
         // 2. Axes Calculation (Keyboard)
         let kx = 0

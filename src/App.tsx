@@ -2,7 +2,11 @@ import { Suspense, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
-import Lobby from './scenes/Lobby'
+import Level_01 from './scenes/Level_01'
+import HUD from './components/ui/HUD'
+import InventoryUI from './components/ui/InventoryUI'
+import PauseMenu from './components/ui/PauseMenu'
+import GameOverScreen from './components/ui/GameOverScreen'
 import UIOverlay from './components/ui/UIOverlay'
 import { FPSLimiter } from './components/game/FPSLimiter'
 import { LoadingScreen } from './components/ui/LoadingScreen'
@@ -87,104 +91,110 @@ function App() {
                     </Suspense>
 
                     <Suspense fallback={<LoadingScreen />}>
-                        <Lobby />
+                        <Level_01 />
                     </Suspense>
                 </Canvas>
+                <HUD />
+                <InventoryUI />
+                <PauseMenu />
+                <GameOverScreen />
                 <UIOverlay />
                 {isMobile && <MobileControls />}
-            </div>
+            </div >
 
             {/* Portrait Mode Content List */}
-            {isPortraitMobile && (
-                <>
-                    {/* Collapse Toggle Button */}
-                    <button
-                        onClick={() => setIsProjectSectionOpen(!isProjectSectionOpen)}
-                        style={{
-                            position: 'absolute',
-                            bottom: isProjectSectionOpen ? '60dvh' : '0',
-                            left: '50%',
-                            transform: 'translateX(-50%) translateY(-100%)',
-                            zIndex: 1000,
-                            background: '#4a3728',
-                            color: '#fcf4e8',
-                            border: 'none',
-                            borderTopLeftRadius: '10px',
-                            borderTopRightRadius: '10px',
-                            padding: '10px 20px',
-                            fontFamily: '"Press Start 2P", cursive',
-                            fontSize: '10px',
-                            boxShadow: '0 -2px 5px rgba(0,0,0,0.5)',
-                            transition: 'bottom 0.3s ease'
-                        }}
-                    >
-                        {isProjectSectionOpen ? '▼ Minimize' : '▲ Projects'}
-                    </button>
+            {
+                isPortraitMobile && (
+                    <>
+                        {/* Collapse Toggle Button */}
+                        <button
+                            onClick={() => setIsProjectSectionOpen(!isProjectSectionOpen)}
+                            style={{
+                                position: 'absolute',
+                                bottom: isProjectSectionOpen ? '60dvh' : '0',
+                                left: '50%',
+                                transform: 'translateX(-50%) translateY(-100%)',
+                                zIndex: 1000,
+                                background: '#4a3728',
+                                color: '#fcf4e8',
+                                border: 'none',
+                                borderTopLeftRadius: '10px',
+                                borderTopRightRadius: '10px',
+                                padding: '10px 20px',
+                                fontFamily: '"Press Start 2P", cursive',
+                                fontSize: '10px',
+                                boxShadow: '0 -2px 5px rgba(0,0,0,0.5)',
+                                transition: 'bottom 0.3s ease'
+                            }}
+                        >
+                            {isProjectSectionOpen ? '▼ Minimize' : '▲ Projects'}
+                        </button>
 
-                    <div className="mobile-content-list" style={{
-                        height: isProjectSectionOpen ? '60dvh' : '0',
-                        padding: isProjectSectionOpen ? '20px' : '0',
-                        transition: 'height 0.3s ease, padding 0.3s ease',
-                        overflow: 'hidden', // Hide overflow when closed
-                        overflowY: isProjectSectionOpen ? 'auto' : 'hidden'
-                    }}>
-                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', color: '#fcf4e8' }}>Projects</h2>
-                        <div>
-                            {projectsData.map((project: any) => (
-                                <article key={project.id} className="mobile-project-card">
-                                    {project.heroImage && (
-                                        <img
-                                            src={project.heroImage}
-                                            alt={project.title}
-                                            className="mobile-project-image"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                            }}
-                                        />
-                                    )}
-                                    <div className="mobile-card-content">
-                                        <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD54F', lineHeight: '1.4' }}>{project.title}</h3>
-                                        {/* Improved typography for body text */}
-                                        <p className="mobile-text-body" style={{
-                                            fontSize: '14px', // Fallback
-                                            color: '#fcf4e8',
-                                            fontFamily: 'Inter, system-ui, sans-serif',
-                                            marginBottom: '15px'
-                                        }}>
-                                            {project.description}
-                                        </p>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                            {project.techStack.map((tech: string) => (
-                                                <span key={tech} className="mobile-tech-tag">
-                                                    {tech}
-                                                </span>
-                                            ))}
+                        <div className="mobile-content-list" style={{
+                            height: isProjectSectionOpen ? '60dvh' : '0',
+                            padding: isProjectSectionOpen ? '20px' : '0',
+                            transition: 'height 0.3s ease, padding 0.3s ease',
+                            overflow: 'hidden', // Hide overflow when closed
+                            overflowY: isProjectSectionOpen ? 'auto' : 'hidden'
+                        }}>
+                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', color: '#fcf4e8' }}>Projects</h2>
+                            <div>
+                                {projectsData.map((project: any) => (
+                                    <article key={project.id} className="mobile-project-card">
+                                        {project.heroImage && (
+                                            <img
+                                                src={project.heroImage}
+                                                alt={project.title}
+                                                className="mobile-project-image"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        )}
+                                        <div className="mobile-card-content">
+                                            <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD54F', lineHeight: '1.4' }}>{project.title}</h3>
+                                            {/* Improved typography for body text */}
+                                            <p className="mobile-text-body" style={{
+                                                fontSize: '14px', // Fallback
+                                                color: '#fcf4e8',
+                                                fontFamily: 'Inter, system-ui, sans-serif',
+                                                marginBottom: '15px'
+                                            }}>
+                                                {project.description}
+                                            </p>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                                {project.techStack.map((tech: string) => (
+                                                    <span key={tech} className="mobile-tech-tag">
+                                                        {tech}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                                    </article>
+                                ))}
+                            </div>
 
-                        <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', marginTop: '40px', color: '#fcf4e8' }}>Skills</h2>
-                        <div className="mobile-skills-grid">
-                            {flattenedSkills.map((skill: any) => (
-                                <div key={skill.name} className="skill-card">
-                                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>
-                                        {/* Default icon if none provided */}
-                                        {skill.icon || '🔹'}
+                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', marginTop: '40px', color: '#fcf4e8' }}>Skills</h2>
+                            <div className="mobile-skills-grid">
+                                {flattenedSkills.map((skill: any) => (
+                                    <div key={skill.name} className="skill-card">
+                                        <div style={{ fontSize: '24px', marginBottom: '10px' }}>
+                                            {/* Default icon if none provided */}
+                                            {skill.icon || '🔹'}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#fcf4e8', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
+                                        {skill.level && <div style={{ fontSize: '10px', color: '#d7ccc8', marginTop: '4px' }}>{skill.level}</div>}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#fcf4e8', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
-                                    {skill.level && <div style={{ fontSize: '10px', color: '#d7ccc8', marginTop: '4px' }}>{skill.level}</div>}
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
 
-                        <div style={{ height: '80px', textAlign: 'center', marginTop: '40px', fontSize: '12px', color: '#a1887f' }}>
-                            Swipe up for more...
+                            <div style={{ height: '80px', textAlign: 'center', marginTop: '40px', fontSize: '12px', color: '#a1887f' }}>
+                                Swipe up for more...
+                            </div>
                         </div>
-                    </div>
-                </>
-            )}
+                    </>
+                )
+            }
         </>
     )
 }
