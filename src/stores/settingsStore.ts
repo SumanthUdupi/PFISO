@@ -2,7 +2,17 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface SettingsState {
-    // Camera
+    // Camera Tuning
+    camDamping: number
+    setCamDamping: (val: number) => void
+    camSensitivity: number
+    setCamSensitivity: (val: number) => void
+    camDistance: number
+    setCamDistance: (val: number) => void
+    camLookAhead: number
+    setCamLookAhead: (val: number) => void
+
+    // Camera General
     fov: number
     setFov: (fov: number) => void
     mouseSensitivity: number
@@ -22,6 +32,16 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
+            // Camera Tuning Defaults
+            camDamping: 15,
+            setCamDamping: (val) => set({ camDamping: val }),
+            camSensitivity: 1.0,
+            setCamSensitivity: (val) => set({ camSensitivity: val }),
+            camDistance: 8,
+            setCamDistance: (val) => set({ camDistance: val }),
+            camLookAhead: 0.5,
+            setCamLookAhead: (val) => set({ camLookAhead: val }),
+
             fov: 75,
             setFov: (fov) => set({ fov }),
             mouseSensitivity: 1.0,

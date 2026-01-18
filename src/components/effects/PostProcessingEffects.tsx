@@ -73,58 +73,18 @@ const ImpactAberration = () => {
     )
 }
 
-const AutoFocusDOF = () => {
-    const { scene, camera } = useThree()
-    const raycaster = new THREE.Raycaster()
-    const screenCenter = new THREE.Vector2(0, 0)
-    const focusDist = useRef(5) // Default focus at 5m
-    const dofRef = useRef<any>(null)
-
-    useFrame((_, delta) => {
-        // Raycast from center
-        raycaster.setFromCamera(screenCenter, camera)
-        const intersects = raycaster.intersectObjects(scene.children, true)
-        let targetDist = 5
-
-        if (intersects.length > 0) {
-            targetDist = intersects[0].distance
-        }
-
-        if (targetDist < 1.0) targetDist = 1.0
-
-        focusDist.current = THREE.MathUtils.lerp(focusDist.current, targetDist, delta * 2.0)
-
-        if (dofRef.current) {
-            dofRef.current.target = new THREE.Vector3(0, 0, -focusDist.current).applyMatrix4(camera.matrixWorld)
-        }
-    })
-
-    return (
-        <DepthOfField
-            ref={dofRef}
-            target={[0, 0, 5]} // Default target
-            focalLength={0.05} // Narrower lens, less blur
-            bokehScale={2} // Smaller bokeh
-            height={480}
-        />
-    )
-}
-
 export const PostProcessingEffects: React.FC = () => {
     const { isMobile } = useDeviceDetect()
 
     return (
         <EffectComposer disableNormalPass>
-            {/* Soft Bloom - Very subtle */}
+            {/* Soft Bloom - Reduced for clarity */}
             <Bloom
                 luminanceThreshold={0.95}
                 mipmapBlur={!isMobile}
-                intensity={0.4}
-                radius={0.4}
+                intensity={0.2}
+                radius={0.2}
             />
-
-            {/* REQ-032: Auto Focus Depth of Field */}
-            {!isMobile ? <AutoFocusDOF /> : <></>}
 
             {/* REQ-034: Vignette - Dynamic based on Health */}
             <HealthVignette />
@@ -132,13 +92,10 @@ export const PostProcessingEffects: React.FC = () => {
             {/* REQ-035: Impact FX */}
             <ImpactAberration />
 
-            {/* Subtle Grain - Very low */}
-            {!isMobile ? <Noise opacity={0.01} /> : <></>}
-
             {/* Bright & Cozy Adjustment */}
             <BrightnessContrast
-                brightness={0.1}
-                contrast={0.05}
+                brightness={0.05}
+                contrast={0.1}
             />
         </EffectComposer>
     )

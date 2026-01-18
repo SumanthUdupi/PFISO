@@ -4,11 +4,12 @@
 
 :root {
 
+  /* Font Update for Cleaner, Premium Feel */
   --font-pixel: 'Press Start 2P', cursive;
-  --font-body: 'VT323', monospace;
+  --font-body: 'Outfit', 'Inter', system-ui, sans-serif; /* Changed from VT323 */
 
   /* Palette - Cozy "Refined" Theme */
-  --color-primary-glow: #d4a373;   /* Warm Wood/Caramel (was Orange) */
+  --color-primary-glow: #d4a373;   /* Warm Wood/Caramel */
   --color-ui-bg: #fffcf5;          /* Warm Cream */
   --color-ui-border: #ccd5ae;      /* Muted Sage */
   --color-ui-text: #4a403a;        /* Deep Espresso */
@@ -17,8 +18,9 @@
   --color-accent-sage: #ccd5ae;    /* Muted Sage */
   --color-accent-sand: #eaddcf;    /* Soft Cashmere */
   --color-accent-forest: #3a5a40;  /* Forest Green */
+  --color-accent-dark: #2d2424;    /* Darkened Wood */
 
-  /* Background / Sky Palette - keeping these for now as they affect 3D env */
+  /* Background / Sky Palette */
   --color-sky-zenith: #d4a373;
   --color-sky-horizon: #ccd5ae;
   --color-sky-abyss: #fefae0;
@@ -30,11 +32,11 @@
 }
 
 .glass-cozy {
-  background: rgba(255, 252, 245, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 252, 245, 0.8); /* More opaque for clarity */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(212, 163, 115, 0.1);
 }
 
 * {
@@ -43,19 +45,13 @@
 
 body {
   margin: 0;
-  background: var(--color-sky-horizon);
-  /* Start with horizon color */
+  background: var(--color-ui-bg); /* Match UI BG */
   color: var(--color-ui-text);
   user-select: none;
-  cursor: crosshair;
-  /* Fallback retro cursor */
+  cursor: default; /* Standard cursor for premium feel */
   font-family: var(--font-body);
-  font-size: 18px;
-  /* Base size for VT323 which is small */
-  /* Text Readability Enhancement */
+  font-size: 16px;
   text-shadow: none;
-  /* Removed harsh shadow for cleaner look */
-  /* Removed harsh shadow for cleaner look */
 }
 
 html,
@@ -64,7 +60,6 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  /* Prevent scrolling on the game page */
 }
 
 /* Main App Container */
@@ -84,8 +79,8 @@ body,
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
@@ -94,8 +89,8 @@ body,
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--color-scrollbar-thumb);
-  border: 4px solid var(--color-scrollbar-track);
-  box-shadow: inset -2px -2px 0px rgba(0, 0, 0, 0.5), inset 2px 2px 0px rgba(255, 255, 255, 0.5);
+  border: 3px solid var(--color-scrollbar-track);
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-corner {
@@ -107,7 +102,6 @@ a,
 button,
 [role="button"] {
   cursor: pointer;
-  /* Can be replaced with a custom hand cursor image if available */
 }
 
 /* --- Mobile UX Improvements --- */
@@ -121,24 +115,19 @@ button,
 /* Portrait Mobile Layout */
 .mobile-portrait-container {
   width: 100%;
-  /* Height is managed by inline styles in App.tsx for transitions */
   position: relative;
   overflow: hidden;
   touch-action: none;
 }
 
 .mobile-content-list {
-  /* Height is managed by inline styles in App.tsx for transitions */
   overflow-y: auto;
-  background: #2d2424;
-  /* Match Zenith */
-  color: #fcf4e8;
-  /* Padding is managed by inline styles for transitions */
+  background: var(--color-ui-bg); /* Consistent Warm Cream */
+  color: var(--color-ui-text);
   padding-bottom: calc(20px + var(--safe-area-bottom));
-  font-family: 'Press Start 2P', cursive;
-  border-top: 4px solid #4a3728;
+  font-family: var(--font-body);
+  border-top: 4px solid var(--color-accent-sage);
   box-sizing: border-box;
-  /* Ensure scrolling feels native */
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
@@ -159,50 +148,48 @@ button,
 }
 
 .skill-card {
-  background: #4a3728;
-  /* Dark Coffee */
+  background: white;
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid #5d4037;
+  border: 1px solid var(--color-ui-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* Mobile Project Card Polish */
 .mobile-project-card {
-  background: #3e2723;
-  /* Even darker brown */
+  background: white;
   padding: 0;
-  /* Remove padding to let image flush with edges */
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #5d4037;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-ui-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin-bottom: 24px;
 }
 
 .mobile-project-image {
   width: 100%;
-  height: 180px;
+  height: 200px;
   object-fit: cover;
   display: block;
-  border-bottom: 1px solid #5d4037;
+  border-bottom: 1px solid var(--color-ui-border);
 }
 
 .mobile-card-content {
-  padding: 20px;
+  padding: 24px;
 }
 
 .mobile-tech-tag {
-  background: #5d4037;
+  background: var(--color-accent-sand);
   padding: 6px 12px;
   font-size: 12px;
   border-radius: 100px;
-  /* Pill shape */
-  color: #fcf4e8;
-  font-family: 'Inter', system-ui, sans-serif;
-  border: 1px solid #795548;
+  color: var(--color-ui-text);
+  font-family: var(--font-body);
+  border: 1px solid var(--color-primary-glow);
+  font-weight: 500;
 }

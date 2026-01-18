@@ -3,7 +3,7 @@ import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useRapier } from '@react-three/rapier'
 import { Line, PointerLockControls } from '@react-three/drei'
-import { useControls } from 'leva'
+// import { useControls } from 'leva' // Removed for cleaner UI
 import useCameraStore, { CameraMode } from '../stores/cameraStore'
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
 import inputs from '../systems/InputManager'
@@ -19,18 +19,11 @@ const CameraSystem = () => {
     const { isMobile, isLandscape } = useDeviceDetect()
     const debugFlags = useGameStore(state => state.debugFlags)
 
-    // REQ-047: Leva GUI
-    const {
-        camDamping,
-        camSensitivity,
-        camDistance,
-        camLookAhead
-    } = useControls('Camera Tuning', {
-        camDamping: { value: 15, min: 1, max: 50 },
-        camSensitivity: { value: 1.0, min: 0.1, max: 5.0 },
-        camDistance: { value: 8, min: 2, max: 20 },
-        camLookAhead: { value: 0.5, min: 0, max: 2 }
-    })
+    // Camera Tuning from Settings Store (moved from Leva)
+    const camDamping = useSettingsStore(state => state.camDamping)
+    const camSensitivity = useSettingsStore(state => state.camSensitivity)
+    const camDistance = useSettingsStore(state => state.camDistance)
+    const camLookAhead = useSettingsStore(state => state.camLookAhead)
 
     // Internal State
     const currentRotation = useRef(new THREE.Vector2(0, 0))

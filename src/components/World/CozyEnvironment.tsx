@@ -10,8 +10,6 @@ export const CozyEnvironment: React.FC = () => {
     // Battery Saver Detection
     const [batterySaver, setBatterySaver] = useState(false);
 
-
-
     // Battery Saver Detection
     useEffect(() => {
         if ('getBattery' in navigator) {
@@ -23,66 +21,49 @@ export const CozyEnvironment: React.FC = () => {
                 checkBattery();
                 battery.addEventListener('levelchange', checkBattery);
                 battery.addEventListener('chargingchange', checkBattery);
-                // Return cleanup not used for promises usually but safe here
             });
         }
     }, []);
 
 
-    // Day/Night Cycle State
-    // 0 = Noon, 0.25 = Sunset, 0.5 = Midnight, 0.75 = Sunrise
-    useFrame((state) => {
-        const time = state.clock.elapsedTime;
-        const cycleDuration = 300; // 5 minutes per day for office feel
-        const dayTime = (time % cycleDuration) / cycleDuration;
+    // Static Golden Hour Lighting (Digital Hygge)
+    useFrame(() => {
+        // Golden Hour Direction
+        // Low angle sun from the side/window
+        const sunPos = new THREE.Vector3(60, 40, 40);
 
-        // Calculate Sun Position based on time
-        const phi = 2 * Math.PI * (dayTime - 0.5); // -PI to PI
-        const x = 100 * Math.cos(phi);
-        const y = 100 * Math.sin(phi);
-        const z = 20;
-
-        const isDay = y > 0;
-
-        // Update Directional Light (Sun/Moon)
         if (dirLightRef.current) {
-            dirLightRef.current.position.set(x, y, z);
+            dirLightRef.current.position.copy(sunPos);
             const saverMultiplier = batterySaver ? 0.5 : 1;
 
-            // Smoother office lighting
-            if (isDay) {
-                dirLightRef.current.intensity = THREE.MathUtils.lerp(0.8, 2.5, Math.sin(phi)) * saverMultiplier;
-                // Soft Warm Sun
-                dirLightRef.current.color.setHSL(0.1, 0.5, 0.95);
-            } else {
-                // Night (Office night mode)
-                dirLightRef.current.intensity = 0.3 * saverMultiplier;
-                dirLightRef.current.color.setHSL(0.6, 0.2, 0.2);
-            }
+            // Warm Golden Sun
+            dirLightRef.current.intensity = 2.5 * saverMultiplier;
+            dirLightRef.current.color.setHSL(0.08, 0.6, 0.8); // Warm Orange-Yellow
         }
 
         // Ambient Light
         if (ambientRef.current) {
             const saverMultiplier = batterySaver ? 0.5 : 1;
-            // Office usually has good ambient light
-            const ambInt = (isDay ? 0.8 : 0.3) * saverMultiplier;
-            ambientRef.current.intensity = THREE.MathUtils.lerp(ambientRef.current.intensity, ambInt, 0.01);
-            if (!isDay) ambientRef.current.color.setHex(0x263238); // Blue grey night
-            else ambientRef.current.color.setHex(0xffffff);
+            // Warm ambient to fill shadows
+            ambientRef.current.intensity = 0.6 * saverMultiplier;
+            ambientRef.current.color.setHex(0xffeebb); // Warm cream
         }
     });
 
     return (
         <>
-            <ambientLight ref={ambientRef} intensity={0.8} />
+            <ambientLight ref={ambientRef} intensity={0.6} />
             <directionalLight
                 ref={dirLightRef}
-                position={[10, 10, 5]}
-                intensity={1}
+                position={[60, 40, 40]}
+                intensity={2.5}
                 castShadow
                 shadow-mapSize-width={2048}
                 shadow-mapSize-height={2048}
-            />
+                shadow-bias={-0.0005}
+            >
+                <orthographicCamera attach="shadow-camera" args={[-50, 50, 50, -50]} />
+            </directionalLight>
 
             {/* Nice Office Floor - Warm Wood */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
@@ -94,8 +75,8 @@ export const CozyEnvironment: React.FC = () => {
                 />
             </mesh>
 
-            {/* Grid Pattern to prevent "rotation" illusion - Subtle */}
-            <gridHelper args={[100, 100, 0xbcaaa4, 0x8d6e63]} position={[0, 0.01, 0]} />
+            {/* Grid Pattern - Very Subtle Warmth */}
+            <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} />
 
             {/* Office Walls */}
             <OfficeWall position={[0, 1.5, -10]} width={20} />
