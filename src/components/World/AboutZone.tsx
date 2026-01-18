@@ -4,6 +4,7 @@ import { InteractableItem } from '../game/InteractableItem'
 import { CozyChair, CozyRug, Plant, CoffeeMug } from '../game/Environment/Decor'
 import bioData from '../../assets/data/bio.json'
 import { useUIStore } from '../../stores/uiStore'
+import { resolveAssetPath } from '../../utils/assetUtils'
 
 export const AboutZone: React.FC<{ position: [number, number, number] }> = ({ position }) => {
     const openModal = useUIStore(state => state.openModal)
@@ -29,7 +30,7 @@ export const AboutZone: React.FC<{ position: [number, number, number] }> = ({ po
                     title: "About Sumanth",
                     subtitle: bioData.role,
                     description: bioData.summary.join('\n\n'),
-                    image: bioData.avatar,
+                    image: resolveAssetPath(bioData.avatar),
                     tags: ["Biography", "Philosophy", "Goals"],
                     type: 'GENERIC'
                 })}
@@ -42,7 +43,7 @@ export const AboutZone: React.FC<{ position: [number, number, number] }> = ({ po
                 {/* Photo */}
                 {bioData.avatar && (
                     <Image
-                        url={bioData.avatar}
+                        url={resolveAssetPath(bioData.avatar)}
                         position={[0, 0.2, 0.06]}
                         scale={[2, 2]}
                     />

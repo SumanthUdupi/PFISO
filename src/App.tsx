@@ -34,6 +34,7 @@ import { TelemetryManager } from './systems/TelemetryManager'
 import useAudioStore from './audioStore'
 import useGameStore from './store'
 import Hotbar from './components/ui/Hotbar'
+import { resolveAssetPath } from './utils/assetUtils'
 
 
 // const CameraSystem = lazy(() => import('./systems/CameraSystem')) // Moved to Level_01
@@ -203,7 +204,7 @@ function App() {
                                     <article key={project.id} className="mobile-project-card">
                                         {project.heroImage && (
                                             <img
-                                                src={project.heroImage}
+                                                src={resolveAssetPath(project.heroImage)}
                                                 alt={project.title}
                                                 className="mobile-project-image"
                                                 onError={(e) => {
