@@ -6,7 +6,7 @@ interface AudioState {
     audioContextReady: boolean;
     toggleMute: () => void;
     setVolume: (v: number) => void;
-    playSound: (sound: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success') => void;
+    playSound: (sound: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success' | 'footstep') => void;
     startAmbient: () => void;
     stopAmbient: () => void;
     initAudio: () => Promise<void>;
@@ -27,7 +27,7 @@ const getAudioContext = () => {
     return audioCtx;
 };
 
-const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success', volume: number) => {
+const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success' | 'footstep', volume: number) => {
     if (typeof window === 'undefined') return;
 
     try {
@@ -124,11 +124,32 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.start(now);
                 osc.stop(now + 0.5);
                 break;
+            case 'footstep':
+                // Short, low thud/click
+                osc.type = 'square'; // or triangle for softer
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+                gain.gain.setValueAtTime(volume * 0.1, now); // Quiet
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+                break;
         }
     } catch (e) {
         console.warn("Audio play failed", e);
     }
 };
+
+// Audio Cooldowns to prevent spam (ms)
+const COOLDOWNS: Record<string, number> = {
+    footstep: 350,   // Increased to match walk cycle speed better
+    hover: 50,       // Very short, just avoids double-triggers
+    land: 500,       // Only once per impact
+    jump: 200,
+    click: 100
+};
+
+const lastPlayed = new Map<string, number>();
 
 const useAudioStore = create<AudioState>((set, get) => ({
     muted: false,
@@ -164,6 +185,15 @@ const useAudioStore = create<AudioState>((set, get) => ({
     playSound: (type) => {
         const { muted, volume } = get();
         if (muted) return;
+
+        // Cooldown Check
+        const now = Date.now();
+        const last = lastPlayed.get(type) || 0;
+        const cooldown = COOLDOWNS[type] || 0;
+
+        if (now - last < cooldown) return;
+
+        lastPlayed.set(type, now);
         playSynthSound(type, volume);
     },
     startAmbient: () => {

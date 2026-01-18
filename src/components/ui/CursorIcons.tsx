@@ -44,18 +44,31 @@ const ICONS = {
         </g>
     </svg>
     `,
+    camera: `
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+         <filter id="shadow" x="-2" y="-2" width="36" height="36">
+             <feDropShadow dx="1" dy="1" stdDeviation="1" flood-opacity="0.5"/>
+         </filter>
+         <g filter="url(#shadow)">
+             <rect x="4" y="8" width="24" height="16" rx="2" fill="#4caf50" stroke="black" stroke-width="2"/>
+             <circle cx="16" cy="16" r="6" fill="none" stroke="black" stroke-width="2"/>
+             <circle cx="16" cy="16" r="4" fill="#ffffff"/>
+             <circle cx="22" cy="12" r="2" fill="#ff5722"/>
+         </g>
+    </svg>
+    `,
     default: `
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
          <filter id="shadow" x="-2" y="-2" width="36" height="36">
-            <feDropShadow dx="1" dy="1" stdDeviation="1" flood-opacity="0.5"/>
-        </filter>
-        <path d="M7 2L23 16L16 17L21 27L17 29L12 19L7 26V2Z" fill="white" filter="url(#shadow)"/>
-        <path d="M7 2L23 16L16 17L21 27L17 29L12 19L7 26V2Z" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+             <feDropShadow dx="1" dy="1" stdDeviation="1" flood-opacity="0.5"/>
+         </filter>
+         <path d="M7 2L23 16L16 17L21 27L17 29L12 19L7 26V2Z" fill="white" filter="url(#shadow)"/>
+         <path d="M7 2L23 16L16 17L21 27L17 29L12 19L7 26V2Z" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
     </svg>
     `
 }
 
-export const getCursorUrl = (type: 'talk' | 'inspect' | 'grab' | 'default') => {
+export const getCursorUrl = (type: 'talk' | 'inspect' | 'grab' | 'camera' | 'default') => {
     const svg = ICONS[type] || ICONS.default
     const blob = new Blob([svg], { type: 'image/svg+xml' })
     return URL.createObjectURL(blob)

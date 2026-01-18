@@ -24,7 +24,7 @@ def verify_physics():
             else:
                 print("Canvas NOT detected. Still on loading screen?")
 
-            page.screenshot(path="physics_debug.png")
+            page.screenshot(path="verification/physics_debug.png")
             
         except Exception as e:
             print(f"Test failed: {e}")

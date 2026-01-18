@@ -1,5 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react'
-import { PositionalAudio } from '@react-three/drei'
+import React, { useEffect, useState, useMemo } from 'react'
 import * as THREE from 'three'
 import { useSoundBank } from './SoundBank'
 import useAudioStore from '../../audioStore'
@@ -14,48 +13,61 @@ interface PositionalSoundProps {
 
 /**
  * A wrapper around THREE.PositionalAudio that uses our pre-generated buffers.
+ * We avoid Drei's PositionalAudio to have full manual control over buffers and listeners.
  */
 const PositionalSound: React.FC<PositionalSoundProps> = ({ type, trigger, loop = false, distance = 10, volumeMultiplier = 1.0 }) => {
-    const soundRef = useRef<THREE.PositionalAudio>(null)
-    const { buffers, isLoaded } = useSoundBank()
+    const { buffers, isLoaded, listener } = useSoundBank()
     const { volume, muted } = useAudioStore()
     const [isPlaying, setIsPlaying] = useState(false)
 
+    // Create the sound object only when listener is available
+    const sound = useMemo(() => {
+        if (!listener) return null
+        return new THREE.PositionalAudio(listener)
+    }, [listener])
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (sound && sound.isPlaying) sound.stop()
+        }
+    }, [sound])
+
     // Trigger Playback
     useEffect(() => {
-        if (!isLoaded || !buffers[type] || !soundRef.current || muted) return
+        if (!isLoaded || !buffers[type] || !sound || muted) return
+
+        // Update settings
+        sound.setRefDistance(1)
+        sound.setMaxDistance(distance)
+        sound.setLoop(loop)
+
+        // This is important: setBuffer(buffer)
+        // If buffer changes, we set it.
+        // We only need to set it once really, but if type changes...
+        if (sound.buffer !== buffers[type]) {
+            sound.setBuffer(buffers[type])
+        }
 
         if (trigger) {
-            if (soundRef.current.isPlaying) soundRef.current.stop()
-            soundRef.current.setBuffer(buffers[type])
-            soundRef.current.setVolume(volume * volumeMultiplier)
-            soundRef.current.setRefDistance(1) // Attenuation starts at 1 meter
-            soundRef.current.setMaxDistance(distance)
-            soundRef.current.setLoop(loop)
-            soundRef.current.play()
+            if (sound.isPlaying) sound.stop()
+            sound.setVolume(volume * volumeMultiplier)
+            sound.play()
             setIsPlaying(true)
         } else if (!loop && isPlaying) {
-            // If trigger goes false and we are NOT looping, we usually don't stop strictly unless specified.
-            // But if we want to support "hold to play" logic, we could stop here.
-            // For one-shots, 'trigger' usually pulses true/false.
+            // Optional: Stop if trigger goes false?
         }
 
         if (loop && !trigger && isPlaying) {
-            soundRef.current.stop()
+            sound.stop()
             setIsPlaying(false)
         }
 
-    }, [trigger, isLoaded, buffers, type, volume, muted, loop, distance, volumeMultiplier])
+    }, [trigger, isLoaded, buffers, type, volume, muted, loop, distance, volumeMultiplier, sound])
 
-    return (
-        <PositionalAudio
-            ref={soundRef}
-            distance={distance}
-            loop={loop}
-            // @ts-ignore
-            url={null} // We set buffer manually
-        />
-    )
+    if (!sound) return null
+
+    return <primitive object={sound} />
 }
 
 export default PositionalSound

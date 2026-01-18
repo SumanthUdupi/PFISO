@@ -4,7 +4,7 @@
   "headline": "Bridging Business Strategy and Technical Execution",
   "valueProposition": "I am a Business Analyst who thrives at the intersection of process, data, and technology. For clients like Volvo and PACCAR, I've delivered mission-critical EHS and QMS platforms by owning the entire lifecycle: from leading global discovery sessions and authoring precise Gherkin user stories, to validating REST APIs and building the SQL-powered dashboards that prove our impact.",
   "tagline": "Clarity in Complexity.",
-  "photo": "./assets/sprites/avatar.webp",
+  "photo": "/assets/sprites/avatar.webp",
   "summary": [
     "Hello, I'm Sumanth. My career began with a foundation in Mechanical Engineering, but a passion for the systems that govern our world—and the data that explains them—led me to Business Analysis. I believe the most elegant solutions are born from a deep understanding of the problem, and I thrive on diving into complex domains like Environmental, Health, and Safety (EHS) and automotive compliance to build software that is not only functional but transformative.",
     "My approach is built on a simple philosophy: clarity is kindness. Whether I'm writing a Gherkin user story, documenting an OpenAPI specification, or prototyping a workflow in Figma, my goal is to create a single source of truth that empowers developers to build with confidence and stakeholders to feel understood. I love leading Agile ceremonies because they are about collaboration and shared ownership, turning a roadmap into reality one sprint at a time.",
@@ -17,17 +17,33 @@
     {
       "title": "Business Analysis & Strategy",
       "description": "I translate high-level business goals into detailed, actionable user stories and product backlogs. I lead Agile ceremonies and ensure development aligns perfectly with stakeholder vision.",
-      "keywords": ["Gherkin", "Agile", "SDLC", "BPMN", "Roadmapping"]
+      "keywords": [
+        "Gherkin",
+        "Agile",
+        "SDLC",
+        "BPMN",
+        "Roadmapping"
+      ]
     },
     {
       "title": "Data Analysis & Insights",
       "description": "I go beyond requirements to find the story in the data. I write my own SQL queries and build dashboards in Power BI & Superset to measure impact and drive data-informed decisions.",
-      "keywords": ["SQL", "Power BI", "ETL", "Predictive Analytics"]
+      "keywords": [
+        "SQL",
+        "Power BI",
+        "ETL",
+        "Predictive Analytics"
+      ]
     },
     {
       "title": "Technical Integration & Validation",
       "description": "I ensure seamless system integration by authoring and validating API specifications with Postman and Swagger, and I collaborate closely with UX teams on high-fidelity Figma prototypes.",
-      "keywords": ["REST API", "Swagger/OpenAPI", "Figma", "UAT"]
+      "keywords": [
+        "REST API",
+        "Swagger/OpenAPI",
+        "Figma",
+        "UAT"
+      ]
     }
   ],
   "domainExpertise": [
@@ -45,48 +61,92 @@
     }
   ],
   "skills": [
-      {
-          "category": "Business Analysis & Agile Management",
-          "items": [
-              { "name": "Gherkin & User Stories", "level": "Expert", "description": "Authored 200+ user stories for complex modules, creating a single source of truth for development and testing." },
-              { "name": "Agile & Scrum", "level": "Expert", "description": "2+ years leading all Agile ceremonies for a 7-member squad, improving delivery velocity by 15%.", "certification": "Certified by Atlassian" },
-              { "name": "Tools", "level": "Proficient", "description": "Azure DevOps, Jira, Smartsheet." }
-          ]
-      },
-      {
-          "category": "Data Analysis & Visualization",
-          "items": [
-               { "name": "SQL (MSSQL)", "level": "Proficient", "description": "I write my own queries to extract data for analysis and build dashboards that drive business decisions." },
-               { "name": "BI Tools (Superset, Power BI)", "level": "Proficient", "description": "Developed and maintained dashboards to track user adoption and process performance, leading to a 10% increase in customer satisfaction." }
-          ]
-      },
-      {
-          "category": "API & Design",
-          "items": [
-              { "name": "API Design & Testing", "level": "Proficient", "description": "My go-to tools (Postman, Swagger) for validating and documenting REST APIs. Reduced API integration defects by 25%." },
-              { "name": "UX Prototyping", "level": "Proficient", "description": "Partner closely with UX teams using Figma/Axure, contributing to high-fidelity prototypes that cut design iteration cycles by 20%.", "certification": "Certified UX Design Professional, Google" }
-          ]
-      }
+    {
+      "category": "Business Analysis & Agile Management",
+      "items": [
+        {
+          "name": "Gherkin & User Stories",
+          "level": "Expert",
+          "description": "Authored 200+ user stories for complex modules, creating a single source of truth for development and testing."
+        },
+        {
+          "name": "Agile & Scrum",
+          "level": "Expert",
+          "description": "2+ years leading all Agile ceremonies for a 7-member squad, improving delivery velocity by 15%.",
+          "certification": "Certified by Atlassian"
+        },
+        {
+          "name": "Tools",
+          "level": "Proficient",
+          "description": "Azure DevOps, Jira, Smartsheet."
+        }
+      ]
+    },
+    {
+      "category": "Data Analysis & Visualization",
+      "items": [
+        {
+          "name": "SQL (MSSQL)",
+          "level": "Proficient",
+          "description": "I write my own queries to extract data for analysis and build dashboards that drive business decisions."
+        },
+        {
+          "name": "BI Tools (Superset, Power BI)",
+          "level": "Proficient",
+          "description": "Developed and maintained dashboards to track user adoption and process performance, leading to a 10% increase in customer satisfaction."
+        }
+      ]
+    },
+    {
+      "category": "API & Design",
+      "items": [
+        {
+          "name": "API Design & Testing",
+          "level": "Proficient",
+          "description": "My go-to tools (Postman, Swagger) for validating and documenting REST APIs. Reduced API integration defects by 25%."
+        },
+        {
+          "name": "UX Prototyping",
+          "level": "Proficient",
+          "description": "Partner closely with UX teams using Figma/Axure, contributing to high-fidelity prototypes that cut design iteration cycles by 20%.",
+          "certification": "Certified UX Design Professional, Google"
+        }
+      ]
+    }
   ],
   "experience": [
-     {
-       "role": "Integration Lead & Business Analyst",
-       "company": "Volvo / PACCAR (via Capgemini)",
-       "years": "2021-Present"
-     },
-     {
-       "role": "Data Analyst",
-       "company": "Amazon",
-       "years": "2019-2021"
-     }
+    {
+      "role": "Integration Lead & Business Analyst",
+      "company": "Volvo / PACCAR (via Capgemini)",
+      "years": "2021-Present"
+    },
+    {
+      "role": "Data Analyst",
+      "company": "Amazon",
+      "years": "2019-2021"
+    }
   ],
   "certifications": [
-      { "name": "Google UX Design Professional Certificate", "issuer": "Coursera", "date": "2023" },
-      { "name": "Certified Scrum Master", "issuer": "Scrum Alliance", "date": "2022" }
+    {
+      "name": "Google UX Design Professional Certificate",
+      "issuer": "Coursera",
+      "date": "2023"
+    },
+    {
+      "name": "Certified Scrum Master",
+      "issuer": "Scrum Alliance",
+      "date": "2022"
+    }
   ],
   "testimonials": [
-      { "quote": "Sumanth is an exceptional analyst who balances technical depth with business acumen perfectly.", "author": "Senior PM at Volvo" },
-      { "quote": "The best collaborative partner I've had. Solves problems before they exist.", "author": "Lead Developer, PACCAR Project" }
+    {
+      "quote": "Sumanth is an exceptional analyst who balances technical depth with business acumen perfectly.",
+      "author": "Senior PM at Volvo"
+    },
+    {
+      "quote": "The best collaborative partner I've had. Solves problems before they exist.",
+      "author": "Lead Developer, PACCAR Project"
+    }
   ],
-  "avatar": "./assets/sprites/avatar.webp"
+  "avatar": "/assets/sprites/avatar.webp"
 }

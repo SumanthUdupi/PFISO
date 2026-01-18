@@ -1,7 +1,5 @@
-import React from 'react'
-import { EffectComposer, Bloom, HueSaturation, Outline, SSAO, Vignette } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, Outline, SSAO, Vignette } from '@react-three/postprocessing'
 import { useDeviceDetect } from '../../hooks/useDeviceDetect'
-import * as THREE from 'three'
 
 
 const Effects = () => {
@@ -17,9 +15,9 @@ const Effects = () => {
     <EffectComposer multisampling={4}>
       <Bloom
         luminanceThreshold={1.1} // Raised to prevent background blowout
-        mipmapBlur
-        intensity={0.2}
-        radius={0.5}
+        mipmapBlur={false} // Disabled for sharper focus
+        intensity={0.1}
+        radius={0.3}
       />
       <SSAO
         radius={0.1}
@@ -31,7 +29,7 @@ const Effects = () => {
         worldProximityThreshold={1}
         worldProximityFalloff={1}
       />
-      <Vignette eskil={false} offset={0.1} darkness={0.3} />
+      <Vignette eskil={false} offset={0.1} darkness={0.2} />
       {/* HueSaturation disabled to prevent color shifting artifacts */}
       {/* <HueSaturation saturation={0.2} hue={0} /> */}
 

@@ -1,147 +1,125 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import useControlsStore from '../../stores/controlsStore';
+import VirtualJoystick from './VirtualJoystick';
+import useCameraStore from '../../stores/cameraStore';
 
 const MobileControls: React.FC = () => {
-    const { setJoystick, setActionPressed } = useControlsStore();
-    const joystickContainerRef = useRef<HTMLDivElement>(null);
-    const stickRef = useRef<HTMLDivElement>(null);
-    const [touchId, setTouchId] = useState<number | null>(null);
+    const { setJoystick, setLookVector, setActionPressed, setJumpPressed, setCrouchPressed } = useControlsStore();
+    const touchStartRef = useRef<{ x: number, y: number } | null>(null);
+    const pinchStartDist = useRef<number>(0);
 
-    // Joystick Logic
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (touchId !== null) return;
-        const touch = e.changedTouches[0];
-        setTouchId(touch.identifier);
-        updateJoystick(touch.clientX, touch.clientY);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
-        if (touch) {
-            updateJoystick(touch.clientX, touch.clientY);
+    const onTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 1) {
+            touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            pinchStartDist.current = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
         }
-    };
+    }
 
-    const handleTouchEnd = (e: React.TouchEvent) => {
-        const touch = Array.from(e.changedTouches).find(t => t.identifier === touchId);
-        if (touch) {
-            setTouchId(null);
-            setJoystick(0, 0);
-            if (stickRef.current) {
-                stickRef.current.style.transform = `translate(0px, 0px)`;
+    const onTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            const dist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            if (pinchStartDist.current > 0) {
+                const delta = dist - pinchStartDist.current;
+                const { zoomLevel, setZoomLevel } = useCameraStore.getState()
+                setZoomLevel(zoomLevel - (delta * 0.005));
+                pinchStartDist.current = dist // Reset for continuous delta
             }
         }
-    };
+    }
 
-    const updateJoystick = (clientX: number, clientY: number) => {
-        if (!joystickContainerRef.current || !stickRef.current) return;
-
-        const containerRect = joystickContainerRef.current.getBoundingClientRect();
-        const centerX = containerRect.left + containerRect.width / 2;
-        const centerY = containerRect.top + containerRect.height / 2;
-
-        const maxRadius = containerRect.width / 2 - stickRef.current.offsetWidth / 2;
-
-        let deltaX = clientX - centerX;
-        let deltaY = clientY - centerY;
-
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        if (distance > maxRadius) {
-            const angle = Math.atan2(deltaY, deltaX);
-            deltaX = Math.cos(angle) * maxRadius;
-            deltaY = Math.sin(angle) * maxRadius;
+    const onTouchEnd = (e: React.TouchEvent) => {
+        if (e.touches.length === 0) {
+            touchStartRef.current = null;
+            pinchStartDist.current = 0;
         }
 
-        // Update Stick Visual
-        stickRef.current.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-        // Update Store (Normalized -1 to 1)
-        // Invert Y because screen Y is down, but typically Up is negative in 2D,
-        // but in 3D Z is down/forward.
-        // Player.tsx: inputVector.z -= 1 (w/Up) -> Negative Z is forward.
-        // Screen Y Up (negative pixel delta) -> Should be forward (Negative Z).
-        // So Y input matches Z output directly?
-        // Let's normalize: Up (negative deltaY) -> -1. Down (positive deltaY) -> 1.
-
-        const normX = deltaX / maxRadius;
-        const normY = deltaY / maxRadius;
-
-        setJoystick(normX, normY);
+        if (!touchStartRef.current) return;
+        // ... (existing swipe logic)
+        const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+        const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+        const threshold = 50;
+        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > threshold) {
+            if (deltaY < 0) { // swipe up
+                setJumpPressed(true);
+                setTimeout(() => setJumpPressed(false), 100);
+            } else { // swipe down
+                setCrouchPressed(true);
+                setTimeout(() => setCrouchPressed(false), 100);
+            }
+        }
     };
 
     return (
         <div style={{
             position: 'absolute',
-            bottom: '20px',
-            left: '20px',
-            right: '20px',
-            height: '150px',
-            pointerEvents: 'none', // Allow clicks through empty space
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 1000,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-end',
-            zIndex: 1000
+            padding: '20px 40px'
         }}>
-            {/* Joystick Zone */}
-            <div
-                ref={joystickContainerRef}
-                style={{
-                    width: '120px',
-                    height: '120px',
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    borderRadius: '50%',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    position: 'relative',
-                    pointerEvents: 'auto',
-                    touchAction: 'none'
-                }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                <div
-                    ref={stickRef}
-                    style={{
-                        width: '50px',
-                        height: '50px',
-                        background: 'rgba(255, 215, 0, 0.5)', // Gold
-                        borderRadius: '50%',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        marginTop: '-25px',
-                        marginLeft: '-25px',
-                        boxShadow: '0 0 10px rgba(0,0,0,0.5)'
-                    }}
+            {/* Left Stick - Movement */}
+            <div style={{ position: 'relative', width: '150px', height: '150px', pointerEvents: 'none' }}>
+                <VirtualJoystick
+                    onMove={setJoystick}
+                    position={{ bottom: '20px', left: '20px' }}
                 />
             </div>
 
-            {/* Action Button */}
-            <button
-                style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 87, 34, 0.8)', // Orange/Red
-                    border: '4px solid #fff',
-                    color: 'white',
-                    fontSize: '24px',
-                    fontFamily: '"Press Start 2P", cursive',
-                    pointerEvents: 'auto',
-                    touchAction: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 0 #bf360c'
-                }}
-                onTouchStart={(e) => { e.preventDefault(); setActionPressed(true); }}
-                onTouchEnd={(e) => { e.preventDefault(); setActionPressed(false); }}
-                onMouseDown={() => setActionPressed(true)}
-                onMouseUp={() => setActionPressed(false)}
-            >
-                A
-            </button>
+            {/* Right Group: Action Button & Look Stick */}
+            <div style={{ position: 'relative', width: '250px', height: '150px', pointerEvents: 'none', display: 'flex', gap: '20px', alignItems: 'flex-end' }}>
+
+                {/* Action Button (A) */}
+                <button
+                    style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 87, 34, 0.9)', // Orange
+                        border: '3px solid #fff',
+                        color: 'white',
+                        fontSize: '20px',
+                        fontFamily: '"Press Start 2P", cursive',
+                        pointerEvents: 'auto',
+                        touchAction: 'none',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+                        marginBottom: '20px' // Align with joystick center roughly
+                    }}
+                    onTouchStart={(e) => {
+                        e.preventDefault();
+                        setActionPressed(true);
+                        if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+                    }}
+                    onTouchEnd={(e) => { e.preventDefault(); setActionPressed(false); }}
+                    aria-label="Interact"
+                >
+                    A
+                </button>
+
+                {/* Right Stick - Look */}
+                <VirtualJoystick
+                    onMove={(x, y) => setLookVector(x, y)} // Pass raw x,y (normalized)
+                    position={{ bottom: '20px', right: '0px' }}
+                    color="rgba(0, 0, 0, 0.2)"
+                />
+            </div>
+
+            {/* Gesture Layer */}
+            <div
+                style={{ position: 'absolute', inset: 0, pointerEvents: 'auto', background: 'transparent' }}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            ></div>
         </div>
     );
 };

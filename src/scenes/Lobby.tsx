@@ -16,6 +16,8 @@ import SmoothText from '../components/ui/SmoothText'
 import PixelTransition from '../components/ui/PixelTransition'
 import Player, { PlayerHandle } from '../components/game/Player'
 import ClickMarker from '../components/game/ClickMarker'
+import Grabber from '../components/game/Grabber'
+import PhysicsInteractable from '../components/game/PhysicsInteractable'
 import projectsData from '../assets/data/projects.json'
 import bioData from '../assets/data/bio.json'
 
@@ -38,6 +40,8 @@ import useAudioStore from '../audioStore'
 import useCursorStore from '../stores/CursorStore'
 
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+import { ASSET_LIST } from '../data/AssetRegistry'
+import AssetPlaceholder from '../components/game/AssetPlaceholder'
 
 const CameraController = () => {
     const { camera } = useThree()
@@ -240,6 +244,16 @@ const LobbyContent = () => {
                 bounds={{ width: 12, depth: 12 }}
             />
 
+            <Grabber />
+
+            {/* TEST OBJECT: Physics Ball */}
+            <PhysicsInteractable id="stress-ball" position={[0, 1, 2]} label="Stress Ball">
+                <mesh castShadow receiveShadow>
+                    <sphereGeometry args={[0.2]} />
+                    <meshStandardMaterial color="#FF4081" roughness={0.4} />
+                </mesh>
+            </PhysicsInteractable>
+
             <ClickMarker position={clickTarget} onComplete={() => setClickTarget(null)} />
 
             {/* LIGHTING & ATMOSPHERE */}
@@ -440,9 +454,50 @@ const LobbyContent = () => {
 }
 
 const Lobby = () => {
+    // ASSET GALLERY DEBUG
+    const [showAssetGallery, setShowAssetGallery] = useState(false)
+
+    useEffect(() => {
+        const toggleGallery = (e: KeyboardEvent) => {
+            if (e.key === 'g' && e.ctrlKey) {
+                setShowAssetGallery(prev => !prev)
+            }
+        }
+        window.addEventListener('keydown', toggleGallery)
+        return () => window.removeEventListener('keydown', toggleGallery)
+    }, [])
+
     return (
         <Physics gravity={[0, -30, 0]} timeStep={1 / 60}>
-            <LobbyContent />
+            {!showAssetGallery ? (
+                <LobbyContent />
+            ) : (
+                <group>
+                    <ambientLight intensity={0.5} />
+                    <directionalLight position={[10, 10, 5]} intensity={1} />
+                    <CameraController />
+                    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
+                        <planeGeometry args={[100, 100]} />
+                        <meshStandardMaterial color="#222" />
+                    </mesh>
+
+                    <Text position={[0, 4, -5]} fontSize={1} color="white" anchorX="center">
+                        ASSET REQUIREMENT EXECUTION GALLERY
+                    </Text>
+
+                    {ASSET_LIST.map((asset: any, index: number) => {
+                        const row = Math.floor(index / 10)
+                        const col = index % 10
+                        return (
+                            <AssetPlaceholder
+                                key={asset.id}
+                                id={asset.id}
+                                position={[col * 2 - 9, 0, row * 2 - 5]}
+                            />
+                        )
+                    })}
+                </group>
+            )}
             {/* FIXED: Use sunset for lighting, but disable background to use our Custom Background.tsx */}
         </Physics>
     )

@@ -7,9 +7,15 @@ interface RobloxCharacterProps {
   isMoving: boolean
   speed?: number // Added speed prop
   lookTarget?: THREE.Vector3
+  onStep?: () => void
+  isSitting?: boolean // Added isSitting prop
+  shirtColor?: string
+  pantsColor?: string
 }
 
-const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, lookTarget }) => {
+const RobloxCharacter: React.FC<RobloxCharacterProps> = (props) => {
+  const { isMoving, speed = 0, lookTarget, onStep, isSitting } = props;
+
   // --- REFS ---
   const group = useRef<THREE.Group>(null)
   const leftLeg = useRef<THREE.Group>(null)
@@ -17,11 +23,11 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
   const leftArm = useRef<THREE.Group>(null)
   const rightArm = useRef<THREE.Group>(null)
   const headGroup = useRef<THREE.Group>(null)
-  const torsoGroup = useRef<THREE.Group>(null) // New ref for bobbing
+  const torsoGroup = useRef<THREE.Group>(null)
 
   // --- REUSABLE LOGIC VARS ---
-  const lookDir = useRef(new THREE.Vector3())
-  const animTime = useRef(0) // Local animation time
+  const animTime = useRef(0)
+  const currentHeadRot = useRef({ x: 0, y: 0 })
 
   // --- VISUAL CONFIGURATION ---
   const bevel = 0.02
@@ -31,70 +37,130 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
   const materials = useMemo(() => {
     return {
       skin: new THREE.MeshStandardMaterial({ color: '#ffdbac', roughness: 0.3 }),
-      suit: new THREE.MeshStandardMaterial({ color: '#4a3728', roughness: 0.9 }), // Dark Coffee Suit
-      shirt: new THREE.MeshStandardMaterial({ color: '#fff3e0', roughness: 0.6 }), // Warm Cream Shirt
-      tie: new THREE.MeshStandardMaterial({ color: '#e67e22', roughness: 0.4 }), // Burnt Orange Tie
-      shoe: new THREE.MeshStandardMaterial({ color: '#3e2723', roughness: 0.2 }), // Dark Leather
-      hair: new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.9 }), // Dark Charcoal Hair
+      suit: new THREE.MeshStandardMaterial({ color: props.pantsColor || '#2c3e50', roughness: 0.9 }),
+      shirt: new THREE.MeshStandardMaterial({ color: props.shirtColor || '#3498db', roughness: 0.6 }),
+      tie: new THREE.MeshStandardMaterial({ color: '#e67e22', roughness: 0.4 }),
+      shoe: new THREE.MeshStandardMaterial({ color: '#3e2723', roughness: 0.2 }),
+      hair: new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.9 }),
       eyes: new THREE.MeshStandardMaterial({ color: '#000000', roughness: 0.1, emissive: '#000000' })
     }
-  }, [])
+  }, [props.shirtColor, props.pantsColor])
 
   useFrame((state, delta) => {
-    // 1. Head Tracking (Simplified)
+    // 1. Head Tracking (IK)
     if (headGroup.current && group.current) {
-      // ... (Keep existing simple smoothing behavior)
-      const smoothFactor = 1.0 - Math.exp(-4 * delta)
-      headGroup.current.rotation.y = THREE.MathUtils.lerp(headGroup.current.rotation.y, 0, smoothFactor)
-      headGroup.current.rotation.x = THREE.MathUtils.lerp(headGroup.current.rotation.x, 0, smoothFactor)
+      let targetY = 0
+      let targetX = 0
+
+      if (lookTarget) {
+        // Convert world target to local space relative to character
+        const localTarget = group.current.worldToLocal(lookTarget.clone())
+
+        // Calculate look angles
+        // atan2(x, z) gives yaw. Note Z is forward in some contexts, but usually -Z.
+        // In our character, +Z is forward face? No, usually +Z is front or -Z. 
+        // Let's assume standard ThreeJS: +Z is towards camera (back), -Z is forward.
+        // Our character likely faces +Z or -Z. Let's test.
+        // Actually, usually characters face +Z in standard T-pose or +Z is "Forward" in Rapier? 
+        // We'll try standard `lookAt` logic.
+
+        // Check if target is in front (dot product or simple z check)
+        // If z is positive (in front) -> wait, depends on model orientation.
+
+        const distance = localTarget.length()
+        if (distance > 0.5 && distance < 10) {
+          // Simple approach: look at the target
+          // Yaw
+          targetY = Math.atan2(localTarget.x, localTarget.z)
+          // Clamp yaw (don't break neck) - 60 degrees
+          targetY = Math.max(-1.5, Math.min(1.5, targetY))
+
+          // Pitch (Height)
+          targetX = -Math.atan2(localTarget.y, Math.sqrt(localTarget.x ** 2 + localTarget.z ** 2))
+          targetX = Math.max(-0.8, Math.min(0.8, targetX))
+        }
+      } else if (isMoving) {
+        // Look slightly into turn? 
+        // Or just reset
+        targetY = 0
+        // Look slightly down when running?
+        targetX = speed > 5 ? 0.1 : 0
+      }
+
+      const smoothFactor = 1.0 - Math.exp(-8 * delta)
+      currentHeadRot.current.y = THREE.MathUtils.lerp(currentHeadRot.current.y, targetY, smoothFactor)
+      currentHeadRot.current.x = THREE.MathUtils.lerp(currentHeadRot.current.x, targetX, smoothFactor)
+
+      headGroup.current.rotation.y = currentHeadRot.current.y
+      headGroup.current.rotation.x = currentHeadRot.current.x
     }
 
-    // 2. Walk Animation System (MECH-FIX)
+    // 2. Walk Animation System
     if (!leftLeg.current || !rightLeg.current || !leftArm.current || !rightArm.current || !torsoGroup.current) return
+
+    if (props.isSitting) {
+      // Sitting Pose
+      const sitLerp = 10 * delta
+      leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, -Math.PI / 2, sitLerp)
+      rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, -Math.PI / 2, sitLerp)
+      leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, -0.2, sitLerp)
+      rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, -0.2, sitLerp)
+      torsoGroup.current.position.y = THREE.MathUtils.lerp(torsoGroup.current.position.y, 0.5, sitLerp)
+      torsoGroup.current.rotation.x = THREE.MathUtils.lerp(torsoGroup.current.rotation.x, 0, sitLerp)
+      return
+    }
+
+    // Tilt Torso based on speed (Forward lean)
+    const targetLean = isMoving ? Math.min(speed * 0.05, 0.2) : 0
+    torsoGroup.current.rotation.x = THREE.MathUtils.lerp(torsoGroup.current.rotation.x, targetLean, delta * 5)
+
 
     if (isMoving && speed > 0.1) {
       // Sync animation speed with movement speed
-      // Base walk speed roughly 1.5 cycles per second at normal speed
       const walkCycleSpeed = speed * 2.5
-      animTime.current += delta * walkCycleSpeed
 
+      const prevAnimTime = animTime.current
+      animTime.current += delta * walkCycleSpeed
       const t = animTime.current
 
-      // Limbs - Simple Sine Wave but synced
-      const legAmp = 0.8 // Increased amplitude for more confident stride
+      const cycle = 2 * Math.PI
+      const prevPhase = prevAnimTime % cycle
+      const currPhase = t % cycle
+
+      if (prevPhase < Math.PI / 2 && currPhase >= Math.PI / 2) {
+        if (onStep) onStep()
+      }
+      if (prevPhase < 3 * Math.PI / 2 && currPhase >= 3 * Math.PI / 2) {
+        if (onStep) onStep()
+      }
+
+      // Sine Wave Limbs
+      const legAmp = 0.8
       const armAmp = 0.6
 
       leftLeg.current.rotation.x = Math.sin(t) * legAmp
-      rightLeg.current.rotation.x = Math.sin(t + Math.PI) * legAmp // Perfect opposite phase
+      rightLeg.current.rotation.x = Math.sin(t + Math.PI) * legAmp
 
-      leftArm.current.rotation.x = Math.sin(t + Math.PI) * armAmp // Arms opposite to legs
+      leftArm.current.rotation.x = Math.sin(t + Math.PI) * armAmp
       rightArm.current.rotation.x = Math.sin(t) * armAmp
 
-      // Body Bobbing (Vertical)
-      // Bobs twice per cycle (once for each step)
       const bobParams = { amp: 0.05, freq: 2 }
       const bobOffset = Math.sin(t * bobParams.freq - Math.PI / 2) * bobParams.amp
-      // Only bob the torso/head/arms, legs stay grounded relative (visually)
       torsoGroup.current.position.y = 0.6 + Math.abs(bobOffset)
 
     } else {
-      // Return to Idle
-      // Smoothly reset limbs
+      // Idle
       const lerpSpeed = 10 * delta
       leftLeg.current.rotation.x = THREE.MathUtils.lerp(leftLeg.current.rotation.x, 0, lerpSpeed)
       rightLeg.current.rotation.x = THREE.MathUtils.lerp(rightLeg.current.rotation.x, 0, lerpSpeed)
       leftArm.current.rotation.x = THREE.MathUtils.lerp(leftArm.current.rotation.x, 0, lerpSpeed)
       rightArm.current.rotation.x = THREE.MathUtils.lerp(rightArm.current.rotation.x, 0, lerpSpeed)
-
-      // Reset Bob
       torsoGroup.current.position.y = THREE.MathUtils.lerp(torsoGroup.current.position.y, 0.6, lerpSpeed)
     }
   })
 
   return (
     <group ref={group}>
-      {/* Legs attached to root (hip) so they don't bob UP with the body, but rotate */}
-      {/* Adjusted Z positions to prevent butt-clipping */}
       <group ref={leftLeg} position={[-0.11, 0.4, 0]}>
         <group position={[0, -0.2, 0]}>
           <RoundedBox args={[0.18, 0.4, 0.18]} radius={bevel} smoothness={segment} castShadow receiveShadow material={materials.suit} />
@@ -113,13 +179,10 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
         </group>
       </group>
 
-      {/* Torso Group that BOBS */}
       <group ref={torsoGroup} position={[0, 0.6, 0]}>
-        {/* Main Body */}
         <group position={[0, 0, 0]}>
           <RoundedBox args={[0.42, 0.42, 0.22]} radius={0.04} smoothness={segment} castShadow receiveShadow material={materials.suit} />
 
-          {/* Shirt/Tie Details... */}
           <group position={[0, 0, 0.115]}>
             <RoundedBox args={[0.18, 0.41, 0.01]} radius={0.005} castShadow receiveShadow material={materials.shirt} />
             <group position={[0, -0.02, 0.01]}>
@@ -134,7 +197,6 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
           </group>
         </group>
 
-        {/* Arms attached to Torso */}
         <group ref={leftArm} position={[-0.32, 0.15, 0]}>
           <group position={[0, -0.2, 0]}>
             <RoundedBox args={[0.16, 0.4, 0.16]} radius={bevel} smoothness={segment} castShadow receiveShadow material={materials.suit} />
@@ -159,7 +221,6 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = ({ isMoving, speed = 0, 
           </group>
         </group>
 
-        {/* Head attached to Torso */}
         <group ref={headGroup} position={[0, 0.2, 0]}>
           <group position={[0, 0.05, 0]}>
             <mesh castShadow receiveShadow material={materials.skin}><cylinderGeometry args={[0.08, 0.08, 0.1]} /></mesh>

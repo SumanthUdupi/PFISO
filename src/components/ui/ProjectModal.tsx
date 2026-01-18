@@ -83,28 +83,36 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                 key={project.id}
                 onClick={() => setSelectedProject(project)}
                 style={{
-                  border: '4px solid #000',
+                  border: '4px solid var(--color-ui-border)',
+                  borderRadius: '12px',
                   cursor: 'pointer',
-                  transition: 'transform 0.1s',
+                  transition: 'transform 0.1s, box-shadow 0.2s',
                   position: 'relative',
                   background: 'white',
                   padding: 0,
                   textAlign: 'left',
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: project.featured ? '0 0 15px rgba(255, 165, 0, 0.5)' : 'none'
+                  overflow: 'hidden',
+                  boxShadow: project.featured ? '0 0 15px rgba(226, 114, 91, 0.4)' : '0 4px 6px rgba(0,0,0,0.05)'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translate(-2px, -2px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translate(0, 0)'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)'
+                  e.currentTarget.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = project.featured ? '0 0 15px rgba(226, 114, 91, 0.4)' : '0 4px 6px rgba(0,0,0,0.05)'
+                }}
                 onFocus={(e) => e.currentTarget.style.transform = 'translate(-2px, -2px)'}
                 onBlur={(e) => e.currentTarget.style.transform = 'translate(0, 0)'}
               >
                 {project.featured && (
-                  <div style={{ position: 'absolute', top: '10px', right: '10px', background: '#ffa726', color: 'black', padding: '4px 8px', fontSize: '10px', fontFamily: '"Press Start 2P", cursive', zIndex: 10 }}>
+                  <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--color-primary-glow)', color: 'white', padding: '4px 8px', fontSize: '10px', fontFamily: '"Press Start 2P", cursive', zIndex: 10, borderRadius: '4px' }}>
                     FEATURED
                   </div>
                 )}
-                <div style={{ width: '100%', height: '150px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid #000', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '150px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid var(--color-ui-border)', overflow: 'hidden' }}>
                   <img src={project.heroImage} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
                 </div>
                 <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -124,17 +132,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               <button
                 onClick={() => setSelectedProject(null)}
                 style={{
-                  background: '#e7dcc9',
-                  border: '2px solid #d7ccc8',
+                  background: 'var(--color-ui-bg)',
+                  border: '2px solid var(--color-ui-border)',
                   borderRadius: '8px',
                   fontFamily: '"Press Start 2P", cursive',
                   cursor: 'pointer',
                   marginBottom: '20px',
-                  color: '#4a3728',
+                  color: 'var(--color-ui-text)',
                   textDecoration: 'none',
                   padding: '12px 16px',
                   width: isMobile ? '100%' : 'auto',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}
               >
                 &lt; BACK TO PROJECTS

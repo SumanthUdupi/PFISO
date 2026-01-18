@@ -36,8 +36,9 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
     display: 'flex',
     flexDirection: 'column',
     padding: 0,
-    backgroundColor: '#fcf4e8',
-    color: '#4a3728',
+    padding: 0,
+    backgroundColor: 'var(--color-ui-bg)',
+    color: 'var(--color-ui-text)',
     boxShadow: '0 -4px 10px rgba(0,0,0,0.5)',
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
@@ -50,7 +51,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
     left: 0,
     width: '100vw',
     height: '100vh',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(47, 79, 79, 0.4)', // Dimmed cozy-text
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -65,9 +66,9 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
     display: 'flex',
     flexDirection: 'column',
     padding: 0,
-    backgroundColor: '#fcf4e8',
-    color: '#4a3728',
-    boxShadow: '8px 8px 0px rgba(0,0,0,0.5)',
+    backgroundColor: 'var(--color-ui-bg)',
+    color: 'var(--color-ui-text)',
+    boxShadow: '8px 8px 0px rgba(0,0,0,0.2)',
   }
 
   return (
@@ -93,7 +94,7 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
             >
               <NineSlicePanel style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div style={{
-                  background: 'linear-gradient(to right, #3e2723, #5d4037)',
+                  background: 'var(--color-primary-glow)',
                   padding: '12px 16px', // Larger touch target
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -101,21 +102,18 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
                   color: 'white',
                   fontFamily: '"Press Start 2P", cursive',
                 }}>
-                  <h2 style={{ margin: 0, fontSize: isMobile ? '16px' : '14px', textShadow: '2px 2px #000' }}>{title}</h2>
+                  <h2 style={{ margin: 0, fontSize: isMobile ? '16px' : '14px', textShadow: '1px 1px rgba(0,0,0,0.2)' }}>{title}</h2>
                   <button
                     onClick={onClose}
                     aria-label="Close"
                     style={{
-                      background: '#fcf4e8',
-                      border: '2px outset #d7ccc8',
-                      color: '#4a3728',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'white',
                       fontFamily: '"Press Start 2P", cursive',
                       cursor: 'pointer',
-                      padding: isMobile ? '8px 12px' : '2px 6px', // Larger touch target (min 44px check via padding+content usually)
-                      minWidth: isMobile ? '44px' : 'auto',
-                      minHeight: isMobile ? '44px' : 'auto',
-                      fontSize: '12px',
-                      boxShadow: '1px 1px 0px #000',
+                      padding: isMobile ? '8px 12px' : '2px 6px',
+                      fontSize: '16px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'

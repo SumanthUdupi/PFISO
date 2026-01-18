@@ -1,117 +1,87 @@
 import React from 'react'
-import useGameStore from '../../stores/gameStore'
-import useInventoryStore from '../../stores/inventoryStore'
+import { useUIStore } from '../../stores/uiStore'
 
-const HUD: React.FC = () => {
-    const { health, maxHealth, score } = useGameStore()
-    const { items } = useInventoryStore()
+import Journal from './Journal'
 
-    // Calculate health percentage
-    const healthPercent = (health / maxHealth) * 100
+import { useDeviceDetect } from '../../hooks/useDeviceDetect'
+import useGameStore from '../../store'
+
+export const HUD: React.FC = () => {
+    const { toggleSkillsMenu, toggleSystemMenu, isJournalOpen, toggleJournal } = useUIStore()
+    const { isMobile } = useDeviceDetect()
+    // Local state removed in favor of global store
+    const { currentObjective } = useGameStore()
+
+    React.useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === 'j' || e.key === 'Tab') {
+                e.preventDefault() // Prevent focus trapping with Tab
+                toggleJournal()
+            }
+        }
+        window.addEventListener('keydown', onKeyDown)
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [toggleJournal])
 
     return (
-        <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none', // Allow clicks to pass through to canvas
-            zIndex: 10,
-            fontFamily: 'Inter, sans-serif'
-        }}>
-            {/* CROSSHAIR */}
-            <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: '6px',
-                height: '6px',
-                background: 'white',
-                borderRadius: '50%',
-                transform: 'translate(-50%, -50%)',
-                boxShadow: '0 0 4px rgba(0,0,0,0.5)',
-                border: '1px solid rgba(0,0,0,0.5)'
-            }} />
+        <>
+            {isJournalOpen && <Journal onClose={toggleJournal} />}
 
-            {/* HEALTH BAR (Bottom Left) */}
-            <div style={{
-                position: 'absolute',
-                bottom: '30px',
-                left: '30px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '5px'
-            }}>
-                <div style={{
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px'
-                }}>
-                    Health {health}
-                </div>
-                <div style={{
-                    width: '200px',
-                    height: '10px',
-                    background: 'rgba(0,0,0,0.5)',
-                    borderRadius: '5px',
-                    overflow: 'hidden',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                    <div style={{
-                        width: `${healthPercent}%`,
-                        height: '100%',
-                        background: health > 30 ? '#4ade80' : '#ef4444', // Green or Red warning
-                        transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-                    }} />
-                </div>
-            </div>
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 flex flex-col justify-between z-40">
+                {/* Top Right: Menu & Skills */}
+                <div className="flex justify-end items-start gap-4 pointer-events-auto">
+                    {/* Journal Button */}
+                    <button
+                        onClick={toggleJournal}
+                        className="group flex flex-col items-center gap-1 transition-all active:scale-95"
+                        aria-label="Journal"
+                    >
+                        <div className={`relative bg-cozy-bg/80 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 flex items-center justify-center text-2xl group-hover:bg-cozy-primary group-hover:text-cozy-text transition-all duration-300 ${isMobile ? 'w-14 h-14' : 'w-14 h-14'}`}>
+                            <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            📖
+                        </div>
+                        {!isMobile && (
+                            <span className="text-xs font-medium text-cozy-text/90 drop-shadow-sm bg-cozy-bg/90 backdrop-blur px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                                Journal [J]
+                            </span>
+                        )}
+                    </button>
 
-            {/* INVENTORY (Bottom Right) */}
-            <div style={{
-                position: 'absolute',
-                bottom: '30px',
-                right: '30px',
-                display: 'flex',
-                gap: '10px'
-            }}>
-                {items.map((item, index) => (
-                    <div key={index} style={{
-                        width: '40px',
-                        height: '40px',
-                        background: 'rgba(0,0,0,0.6)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '12px'
-                    }}>
-                        {/* Placeholder Icon */}
-                        KEY
+                    <button
+                        onClick={toggleSkillsMenu}
+                        className="group flex flex-col items-center gap-1 transition-all active:scale-95"
+                        aria-label="Skills Inventory"
+                    >
+                        <div className="relative w-14 h-14 bg-cozy-bg/80 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 flex items-center justify-center text-2xl group-hover:bg-cozy-primary group-hover:text-cozy-text transition-all duration-300">
+                            <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            ✨
+                        </div>
+                        <span className="text-xs font-medium text-cozy-text/90 drop-shadow-sm bg-cozy-bg/90 backdrop-blur px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                            Skills
+                        </span>
+                    </button>
+
+                    {/* Settings Button */}
+                    <button
+                        onClick={toggleSystemMenu}
+                        className="w-12 h-12 bg-cozy-bg/40 backdrop-blur-sm rounded-full border border-white/30 shadow-sm flex items-center justify-center text-lg text-cozy-text/70 hover:bg-cozy-bg/80 hover:text-cozy-text transition-all duration-300"
+                        title="Settings"
+                        aria-label="System Settings"
+                    >
+                        ⚙️
+                    </button>
+                </div>
+
+                {/* Bottom Left: Guidance / Objective */}
+                <div className="flex items-end">
+                    <div className="bg-cozy-bg/90 backdrop-blur-md px-6 py-4 rounded-3xl shadow-sm border border-white/50 max-w-sm transform transition-all hover:scale-[1.02]">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-cozy-text/60 font-bold mb-1">Current Objective</h3>
+                        <p className="text-lg text-cozy-text font-medium leading-tight font-sans" aria-live="polite">
+                            {currentObjective}
+                        </p>
                     </div>
-                ))}
-            </div>
-
-            {/* SCORE (Top Right) */}
-            {score > 0 && (
-                <div style={{
-                    position: 'absolute',
-                    top: '30px',
-                    right: '30px',
-                    color: '#fbbf24',
-                    fontSize: '24px',
-                    fontWeight: '900',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                }}>
-                    {score}
                 </div>
-            )}
-        </div>
+            </div>
+        </>
     )
 }
-
-export default HUD

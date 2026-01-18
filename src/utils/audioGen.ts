@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+
 
 // Types of sounds we can generate
 export type SoundType = 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success'

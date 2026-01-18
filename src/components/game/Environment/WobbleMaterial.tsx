@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { shaderMaterial } from '@react-three/drei'
 import { extend, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
@@ -10,6 +10,9 @@ const WobbleMaterialImpl = shaderMaterial(
     uStrength: 0.1,
     uFrequency: 2.0,
     color: new THREE.Color(0.0, 0.0, 0.0),
+    uSSSIntensity: 0.5, // Subsurface scattering intensity
+    uSheenIntensity: 0.2, // Sheen intensity for fabric-like materials
+    uFingerprintScale: 10.0, // Scale for fingerprint noise
   },
   // Vertex Shader
   `
@@ -64,20 +67,14 @@ const WobbleMaterialImpl = shaderMaterial(
 
 extend({ WobbleMaterialImpl })
 
-// Declare the jsx namespace
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      wobbleMaterialImpl: any
-    }
-  }
-}
-
 interface WobbleMaterialProps {
   color?: string
   speed?: number
   strength?: number
   frequency?: number
+  sssIntensity?: number
+  sheenIntensity?: number
+  fingerprintScale?: number
 }
 
 export const WobbleMaterial = (props: WobbleMaterialProps) => {
@@ -89,13 +86,21 @@ export const WobbleMaterial = (props: WobbleMaterialProps) => {
     }
   })
 
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.uSpeed = props.speed ?? 1
+      materialRef.current.uStrength = props.strength ?? 0.1
+      materialRef.current.uFrequency = props.frequency ?? 2.0
+      materialRef.current.uSSSIntensity = props.sssIntensity ?? 0.5
+      materialRef.current.uSheenIntensity = props.sheenIntensity ?? 0.2
+      materialRef.current.uFingerprintScale = props.fingerprintScale ?? 10.0
+      if (props.color) materialRef.current.color = new THREE.Color(props.color)
+    }
+  }, [props])
+
   return (
     <wobbleMaterialImpl
       ref={materialRef}
-      color={props.color}
-      uSpeed={props.speed ?? 1}
-      uStrength={props.strength ?? 0.1}
-      uFrequency={props.frequency ?? 2.0}
     />
   )
 }

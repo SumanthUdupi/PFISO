@@ -8,6 +8,9 @@ export const FPSLimiter = ({ limit = 30 }: { limit?: number }) => {
     const { set, invalidate, gl, scene, camera, advance } = state
     const { isMobile } = useDeviceDetect()
     const lastInputTime = useRef(performance.now())
+    const frameCount = useRef(0)
+    const lastFpsCheck = useRef(performance.now())
+    const currentDpr = useRef(gl.getPixelRatio())
 
     useEffect(() => {
         if (!isMobile) {
@@ -32,6 +35,28 @@ export const FPSLimiter = ({ limit = 30 }: { limit?: number }) => {
         const loop = () => {
             const now = performance.now()
             const timeSinceInput = now - lastInputTime.current
+
+            // FPS calculation for DRS
+            frameCount.current++
+            if (now - lastFpsCheck.current >= 1000) {
+                const fps = frameCount.current / ((now - lastFpsCheck.current) / 1000)
+                frameCount.current = 0
+                lastFpsCheck.current = now
+
+                // Dynamic Resolution Scaling
+                if (isMobile) {
+                    let targetDpr = currentDpr.current
+                    if (fps < 25) {
+                        targetDpr = Math.max(0.5, currentDpr.current * 0.8) // Reduce resolution
+                    } else if (fps > 50) {
+                        targetDpr = Math.min(2, currentDpr.current * 1.1) // Increase resolution
+                    }
+                    if (Math.abs(targetDpr - currentDpr.current) > 0.1) {
+                        currentDpr.current = targetDpr
+                        gl.setPixelRatio(targetDpr)
+                    }
+                }
+            }
 
             // If active input (within 3s), target 60fps
             // If idle, target 30fps

@@ -1,0 +1,40 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+interface SettingsState {
+    // Camera
+    fov: number
+    setFov: (fov: number) => void
+    mouseSensitivity: number
+    setMouseSensitivity: (val: number) => void
+    invertY: boolean
+    setInvertY: (val: boolean) => void
+
+    // Audio (Example)
+    masterVolume: number
+    setMasterVolume: (val: number) => void
+
+    // Graphics
+    qualityPreset: 'LOW' | 'MEDIUM' | 'HIGH'
+    setQualityPreset: (val: 'LOW' | 'MEDIUM' | 'HIGH') => void
+}
+
+export const useSettingsStore = create<SettingsState>()(
+    persist(
+        (set) => ({
+            fov: 75,
+            setFov: (fov) => set({ fov }),
+            mouseSensitivity: 1.0,
+            setMouseSensitivity: (val) => set({ mouseSensitivity: val }),
+            invertY: false,
+            setInvertY: (val) => set({ invertY: val }),
+            masterVolume: 1.0,
+            setMasterVolume: (val) => set({ masterVolume: val }),
+            qualityPreset: 'HIGH',
+            setQualityPreset: (val) => set({ qualityPreset: val })
+        }),
+        {
+            name: 'user-settings', // unique name
+        }
+    )
+)

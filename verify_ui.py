@@ -24,7 +24,7 @@ def verify_ui():
             time.sleep(2)
 
             print("Taking screenshot of Modal...")
-            page.screenshot(path="/home/jules/verification/modal_open.png")
+            page.screenshot(path="verification/modal_open.png")
 
         except Exception as e:
             print(f"Error: {e}")

@@ -8,7 +8,7 @@ interface DecorProps {
 }
 
 // COZY: Procedural Plant
-const Plant = ({ position }: { position: [number, number, number] }) => (
+export const Plant = ({ position }: { position: [number, number, number] }) => (
     <group position={position}>
         {/* Pot */}
         <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
@@ -18,13 +18,13 @@ const Plant = ({ position }: { position: [number, number, number] }) => (
         {/* Foliage (Wobbling) */}
         <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
             <dodecahedronGeometry args={[0.35, 0]} />
-            <WobbleMaterial color="#A5D6A7" strength={0.2} speed={1.5} frequency={4} />
+            <WobbleMaterial color="#A5D6A7" strength={0.2} speed={1.5} frequency={4} sssIntensity={0.8} sheenIntensity={0.0} fingerprintScale={0.0} />
         </mesh>
     </group>
 )
 
 // COZY: Coffee Mug
-const CoffeeMug = ({ position }: { position: [number, number, number] }) => (
+export const CoffeeMug = ({ position }: { position: [number, number, number] }) => (
     <group position={position}>
         <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
             <cylinderGeometry args={[0.08, 0.08, 0.2, 16]} />
@@ -39,7 +39,7 @@ const CoffeeMug = ({ position }: { position: [number, number, number] }) => (
 )
 
 // COZY: Stack of Books
-const BookStack = ({ position }: { position: [number, number, number] }) => (
+export const BookStack = ({ position }: { position: [number, number, number] }) => (
     <group position={position} rotation={[0, Math.random() * Math.PI, 0]}>
         <mesh position={[0, 0.05, 0]} castShadow>
             <boxGeometry args={[0.4, 0.1, 0.3]} />
@@ -53,20 +53,50 @@ const BookStack = ({ position }: { position: [number, number, number] }) => (
 )
 
 // COZY: Fluffy Rug
-const CozyRug = ({ position, size, color }: { position: [number, number, number], size: [number, number], color: string }) => (
+export const CozyRug = ({ position, size, color }: { position: [number, number, number], size: [number, number], color: string }) => (
     <group position={[position[0], 0.02, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
         {/* Main Rug Surface */}
         <mesh receiveShadow>
             <planeGeometry args={size} />
             <meshStandardMaterial color={color} roughness={0.9} />
         </mesh>
-        {/* Rug Border/Thickness trick - slightly larger plane underneath in darker color? 
-            Or just a simple box to give it thickness. 
-            Let's use a Box instead of Plane for volume.
-        */}
+        {/* Rug Thickness */}
         <mesh position={[0, 0, -0.01]} receiveShadow castShadow>
             <boxGeometry args={[size[0], size[1], 0.05]} />
             <meshStandardMaterial color={color} roughness={1.0} />
+        </mesh>
+    </group>
+)
+
+// COZY: Comfy Chair
+export const CozyChair = ({ position, rotation = [0, 0, 0] }: { position: [number, number, number], rotation?: [number, number, number] }) => (
+    <group position={position} rotation={rotation}>
+        {/* Seat */}
+        <mesh position={[0, 0.4, 0]} castShadow>
+            <boxGeometry args={[0.6, 0.2, 0.6]} />
+            <meshStandardMaterial color="#8D6E63" />
+        </mesh>
+        {/* Backrest */}
+        <mesh position={[0, 0.8, -0.25]} castShadow>
+            <boxGeometry args={[0.6, 0.8, 0.1]} />
+            <meshStandardMaterial color="#6D4C41" />
+        </mesh>
+        {/* Legs */}
+        <mesh position={[-0.25, 0.2, 0.25]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.4]} />
+            <meshStandardMaterial color="#3E2723" />
+        </mesh>
+        <mesh position={[0.25, 0.2, 0.25]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.4]} />
+            <meshStandardMaterial color="#3E2723" />
+        </mesh>
+        <mesh position={[-0.25, 0.2, -0.25]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.4]} />
+            <meshStandardMaterial color="#3E2723" />
+        </mesh>
+        <mesh position={[0.25, 0.2, -0.25]} castShadow>
+            <cylinderGeometry args={[0.04, 0.03, 0.4]} />
+            <meshStandardMaterial color="#3E2723" />
         </mesh>
     </group>
 )

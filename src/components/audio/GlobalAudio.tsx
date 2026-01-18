@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react'
 import { useSoundBank } from './SoundBank'
 import useAudioStore from '../../audioStore'
-import * as THREE from 'three'
 
 /**
  * GlobalAudio plays non-positional UI sounds. 
@@ -13,15 +11,15 @@ import * as THREE from 'three'
 
 // Simple hook to play one-shot global sounds
 export const useGlobalAudio = () => {
-    const { buffers } = useSoundBank()
+    const { buffers, listener } = useSoundBank()
     const { volume, muted } = useAudioStore()
 
     const play = (type: string) => {
-        if (!buffers[type] || muted) return
+        if (!buffers[type] || !listener || muted) return
 
         // We create a fleeting source for UI sounds
         // This bypasses the scene graph spatialization
-        const ctx = buffers[type].context as AudioContext
+        const ctx = listener.context
         const source = ctx.createBufferSource()
         source.buffer = buffers[type]
 

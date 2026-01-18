@@ -1,31 +1,67 @@
-import { Suspense, useState, useEffect } from 'react'
-import * as THREE from 'three'
+import { Suspense, useState, useEffect, lazy } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment } from '@react-three/drei'
-import Level_01 from './scenes/Level_01'
-import HUD from './components/ui/HUD'
-import InventoryUI from './components/ui/InventoryUI'
-import PauseMenu from './components/ui/PauseMenu'
-import GameOverScreen from './components/ui/GameOverScreen'
-import UIOverlay from './components/ui/UIOverlay'
-import { FPSLimiter } from './components/game/FPSLimiter'
-import { LoadingScreen } from './components/ui/LoadingScreen'
+import { OrbitControls } from '@react-three/drei'
+const Level_01 = lazy(() => import('./scenes/Level_01'))
+// import HUD from './components/ui/HUD' // Removed default import to fix conflict
+const InventoryUI = lazy(() => import('./components/ui/InventoryUI'))
+const PauseMenu = lazy(() => import('./components/ui/PauseMenu'))
+const GameOverScreen = lazy(() => import('./components/ui/GameOverScreen'))
+const UIOverlay = lazy(() => import('./components/ui/UIOverlay'))
+const InfoModal = lazy(() => import('./components/ui/InfoModal').then(module => ({ default: module.InfoModal })))
+const EndingScreen = lazy(() => import('./components/ui/EndingScreen'))
+const HUD = lazy(() => import('./components/ui/HUD').then(module => ({ default: module.HUD })))
+const SkillsMenu = lazy(() => import('./components/ui/SkillsMenu').then(module => ({ default: module.SkillsMenu })))
+const SystemMenu = lazy(() => import('./components/ui/SystemMenu').then(module => ({ default: module.SystemMenu })))
+const FPSLimiter = lazy(() => import('./components/game/FPSLimiter').then(module => ({ default: module.FPSLimiter })))
+const LoadingScreen = lazy(() => import('./components/ui/LoadingScreen').then(module => ({ default: module.LoadingScreen })))
+import { DebugConsole } from './components/ui/DebugConsole'
+import Reticle from './components/ui/Reticle'
 import { useDeviceDetect } from './hooks/useDeviceDetect'
 import projectsData from './assets/data/projects.json'
 import bioData from './assets/data/bio.json'
-import MobileControls from './components/ui/MobileControls'
+const MobileControls = lazy(() => import('./components/ui/MobileControls'))
+const NavigationSuggestions = lazy(() => import('./components/ui/NavigationSuggestions'))
+const FeedbackSurvey = lazy(() => import('./components/ui/FeedbackSurvey'))
+const InteractionManager = lazy(() => import('./systems/InteractionManager'))
+const CameraShake = lazy(() => import('./components/game/CameraShake'))
+const PhotoOverlay = lazy(() => import('./components/ui/PhotoOverlay'))
+const BuffHUD = lazy(() => import('./components/ui/BuffHUD').then(module => ({ default: module.BuffHUD })))
+const ProjectModal = lazy(() => import('./components/ui/ProjectModal'))
+import PortraitWarning from './components/ui/PortraitWarning'
+const PerformanceMonitor = lazy(() => import('./components/debug/PerformanceMonitor'))
+import { useUIStore } from './stores/uiStore'
+import { TelemetryManager } from './systems/TelemetryManager'
 import useAudioStore from './audioStore'
+import useGameStore from './store'
+import Hotbar from './components/ui/Hotbar'
+
+
+// const CameraSystem = lazy(() => import('./systems/CameraSystem')) // Moved to Level_01
+
+// ...
+
+// Helper for Debug Mode (could be state or env)
+const DEBUG_MODE = false;
 
 function App() {
     const { isMobile, isLandscape } = useDeviceDetect()
     // Determine if we are in portrait mobile mode
     const isPortraitMobile = isMobile && !isLandscape
 
+    // Fix useGameStore usage:
+    const motesCollected = useGameStore(state => state.motesCollected)
+    const hasShownSurvey = useGameStore(state => state.hasShownSurvey)
+    const isPhotoMode = useGameStore(state => state.isPhotoMode)
+    const { isProjectModalOpen, toggleProjectModal } = useUIStore()
+
     // State for collapsing the project section
     const [isProjectSectionOpen, setIsProjectSectionOpen] = useState(false)
 
     // Initialize audio on first interaction
     useEffect(() => {
+        // Preload Assets
+        import('./systems/AssetLoader').then(({ preloadAssets }) => preloadAssets());
+
         const initAudio = () => {
             // Initialize audio context on first user interaction
             useAudioStore.getState().initAudio();
@@ -47,6 +83,11 @@ function App() {
         }
     }, []);
 
+    // Load saved game state
+    useEffect(() => {
+        useGameStore.getState().loadGame();
+    }, []);
+
     // Flatten skills for mobile display
     const flattenedSkills = bioData.skills.flatMap((cat: any) => cat.items)
 
@@ -54,28 +95,20 @@ function App() {
         <>
             {/* 3D Viewport Container */}
             <div
-                className={isPortraitMobile ? "mobile-portrait-container" : ""}
-                style={isPortraitMobile ? {
-                    height: isProjectSectionOpen ? '40dvh' : '90dvh', // Expand when closed
-                    transition: 'height 0.3s ease'
-                } : {
-                    width: '100%',
-                    height: '100vh',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    touchAction: 'none'
-                }}
+                className={`app-container ${isPortraitMobile ? "mobile-portrait-container" : ""}`}
             >
                 <Canvas
                     shadows={!isMobile}
                     gl={{ antialias: true }}
-                    orthographic
-                    // Initial zoom set to desktop default, Lobby will adjust for mobile
-                    camera={{ position: [20, 20, 20], zoom: 40, near: 0.1, far: 1000 }}
-                    dpr={[1, 2]} // Clamp pixel ratio
+                    dpr={[1, 2]} // Clamp pixel ratio for consistent performance
                 >
                     <FPSLimiter limit={30} />
-                    <OrbitControls
+
+                    {/* Camera System (Handles View) */}
+                    {/* Camera System moved to Level_01 to access Physics */}
+
+                    {/* Debug Orbit Controls */}
+                    {DEBUG_MODE && <OrbitControls
                         makeDefault
                         enableZoom={true}
                         enableRotate={true}
@@ -83,24 +116,50 @@ function App() {
                         minZoom={10}
                         maxZoom={100}
                         maxPolarAngle={Math.PI / 2}
-                    />
+                    />}
 
-                    {/* Decoupled Environment to avoid side-effect warnings during Lobby loading */}
-                    <Suspense fallback={null}>
-                        <Environment preset="sunset" background={false} />
-                    </Suspense>
+
 
                     <Suspense fallback={<LoadingScreen />}>
                         <Level_01 />
+                        <InteractionManager />
+                        <TelemetryManager />
+                        <CameraShake />
                     </Suspense>
-                </Canvas>
-                <HUD />
-                <InventoryUI />
-                <PauseMenu />
-                <GameOverScreen />
-                <UIOverlay />
-                {isMobile && <MobileControls />}
+                </Canvas >
+
+                {isMobile && <Suspense fallback={null}><MobileControls /></Suspense>
+                }
             </div >
+
+            {/* UI Layer - Outside container to ensure fixed positioning works */}
+            < Suspense fallback={null} >
+                {isPhotoMode && <PhotoOverlay />}
+                {
+                    !isPhotoMode && (
+                        <>
+                            <UIOverlay />
+                            <PerformanceMonitor />
+                            <DebugConsole />
+                            <HUD />
+                            <Hotbar />
+                            <BuffHUD />
+                            <Reticle />
+                            <SkillsMenu />
+                            <SystemMenu />
+                            <InfoModal />
+                            <ProjectModal isOpen={isProjectModalOpen} onClose={toggleProjectModal} projects={projectsData} />
+                            <EndingScreen />
+                            <InventoryUI />
+                            <PauseMenu />
+                            <GameOverScreen />
+                            <NavigationSuggestions />
+                            <PortraitWarning />
+                            {motesCollected >= 5 && !hasShownSurvey && <FeedbackSurvey onClose={() => useGameStore.getState().setHasShownSurvey()} />}
+                        </>
+                    )
+                }
+            </Suspense >
 
             {/* Portrait Mode Content List */}
             {
@@ -115,8 +174,8 @@ function App() {
                                 left: '50%',
                                 transform: 'translateX(-50%) translateY(-100%)',
                                 zIndex: 1000,
-                                background: '#4a3728',
-                                color: '#fcf4e8',
+                                background: '#fffcf5', // cozy-bg
+                                color: '#4a403a',      // cozy-text
                                 border: 'none',
                                 borderTopLeftRadius: '10px',
                                 borderTopRightRadius: '10px',
@@ -135,9 +194,10 @@ function App() {
                             padding: isProjectSectionOpen ? '20px' : '0',
                             transition: 'height 0.3s ease, padding 0.3s ease',
                             overflow: 'hidden', // Hide overflow when closed
-                            overflowY: isProjectSectionOpen ? 'auto' : 'hidden'
+                            overflowY: isProjectSectionOpen ? 'auto' : 'hidden',
+                            backgroundColor: '#fffcf5' // cozy-bg
                         }}>
-                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', color: '#fcf4e8' }}>Projects</h2>
+                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #eaddcf', paddingBottom: '10px', color: '#4a403a' }}>Projects</h2>
                             <div>
                                 {projectsData.map((project: any) => (
                                     <article key={project.id} className="mobile-project-card">
@@ -152,11 +212,10 @@ function App() {
                                             />
                                         )}
                                         <div className="mobile-card-content">
-                                            <h3 style={{ fontSize: '18px', marginTop: 0, color: '#FFD54F', lineHeight: '1.4' }}>{project.title}</h3>
-                                            {/* Improved typography for body text */}
+                                            <h3 style={{ fontSize: '18px', marginTop: 0, color: '#d4a373', lineHeight: '1.4' }}>{project.title}</h3>
                                             <p className="mobile-text-body" style={{
                                                 fontSize: '14px', // Fallback
-                                                color: '#fcf4e8',
+                                                color: '#4a403a', // cozy-text
                                                 fontFamily: 'Inter, system-ui, sans-serif',
                                                 marginBottom: '15px'
                                             }}>
@@ -174,7 +233,7 @@ function App() {
                                 ))}
                             </div>
 
-                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #5d4037', paddingBottom: '10px', marginTop: '40px', color: '#fcf4e8' }}>Skills</h2>
+                            <h2 style={{ fontSize: '20px', borderBottom: '2px solid #eaddcf', paddingBottom: '10px', marginTop: '40px', color: '#4a403a' }}>Skills</h2>
                             <div className="mobile-skills-grid">
                                 {flattenedSkills.map((skill: any) => (
                                     <div key={skill.name} className="skill-card">
@@ -182,8 +241,8 @@ function App() {
                                             {/* Default icon if none provided */}
                                             {skill.icon || '🔹'}
                                         </div>
-                                        <div style={{ fontSize: '12px', color: '#fcf4e8', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
-                                        {skill.level && <div style={{ fontSize: '10px', color: '#d7ccc8', marginTop: '4px' }}>{skill.level}</div>}
+                                        <div style={{ fontSize: '12px', color: '#4a403a', fontFamily: 'Inter, system-ui, sans-serif' }}>{skill.name}</div>
+                                        {skill.level && <div style={{ fontSize: '10px', color: '#8c8c8c', marginTop: '4px' }}>{skill.level}</div>}
                                     </div>
                                 ))}
                             </div>

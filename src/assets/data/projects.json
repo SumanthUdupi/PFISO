@@ -4,19 +4,32 @@
     "title": "EHS Compliance Platform - Ensuring Worker Safety for Global Manufacturing",
     "role": "**My Role**: Lead Business Analyst, responsible for requirements gathering, backlog management, API documentation, and stakeholder communication.",
     "timeline": "2022 - Present",
-    "heroImage": "./assets/projects/p1/hero.webp",
+    "heroImage": "/assets/projects/p1/hero.webp",
     "description": "An EHS platform for a global manufacturing client serving 50,000+ employees.",
-    "techStack": ["Gherkin", "Agile", "REST API", "SQL", "Figma"],
+    "techStack": [
+      "Gherkin",
+      "Agile",
+      "REST API",
+      "SQL",
+      "Figma"
+    ],
     "links": {},
     "problemStatement": {
       "context": "A global manufacturing giant (50k+ employees) was relying on disparate legacy systems and spreadsheets to manage Environmental, Health, and Safety (EHS) incidents. This fragmentation led to delayed reporting, inconsistent data, and increased compliance risk.",
-      "goals": ["Unify EHS data into a single platform", "Reduce incident reporting time by 30%", "Ensure 100% compliance with OSHA/GRI standards"],
+      "goals": [
+        "Unify EHS data into a single platform",
+        "Reduce incident reporting time by 30%",
+        "Ensure 100% compliance with OSHA/GRI standards"
+      ],
       "constraints": "Strict regulatory deadlines, integration with legacy HR systems, multi-language support required."
     },
     "research": {
-        "summary": "Led global discovery sessions with stakeholders from Europe, Asia, and North America to understand local compliance nuances.",
-        "personas": [],
-        "insights": ["Field workers needed a mobile-first interface.", "EHS managers needed real-time dashboards, not monthly reports."]
+      "summary": "Led global discovery sessions with stakeholders from Europe, Asia, and North America to understand local compliance nuances.",
+      "personas": [],
+      "insights": [
+        "Field workers needed a mobile-first interface.",
+        "EHS managers needed real-time dashboards, not monthly reports."
+      ]
     },
     "designProcess": {
       "userFlows": [],
@@ -25,7 +38,11 @@
       "prototypeUrl": ""
     },
     "outcomes": {
-      "metrics": ["Unified 5 legacy systems into 1", "Reduced incident reporting time by 40%", "100% compliance audit pass rate"],
+      "metrics": [
+        "Unified 5 legacy systems into 1",
+        "Reduced incident reporting time by 40%",
+        "100% compliance audit pass rate"
+      ],
       "reflection": "**What I Learned**: This project taught me the importance of early API contract testing. By implementing it, we caught integration issues a full sprint earlier than usual."
     },
     "featured": true
@@ -35,29 +52,45 @@
     "title": "Automotive QMS Suite - Streamlining PPAP & Non-Conformity for Volvo & PACCAR",
     "role": "**My Role**: Business Analyst & Product Owner Proxy, managing the backlog for the Quality Management System modules.",
     "timeline": "2021 - 2023",
-    "heroImage": "./assets/projects/p2/hero.webp",
+    "heroImage": "/assets/projects/p2/hero.webp",
     "description": "A comprehensive Quality Management System (QMS) ensuring parts meet strict automotive standards.",
-    "techStack": ["Azure DevOps", "SQL", "BPMN", "Power BI"],
+    "techStack": [
+      "Azure DevOps",
+      "SQL",
+      "BPMN",
+      "Power BI"
+    ],
     "links": {},
     "problemStatement": {
-        "context": "The client's Production Part Approval Process (PPAP) and Non-Conformity Report (NCR) workflows were manual and email-driven, causing delays in part approval and production bottlenecks.",
-        "goals": ["Digitize the PPAP/NCR workflow", "Reduce approval cycle time by 20%", "Provide real-time visibility into supplier quality"],
-        "constraints": "Must integrate with SAP, strict audit trail requirements."
+      "context": "The client's Production Part Approval Process (PPAP) and Non-Conformity Report (NCR) workflows were manual and email-driven, causing delays in part approval and production bottlenecks.",
+      "goals": [
+        "Digitize the PPAP/NCR workflow",
+        "Reduce approval cycle time by 20%",
+        "Provide real-time visibility into supplier quality"
+      ],
+      "constraints": "Must integrate with SAP, strict audit trail requirements."
     },
     "research": {
-        "summary": "Mapped existing 'as-is' processes using BPMN and identified 15+ bottlenecks in the manual workflow.",
-        "personas": [],
-        "insights": ["Supplier communication was the biggest bottleneck.", "Approvers were overwhelmed by irrelevant notifications."]
+      "summary": "Mapped existing 'as-is' processes using BPMN and identified 15+ bottlenecks in the manual workflow.",
+      "personas": [],
+      "insights": [
+        "Supplier communication was the biggest bottleneck.",
+        "Approvers were overwhelmed by irrelevant notifications."
+      ]
     },
     "designProcess": {
-        "userFlows": [],
-        "wireframes": [],
-        "mockups": [],
-        "prototypeUrl": ""
+      "userFlows": [],
+      "wireframes": [],
+      "mockups": [],
+      "prototypeUrl": ""
     },
     "outcomes": {
-        "metrics": ["Reduced PPAP approval time by 25%", "Digitized 100% of NCR workflows", "Improved supplier response time by 20%"],
-        "reflection": "Standardizing the process before digitizing it was key. We eliminated 3 redundant approval steps before writing a line of code."
+      "metrics": [
+        "Reduced PPAP approval time by 25%",
+        "Digitized 100% of NCR workflows",
+        "Improved supplier response time by 20%"
+      ],
+      "reflection": "Standardizing the process before digitizing it was key. We eliminated 3 redundant approval steps before writing a line of code."
     },
     "featured": true
   },
@@ -66,28 +99,42 @@
     "title": "AI-Powered Risk Detection - Proactively Identifying Compliance Risks",
     "role": "**My Role**: Technical Business Analyst, bridging the gap between Data Science and Engineering.",
     "timeline": "2023",
-    "heroImage": "./assets/projects/p1/hero.webp",
+    "heroImage": "/assets/projects/p1/hero.webp",
     "description": "Integrating machine learning to predict and prevent compliance breaches.",
-    "techStack": ["Python", "Gherkin", "REST API", "Swagger"],
+    "techStack": [
+      "Python",
+      "Gherkin",
+      "REST API",
+      "Swagger"
+    ],
     "links": {},
     "problemStatement": {
       "context": "A key automotive client's compliance team was struggling to manually monitor thousands of daily operational activities. This reactive process meant risks were often identified after the fact.",
-      "goals": ["Proactively identify high-risk activities", "Reduce manual monitoring effort", "Provide explainable AI insights"],
+      "goals": [
+        "Proactively identify high-risk activities",
+        "Reduce manual monitoring effort",
+        "Provide explainable AI insights"
+      ],
       "constraints": "Model explainability was crucial for trust."
     },
     "research": {
-        "summary": "Collaborated with data scientists to define feature sets and with compliance officers to understand risk indicators.",
-        "personas": [],
-        "insights": ["False positives were more acceptable than false negatives, but had to be minimized."]
+      "summary": "Collaborated with data scientists to define feature sets and with compliance officers to understand risk indicators.",
+      "personas": [],
+      "insights": [
+        "False positives were more acceptable than false negatives, but had to be minimized."
+      ]
     },
     "designProcess": {
-        "userFlows": [],
-        "wireframes": [],
-        "mockups": [],
-        "prototypeUrl": ""
+      "userFlows": [],
+      "wireframes": [],
+      "mockups": [],
+      "prototypeUrl": ""
     },
     "outcomes": {
-      "metrics": ["Improved early risk detection accuracy by 20%", "Reduced manual review time by 15 hours/week"],
+      "metrics": [
+        "Improved early risk detection accuracy by 20%",
+        "Reduced manual review time by 15 hours/week"
+      ],
       "reflection": "Data quality is the foundation of AI. We spent 40% of the time just cleaning and validating the input data."
     },
     "featured": true
@@ -97,29 +144,43 @@
     "title": "Executive Dashboards - Visualizing Impact for Decision Makers",
     "role": "**My Role**: Data Analyst & Dashboard Developer.",
     "timeline": "2022",
-    "heroImage": "./assets/projects/p2/hero.webp",
+    "heroImage": "/assets/projects/p2/hero.webp",
     "description": "Building a suite of Power BI and Superset dashboards to track KPI performance.",
-    "techStack": ["Power BI", "Superset", "SQL", "ETL"],
+    "techStack": [
+      "Power BI",
+      "Superset",
+      "SQL",
+      "ETL"
+    ],
     "links": {},
     "problemStatement": {
-        "context": "Executive leadership lacked real-time visibility into EHS and Quality metrics, relying on stale monthly PPT reports.",
-        "goals": ["Provide real-time data access", "Enable drill-down capabilities", "Standardize KPI definitions globally"],
-        "constraints": "Data privacy regulations (GDPR) for employee data."
+      "context": "Executive leadership lacked real-time visibility into EHS and Quality metrics, relying on stale monthly PPT reports.",
+      "goals": [
+        "Provide real-time data access",
+        "Enable drill-down capabilities",
+        "Standardize KPI definitions globally"
+      ],
+      "constraints": "Data privacy regulations (GDPR) for employee data."
     },
     "research": {
-        "summary": "Interviewed 10+ executives to understand their key questions and decision-making criteria.",
-        "personas": [],
-        "insights": ["Executives care about trends, not just snapshots."]
+      "summary": "Interviewed 10+ executives to understand their key questions and decision-making criteria.",
+      "personas": [],
+      "insights": [
+        "Executives care about trends, not just snapshots."
+      ]
     },
     "designProcess": {
-        "userFlows": [],
-        "wireframes": [],
-        "mockups": [],
-        "prototypeUrl": ""
+      "userFlows": [],
+      "wireframes": [],
+      "mockups": [],
+      "prototypeUrl": ""
     },
     "outcomes": {
-        "metrics": ["100% automated reporting (saving 40hrs/month)", "10% increase in customer satisfaction due to faster issue resolution"],
-        "reflection": "Visual design matters in data. A clean, intuitive dashboard gets used; a cluttered one gets ignored."
+      "metrics": [
+        "100% automated reporting (saving 40hrs/month)",
+        "10% increase in customer satisfaction due to faster issue resolution"
+      ],
+      "reflection": "Visual design matters in data. A clean, intuitive dashboard gets used; a cluttered one gets ignored."
     },
     "featured": false
   },
@@ -128,29 +189,43 @@
     "title": "OEM Integration APIs - Connecting the Supply Chain",
     "role": "**My Role**: Technical Analyst & API Designer.",
     "timeline": "2021",
-    "heroImage": "./assets/projects/p1/hero.webp",
+    "heroImage": "/assets/projects/p1/hero.webp",
     "description": "Designing and documenting REST APIs for seamless data exchange with OEMs.",
-    "techStack": ["REST API", "Postman", "Swagger", "XML/JSON"],
+    "techStack": [
+      "REST API",
+      "Postman",
+      "Swagger",
+      "XML/JSON"
+    ],
     "links": {},
     "problemStatement": {
-        "context": "Data exchange between the client and their OEMs was done via fragile file transfers, leading to data loss and sync errors.",
-        "goals": ["Establish real-time API connectivity", "Ensure data integrity", "Document APIs for 3rd party developers"],
-        "constraints": "Legacy OEM systems with limited API capabilities."
+      "context": "Data exchange between the client and their OEMs was done via fragile file transfers, leading to data loss and sync errors.",
+      "goals": [
+        "Establish real-time API connectivity",
+        "Ensure data integrity",
+        "Document APIs for 3rd party developers"
+      ],
+      "constraints": "Legacy OEM systems with limited API capabilities."
     },
     "research": {
-        "summary": "Analyzed existing file formats and mapped them to JSON schemas.",
-        "personas": [],
-        "insights": ["Error handling and retry logic were critical due to unstable network connections at some factory sites."]
+      "summary": "Analyzed existing file formats and mapped them to JSON schemas.",
+      "personas": [],
+      "insights": [
+        "Error handling and retry logic were critical due to unstable network connections at some factory sites."
+      ]
     },
     "designProcess": {
-        "userFlows": [],
-        "wireframes": [],
-        "mockups": [],
-        "prototypeUrl": ""
+      "userFlows": [],
+      "wireframes": [],
+      "mockups": [],
+      "prototypeUrl": ""
     },
     "outcomes": {
-        "metrics": ["Reduced integration defects by 25%", "Cut onboarding time for new OEMs by 50%"],
-        "reflection": "Documentation is a product. High-quality Swagger docs drastically reduced the support burden on our team."
+      "metrics": [
+        "Reduced integration defects by 25%",
+        "Cut onboarding time for new OEMs by 50%"
+      ],
+      "reflection": "Documentation is a product. High-quality Swagger docs drastically reduced the support burden on our team."
     },
     "featured": false
   }
