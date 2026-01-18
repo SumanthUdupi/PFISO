@@ -5,6 +5,7 @@ import Modal from './Modal';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import useGameStore from '../../store';
 import { useEffect } from 'react';
+import { resolveAssetPath } from '../../utils/assetUtils';
 
 interface CaseStudy {
   id: string;
@@ -113,7 +114,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                   </div>
                 )}
                 <div style={{ width: '100%', height: '150px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '2px solid var(--color-ui-border)', overflow: 'hidden' }}>
-                  <img src={project.heroImage} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
+                  <img src={resolveAssetPath(project.heroImage)} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => (e.currentTarget.src = resolveAssetPath('./assets/placeholder_sm.webp'))} />
                 </div>
                 <div style={{ padding: '15px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <h3 style={{ fontFamily: '"Press Start 2P", cursive', fontSize: '12px', marginTop: 0, marginBottom: '10px', lineHeight: '1.4' }}>{project.title}</h3>
@@ -152,10 +153,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
               {/* Hero Section */}
               <div style={{ marginBottom: '40px', borderBottom: '2px solid #eee', paddingBottom: '20px' }}>
                 <img
-                  src={selectedProject.heroImage}
+                  src={resolveAssetPath(selectedProject.heroImage)}
                   alt="Hero"
                   style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #000' }}
-                  onError={(e) => (e.currentTarget.src = './assets/placeholder_hero.webp')}
+                  onError={(e) => (e.currentTarget.src = resolveAssetPath('./assets/placeholder_hero.webp'))}
                 />
                 <div style={{ marginTop: '20px' }}>
                   <h1 style={{ fontFamily: 'var(--font-body)', fontWeight: 800, fontSize: '28px', margin: '0 0 10px 0', lineHeight: 1.3 }}>{selectedProject.title}</h1>
@@ -215,7 +216,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                       <h3 style={{ fontFamily: 'var(--font-body)', fontSize: '18px' }}>Process Flows</h3>
                       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
                         {selectedProject.designProcess.userFlows.map((img, i) => (
-                          <img key={i} src={img} style={{ height: '200px', border: '1px solid #ccc' }} alt="Flow" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
+                          <img key={i} src={resolveAssetPath(img)} style={{ height: '200px', border: '1px solid #ccc' }} alt="Flow" onError={(e) => (e.currentTarget.src = resolveAssetPath('./assets/placeholder_sm.webp'))} />
                         ))}
                       </div>
                     </div>
@@ -227,7 +228,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, projects }
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
                         {selectedProject.designProcess.mockups.map((img, i) => (
                           <div key={i}>
-                            <img src={img} style={{ width: '100%', border: '1px solid #ccc' }} alt="Mockup" onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')} />
+                            <img src={resolveAssetPath(img)} style={{ width: '100%', border: '1px solid #ccc' }} alt="Mockup" onError={(e) => (e.currentTarget.src = resolveAssetPath('./assets/placeholder_sm.webp'))} />
                           </div>
                         ))}
                       </div>
