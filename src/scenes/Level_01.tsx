@@ -20,6 +20,7 @@ import { CrowdManager } from '../components/game/AI/CrowdManager'
 import { PatrolPath } from '../components/game/AI/PatrolPath'
 import { GridOverlay } from '../components/ui/GridOverlay'
 import PerformanceMonitor from '../systems/PerformanceMonitor'
+import { ArtAssetsIntegration } from '../components/World/ArtAssetsIntegration'
 
 // Game Loop Component
 const GameLoop = () => {
@@ -74,6 +75,9 @@ export default function Level_01() {
                 <PhysicsProp id="prop_box_1" position={[0, 1, 3]} type="box" />
                 <PhysicsProp id="prop_ball_1" position={[1, 1, 3]} type="ball" />
                 <Succulent id="artreq_026" position={[0.5, 1, 2.5]} />
+
+                {/* Integration of all 50 Art Assets */}
+                <ArtAssetsIntegration />
 
             </Physics>
 

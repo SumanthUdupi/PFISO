@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Html } from '@react-three/drei'
-import { useGameStore } from '../../../store' // Or wherever we decide to put the state
+import useGameStore from '../../../store' // Or wherever we decide to put the state
 
 // We might need to add `lightsOn` state to the store or a local context
 // For now, let's assume we can dispatch an action or use a callback if passed

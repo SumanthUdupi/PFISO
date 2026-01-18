@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { RigidBody, RapierRigidBody } from '@react-three/rapier'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { useGameStore } from '../../../store'
+import useGameStore from '../../../store'
 
 export const Basketball: React.FC<{ position: [number, number, number] }> = ({ position }) => {
     const rigidBody = useRef<RapierRigidBody>(null)

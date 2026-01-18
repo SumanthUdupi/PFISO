@@ -14,6 +14,8 @@ import { useInputBuffer } from '../../hooks/useInputBuffer'
 import eventBus from '../../systems/EventBus'
 import useAudioStore from '../../audioStore'
 import useCameraStore, { CameraMode } from '../../stores/cameraStore'
+import useCozyStore from '../../systems/CozySystem'
+import useJournalStore from '../../systems/JournalSystem'
 
 // --- COZY TUNING ---
 const WALK_SPEED = 9.0 // Increased from 6.0
@@ -73,12 +75,21 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
     // Carried Object State
     const carriedObject = useRef<THREE.Object3D | null>(null)
 
+    const triggerInteraction = (label: string) => {
+        console.log('Player interacting:', label)
+        if (label.toLowerCase().includes('coffee')) useCozyStore.getState().brewCoffee()
+        if (label.toLowerCase().includes('plant')) useCozyStore.getState().waterPlant()
+        if (label.toLowerCase().includes('pet')) useCozyStore.getState().feedPet()
+        if (label.toLowerCase().includes('journal')) useJournalStore.getState().unlockEntry('journal_01', 'Discovery', 'Found a journal.')
+        // Add more specific logic based on label or passed interactionData
+    }
+
     // Expose handle
     useImperativeHandle(ref, () => ({
         moveTo: (pos) => {
             commandQueue.current.push({ type: 'MOVE', target: pos })
         },
-        triggerInteraction: (label) => { console.log('Player interacting:', label) },
+        triggerInteraction: triggerInteraction,
         enqueueCommand: (cmd) => commandQueue.current.push(cmd),
         clearQueue: () => { commandQueue.current = [] },
         sit: (position, quaternion) => {
@@ -174,6 +185,18 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
             window.removeEventListener('mouseup', onMouseUp)
         }
     }, [isSitting])
+
+    // Command Listener
+    useEffect(() => {
+        const onCommand = (cmd: any) => {
+            if (cmd.type === 'MOVE_AND_INTERACT') {
+                commandQueue.current.push({ type: 'MOVE', target: cmd.target, stopDistance: cmd.stopDistance })
+                commandQueue.current.push({ type: 'CALLBACK', fn: () => triggerInteraction(cmd.label) })
+            }
+        }
+        eventBus.on('PLAYER_COMMAND', onCommand)
+        return () => eventBus.off('PLAYER_COMMAND', onCommand)
+    }, [])
 
     // Command Queue Processing
     const processQueue = () => {
