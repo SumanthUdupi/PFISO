@@ -13,7 +13,7 @@ const HUD = lazy(() => import('./components/ui/HUD').then(module => ({ default: 
 const SkillsMenu = lazy(() => import('./components/ui/SkillsMenu').then(module => ({ default: module.SkillsMenu })))
 const SystemMenu = lazy(() => import('./components/ui/SystemMenu').then(module => ({ default: module.SystemMenu })))
 const FPSLimiter = lazy(() => import('./components/game/FPSLimiter').then(module => ({ default: module.FPSLimiter })))
-const LoadingScreen = lazy(() => import('./components/ui/LoadingScreen').then(module => ({ default: module.LoadingScreen })))
+import { LoadingScreen } from './components/ui/LoadingScreen'
 import { DebugConsole } from './components/ui/DebugConsole'
 import Reticle from './components/ui/Reticle'
 import { useDeviceDetect } from './hooks/useDeviceDetect'
@@ -122,7 +122,7 @@ function App() {
 
 
 
-                    <ErrorBoundary fallback={null}>
+                    <ErrorBoundary>
                         <Suspense fallback={<LoadingScreen />}>
                             <Level_01 />
                             <InteractionManager />

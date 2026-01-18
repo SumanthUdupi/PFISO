@@ -3,7 +3,7 @@ import * as Assets from '../game/ProceduralAssets'
 
 export const ArtAssetsIntegration = () => {
     // Generate a grid of assets
-    const assetsList = Object.values(Assets)
+    const assetsList = Object.values(Assets).filter(asset => typeof asset === 'function')
     const gridSize = Math.ceil(Math.sqrt(assetsList.length))
     const spacing = 3
 

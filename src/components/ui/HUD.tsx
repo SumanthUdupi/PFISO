@@ -38,7 +38,7 @@ export const HUD: React.FC = () => {
                     >
                         <div className={`relative bg-cozy-bg/80 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 flex items-center justify-center text-2xl group-hover:bg-cozy-primary group-hover:text-cozy-text transition-all duration-300 ${isMobile ? 'w-14 h-14' : 'w-14 h-14'}`}>
                             <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                            📖
+                            <span className="font-sans">📖</span>
                         </div>
                         {!isMobile && (
                             <span className="text-xs font-medium text-cozy-text/90 drop-shadow-sm bg-cozy-bg/90 backdrop-blur px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
@@ -54,7 +54,7 @@ export const HUD: React.FC = () => {
                     >
                         <div className="relative w-14 h-14 bg-cozy-bg/80 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 flex items-center justify-center text-2xl group-hover:bg-cozy-primary group-hover:text-cozy-text transition-all duration-300">
                             <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                            ✨
+                            <span className="font-sans">✨</span>
                         </div>
                         <span className="text-xs font-medium text-cozy-text/90 drop-shadow-sm bg-cozy-bg/90 backdrop-blur px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
                             Skills
@@ -68,7 +68,7 @@ export const HUD: React.FC = () => {
                         title="Settings"
                         aria-label="System Settings"
                     >
-                        ⚙️
+                        <span className="font-sans">⚙️</span>
                     </button>
                 </div>
 
