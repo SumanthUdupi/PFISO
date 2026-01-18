@@ -197,6 +197,7 @@ const CameraSystem = () => {
 
         const dir = pivotPosition.current.clone().sub(camera.position).normalize()
         occlusionRaycaster.current.set(camera.position, dir)
+        occlusionRaycaster.current.camera = camera
 
         // Intersect only specific layers? For now all.
         const intersects = occlusionRaycaster.current.intersectObjects(scene.children, true)
