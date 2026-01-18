@@ -5,6 +5,7 @@ import ProjectEasel from '../game/Environment/ProjectEasel'
 import { useTexture } from '@react-three/drei'
 import projectsData from '../../assets/data/projects.json'
 import { useUIStore } from '../../stores/uiStore'
+import { resolveAssetPath } from '../../utils/assetUtils'
 
 interface ProjectData {
     id: string
@@ -22,7 +23,7 @@ export const ProjectZone: React.FC<{ position: [number, number, number] }> = ({ 
     // Preload textures to avoid render-phase updates
     React.useEffect(() => {
         projects.forEach(project => {
-            if (project.heroImage) useTexture.preload(project.heroImage)
+            if (project.heroImage) useTexture.preload(resolveAssetPath(project.heroImage))
         })
     }, [])
 
@@ -50,14 +51,14 @@ export const ProjectZone: React.FC<{ position: [number, number, number] }> = ({ 
                         onInteract={() => openModal({
                             title: project.title,
                             description: project.description,
-                            image: project.heroImage,
+                            image: project.heroImage ? resolveAssetPath(project.heroImage) : undefined,
                             tags: project.techStack,
                             links: project.links.demo ? [{ label: "Demo", url: project.links.demo }] : [],
                             type: 'PROJECT'
                         })}
                     >
                         <Suspense fallback={null}>
-                            <ProjectEasel position={[0, 0, 0]} image={project.heroImage} />
+                            <ProjectEasel position={[0, 0, 0]} image={project.heroImage ? resolveAssetPath(project.heroImage) : undefined} />
                         </Suspense>
                     </InteractableItem>
                 )

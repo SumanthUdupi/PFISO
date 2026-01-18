@@ -2,6 +2,7 @@ import React from 'react';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import useGameStore, { SkillTier } from '../../store';
 import SpriteIcon from './SpriteIcon';
+import { resolveAssetPath } from '../../utils/assetUtils';
 
 interface SkillItem {
   name: string;
@@ -82,7 +83,7 @@ const SkillInventory: React.FC<SkillInventoryProps> = ({ skills }) => {
               <span style={{ fontFamily: '"Fredoka", sans-serif', fontSize: '14px', fontWeight: 'bold' }}>?</span>
             ) : (
               <SpriteIcon
-                src="./assets/sprites/skill-icons.webp"
+                src={resolveAssetPath("./assets/sprites/skill-icons.webp")}
                 size={32}
                 sheetSize={128}
                 iconSize={32}

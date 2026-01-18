@@ -2,6 +2,7 @@ import React from 'react';
 import PixelTransition from './PixelTransition';
 import SmoothText from './SmoothText';
 import Modal from './Modal';
+import { resolveAssetPath } from '../../utils/assetUtils';
 
 interface BioData {
     name: string;
@@ -42,10 +43,10 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                             <div style={{ flex: '0 0 250px' }}>
                                 <div style={{ border: '4px solid #000', padding: '5px', background: 'white', transform: 'rotate(-2deg)' }}>
                                     <img
-                                        src={bio.photo}
+                                        src={resolveAssetPath(bio.photo)}
                                         alt="Profile"
                                         style={{ width: '100%', height: 'auto', display: 'block' }}
-                                        onError={(e) => (e.currentTarget.src = './assets/placeholder_sm.webp')}
+                                        onError={(e) => (e.currentTarget.src = resolveAssetPath('./assets/placeholder_sm.webp'))}
                                     />
                                 </div>
                                 <div style={{ textAlign: 'center', marginTop: '15px', fontFamily: '"Press Start 2P", cursive', fontSize: '12px' }}>

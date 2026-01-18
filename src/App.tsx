@@ -35,6 +35,7 @@ import useAudioStore from './audioStore'
 import useGameStore from './store'
 import Hotbar from './components/ui/Hotbar'
 import { resolveAssetPath } from './utils/assetUtils'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 
 
 // const CameraSystem = lazy(() => import('./systems/CameraSystem')) // Moved to Level_01
@@ -121,12 +122,14 @@ function App() {
 
 
 
-                    <Suspense fallback={<LoadingScreen />}>
-                        <Level_01 />
-                        <InteractionManager />
-                        <TelemetryManager />
-                        <CameraShake />
-                    </Suspense>
+                    <ErrorBoundary fallback={null}>
+                        <Suspense fallback={<LoadingScreen />}>
+                            <Level_01 />
+                            <InteractionManager />
+                            <TelemetryManager />
+                            <CameraShake />
+                        </Suspense>
+                    </ErrorBoundary>
                 </Canvas >
 
                 {isMobile && <Suspense fallback={null}><MobileControls /></Suspense>
