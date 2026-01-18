@@ -248,7 +248,9 @@ const CameraSystem = () => {
         const pPos = gameSystemInstance.playerPosition
         if (!pPos) return
 
-        const targetPivot = new THREE.Vector3(pPos.x, pPos.y + 1.5, pPos.z)
+        // REQ-001: Pivot Offset - Must be higher than player collider (1.75) to avoid internal collision
+        // Collider top ~1.75. Camera sphere radius 0.2. Need > 1.95. Using 2.2.
+        const targetPivot = new THREE.Vector3(pPos.x, pPos.y + 2.2, pPos.z)
         // Use Leva damping
         pivotPosition.current.x = damp(pivotPosition.current.x, targetPivot.x, camDamping, dt)
         pivotPosition.current.y = damp(pivotPosition.current.y, targetPivot.y, camDamping, dt)
@@ -293,7 +295,8 @@ const CameraSystem = () => {
                 direction,
                 shape,
                 maxDist,
-                true
+                true,
+                rapier.QueryFilterFlags.EXCLUDE_DYNAMIC // Ignore player (dynamic) to prevent self-collision
             )
 
             let targetDist = maxDist
