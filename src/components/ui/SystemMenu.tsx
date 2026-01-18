@@ -16,7 +16,7 @@ export const SystemMenu: React.FC = () => {
             >
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-cozy-text font-serif">System Settings</h2>
-                    <button onClick={toggleSystemMenu} className="text-2xl font-bold text-cozy-text hover:text-cozy-accent">✕</button>
+                    <button onClick={toggleSystemMenu} className="text-2xl font-bold text-cozy-text hover:text-cozy-accent"><span className="font-sans">✕</span></button>
                 </div>
 
                 <div className="space-y-6">
