@@ -4,6 +4,7 @@ import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import QuestTracker from './QuestTracker';
 import SpriteIcon from './SpriteIcon';
 import useAudioStore from '../../audioStore';
+import { resolveAssetPath } from '../../utils/assetUtils';
 
 interface GlobalHUDProps {
   onNavigate: (section: 'projects' | 'about' | 'contact' | null) => void;
@@ -105,7 +106,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
             }}
           >
             <SpriteIcon
-              src="./assets/sprites/ui-icons.webp"
+              src={resolveAssetPath("./assets/sprites/ui-icons.webp")}
               size={isMobile ? 24 : 20}
               sheetSize={128}
               iconSize={64}
@@ -145,7 +146,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           }}
         >
           <SpriteIcon
-            src="./assets/sprites/ui-icons.webp"
+            src={resolveAssetPath("./assets/sprites/ui-icons.webp")}
             size={isMobile ? 24 : 20}
             sheetSize={128}
             iconSize={64}
