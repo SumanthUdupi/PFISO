@@ -23,7 +23,10 @@ const Journal = ({ onClose }: { onClose: () => void }) => {
                 <div className="absolute left-1/2 top-4 bottom-4 w-4 bg-[#d0c0a0] rounded-full z-10 -translate-x-1/2 shadow-inner border border-[#b0a080] hidden md:block"></div>
 
                 {/* Left Page (Index / List) */}
-                <div className="flex-1 p-4 md:p-8 md:pr-12 bg-[url('/assets/paper-texture.png')] bg-cover border-b md:border-b-0 md:border-r border-[#e0d0b0] overflow-y-auto">
+                <div
+                    className="flex-1 p-4 md:p-8 md:pr-12 bg-cover border-b md:border-b-0 md:border-r border-[#e0d0b0] overflow-y-auto"
+                    style={{ backgroundImage: `url(${import.meta.env.BASE_URL}assets/paper-texture.png)` }}
+                >
                     <h2 className="text-2xl md:text-3xl font-serif text-[#4a4036] mb-4 md:mb-6 border-b-2 border-[#4a4036] pb-2">Journal</h2>
 
                     {/* Tabs */}
@@ -70,7 +73,10 @@ const Journal = ({ onClose }: { onClose: () => void }) => {
                 </div>
 
                 {/* Right Page (Content) */}
-                <div className="flex-1 p-4 md:p-8 md:pl-12 bg-[url('/assets/paper-texture.png')] bg-cover grid content-start overflow-y-auto">
+                <div
+                    className="flex-1 p-4 md:p-8 md:pl-12 bg-cover grid content-start overflow-y-auto"
+                    style={{ backgroundImage: `url(${import.meta.env.BASE_URL}assets/paper-texture.png)` }}
+                >
                     {activeTab === 'ENTRIES' && journalEntries[page] && (
                         <div className="animate-in fade-in duration-500">
                             <div className="w-full h-32 md:h-48 bg-[#e8e0d0] mb-4 md:mb-6 flex items-center justify-center border-2 border-dashed border-[#c0b090] rounded rotate-1 shadow-sm">

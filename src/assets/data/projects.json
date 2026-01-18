@@ -4,7 +4,7 @@
     "title": "EHS Compliance Platform - Ensuring Worker Safety for Global Manufacturing",
     "role": "**My Role**: Lead Business Analyst, responsible for requirements gathering, backlog management, API documentation, and stakeholder communication.",
     "timeline": "2022 - Present",
-    "heroImage": "/assets/projects/p1/hero.webp",
+    "heroImage": "./assets/projects/p1/hero.webp",
     "description": "An EHS platform for a global manufacturing client serving 50,000+ employees.",
     "techStack": [
       "Gherkin",
@@ -52,7 +52,7 @@
     "title": "Automotive QMS Suite - Streamlining PPAP & Non-Conformity for Volvo & PACCAR",
     "role": "**My Role**: Business Analyst & Product Owner Proxy, managing the backlog for the Quality Management System modules.",
     "timeline": "2021 - 2023",
-    "heroImage": "/assets/projects/p2/hero.webp",
+    "heroImage": "./assets/projects/p2/hero.webp",
     "description": "A comprehensive Quality Management System (QMS) ensuring parts meet strict automotive standards.",
     "techStack": [
       "Azure DevOps",
@@ -99,7 +99,7 @@
     "title": "AI-Powered Risk Detection - Proactively Identifying Compliance Risks",
     "role": "**My Role**: Technical Business Analyst, bridging the gap between Data Science and Engineering.",
     "timeline": "2023",
-    "heroImage": "/assets/projects/p1/hero.webp",
+    "heroImage": "./assets/projects/p1/hero.webp",
     "description": "Integrating machine learning to predict and prevent compliance breaches.",
     "techStack": [
       "Python",
@@ -144,7 +144,7 @@
     "title": "Executive Dashboards - Visualizing Impact for Decision Makers",
     "role": "**My Role**: Data Analyst & Dashboard Developer.",
     "timeline": "2022",
-    "heroImage": "/assets/projects/p2/hero.webp",
+    "heroImage": "./assets/projects/p2/hero.webp",
     "description": "Building a suite of Power BI and Superset dashboards to track KPI performance.",
     "techStack": [
       "Power BI",
@@ -189,7 +189,7 @@
     "title": "OEM Integration APIs - Connecting the Supply Chain",
     "role": "**My Role**: Technical Analyst & API Designer.",
     "timeline": "2021",
-    "heroImage": "/assets/projects/p1/hero.webp",
+    "heroImage": "./assets/projects/p1/hero.webp",
     "description": "Designing and documenting REST APIs for seamless data exchange with OEMs.",
     "techStack": [
       "REST API",
