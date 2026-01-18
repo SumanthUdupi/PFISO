@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { RigidBody, CuboidCollider, CylinderCollider } from '@react-three/rapier'
 import { Html } from '@react-three/drei'
-import { useAudioStore } from '../../../components/audio/GlobalAudio' // Correct import path if needed, or use store
+import useAudioStore from '../../../audioStore' // Correct import path if needed, or use store
 
 // Simplified Hoop
 export const Hoop: React.FC<{ position: [number, number, number] }> = ({ position }) => {
