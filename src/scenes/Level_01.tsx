@@ -81,7 +81,7 @@ export default function Level_01() {
 
             </Physics>
 
-            <PostProcessingEffects />
+            {/* <PostProcessingEffects /> */}
         </SoundBankProvider>
     )
 }
