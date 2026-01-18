@@ -4,7 +4,7 @@
   "headline": "Bridging Business Strategy and Technical Execution",
   "valueProposition": "I am a Business Analyst who thrives at the intersection of process, data, and technology. For clients like Volvo and PACCAR, I've delivered mission-critical EHS and QMS platforms by owning the entire lifecycle: from leading global discovery sessions and authoring precise Gherkin user stories, to validating REST APIs and building the SQL-powered dashboards that prove our impact.",
   "tagline": "Clarity in Complexity.",
-  "photo": "/assets/sprites/avatar.webp",
+  "photo": "./assets/sprites/avatar.webp",
   "summary": [
     "Hello, I'm Sumanth. My career began with a foundation in Mechanical Engineering, but a passion for the systems that govern our world—and the data that explains them—led me to Business Analysis. I believe the most elegant solutions are born from a deep understanding of the problem, and I thrive on diving into complex domains like Environmental, Health, and Safety (EHS) and automotive compliance to build software that is not only functional but transformative.",
     "My approach is built on a simple philosophy: clarity is kindness. Whether I'm writing a Gherkin user story, documenting an OpenAPI specification, or prototyping a workflow in Figma, my goal is to create a single source of truth that empowers developers to build with confidence and stakeholders to feel understood. I love leading Agile ceremonies because they are about collaboration and shared ownership, turning a roadmap into reality one sprint at a time.",
@@ -148,5 +148,5 @@
       "author": "Lead Developer, PACCAR Project"
     }
   ],
-  "avatar": "/assets/sprites/avatar.webp"
+  "avatar": "./assets/sprites/avatar.webp"
 }
