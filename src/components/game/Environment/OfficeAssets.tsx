@@ -1,10 +1,11 @@
 import React, { useRef } from 'react'
 import { Box, Cylinder, Sphere } from '@react-three/drei'
-import { RigidBody } from '@react-three/rapier'
+import { RigidBody, CuboidCollider, CylinderCollider } from '@react-three/rapier'
 
 export const OfficeDesk = (props: any) => {
     return (
-        <RigidBody type="fixed" colliders="hull" {...props}>
+        <RigidBody type="fixed" colliders={false} {...props}>
+            <CuboidCollider args={[1, 0.6, 0.5]} position={[0, 0.6, 0]} />
             {/* Top */}
             <Box args={[2, 0.1, 1]} position={[0, 0.75, 0]}>
                 <meshStandardMaterial color="#8d6e63" metalness={0.1} roughness={0.8} />
@@ -29,7 +30,8 @@ export const OfficeDesk = (props: any) => {
 
 export const OfficeChair = (props: any) => {
     return (
-        <RigidBody type="dynamic" colliders="hull" {...props} linearDamping={2} angularDamping={2}>
+        <RigidBody type="dynamic" colliders={false} {...props} linearDamping={2} angularDamping={2}>
+            <CuboidCollider args={[0.3, 0.5, 0.3]} position={[0, 0.5, 0]} />
             {/* Seat */}
             <Box args={[0.6, 0.1, 0.6]} position={[0, 0.5, 0]}>
                 <meshStandardMaterial color="#37474f" />
@@ -51,7 +53,8 @@ export const OfficeChair = (props: any) => {
 
 export const OfficePlant = (props: any) => {
     return (
-        <RigidBody type="dynamic" colliders="hull" {...props} density={0.5}>
+        <RigidBody type="dynamic" colliders={false} {...props} density={0.5}>
+            <CylinderCollider args={[0.5, 0.3]} position={[0, 0.5, 0]} />
             {/* Pot */}
             <Cylinder args={[0.3, 0.2, 0.4]} position={[0, 0.2, 0]}>
                 <meshStandardMaterial color="#d84315" />
@@ -69,9 +72,12 @@ export const OfficePlant = (props: any) => {
 }
 
 export const OfficeWall = (props: any) => {
+    const w = props.width || 1
+    const h = props.height || 3
     return (
-        <RigidBody type="fixed" {...props}>
-            <Box args={[props.width || 1, props.height || 3, 0.2]}>
+        <RigidBody type="fixed" colliders={false} {...props}>
+            <CuboidCollider args={[w / 2, h / 2, 0.1]} />
+            <Box args={[w, h, 0.2]}>
                 <meshStandardMaterial color="#eceff1" />
             </Box>
         </RigidBody>

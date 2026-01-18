@@ -100,7 +100,7 @@ function App() {
                 className={`app-container ${isPortraitMobile ? "mobile-portrait-container" : ""}`}
             >
                 <Canvas
-                    shadows={!isMobile}
+                    shadows={false}
                     gl={{ antialias: true }}
                     dpr={[1, 2]} // Clamp pixel ratio for consistent performance
                 >

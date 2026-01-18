@@ -6,33 +6,44 @@
 
   /* Font Update for Cleaner, Premium Feel */
   --font-pixel: 'Press Start 2P', cursive;
-  --font-body: 'Outfit', 'Inter', system-ui, sans-serif; /* Changed from VT323 */
+  --font-body: 'Outfit', 'Inter', system-ui, sans-serif;
+  /* Changed from VT323 */
 
   /* Palette - Cozy "Refined" Theme */
-  --color-primary-glow: #d4a373;   /* Warm Wood/Caramel */
-  --color-ui-bg: #fffcf5;          /* Warm Cream */
-  --color-ui-border: #ccd5ae;      /* Muted Sage */
-  --color-ui-text: #4a403a;        /* Deep Espresso */
+  --color-primary-glow: #d4a373;
+  /* Warm Wood/Caramel */
+  --color-ui-bg: #fffcf5;
+  /* Warm Cream */
+  --color-ui-border: #ccd5ae;
+  /* Muted Sage */
+  --color-ui-text: #4a403a;
+  /* Deep Espresso */
 
   /* Additional Accents */
-  --color-accent-sage: #ccd5ae;    /* Muted Sage */
-  --color-accent-sand: #eaddcf;    /* Soft Cashmere */
-  --color-accent-forest: #3a5a40;  /* Forest Green */
-  --color-accent-dark: #2d2424;    /* Darkened Wood */
+  --color-accent-sage: #ccd5ae;
+  /* Muted Sage */
+  --color-accent-sand: #eaddcf;
+  /* Soft Cashmere */
+  --color-accent-forest: #3a5a40;
+  /* Forest Green */
+  --color-accent-dark: #2d2424;
+  /* Darkened Wood */
 
   /* Background / Sky Palette */
   --color-sky-zenith: #d4a373;
   --color-sky-horizon: #ccd5ae;
   --color-sky-abyss: #fefae0;
 
-  --color-interactive-highlight: #faedcd; /* Soft Vanilla */
+  --color-interactive-highlight: #faedcd;
+  /* Soft Vanilla */
 
   --color-scrollbar-track: #fffcf5;
   --color-scrollbar-thumb: #d4a373;
 }
 
 .glass-cozy {
-  background: rgba(255, 252, 245, 0.8); /* More opaque for clarity */
+  background: rgba(255, 252, 245, 0.8);
+  /* More opaque for clarity */
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -45,10 +56,12 @@
 
 body {
   margin: 0;
-  background: var(--color-ui-bg); /* Match UI BG */
+  background: var(--color-ui-bg);
+  /* Match UI BG */
   color: var(--color-ui-text);
   user-select: none;
-  cursor: default; /* Standard cursor for premium feel */
+  cursor: default;
+  /* Standard cursor for premium feel */
   font-family: var(--font-body);
   font-size: 16px;
   text-shadow: none;
@@ -122,7 +135,8 @@ button,
 
 .mobile-content-list {
   overflow-y: auto;
-  background: var(--color-ui-bg); /* Consistent Warm Cream */
+  background: var(--color-ui-bg);
+  /* Consistent Warm Cream */
   color: var(--color-ui-text);
   padding-bottom: calc(20px + var(--safe-area-bottom));
   font-family: var(--font-body);
@@ -157,7 +171,7 @@ button,
   align-items: center;
   justify-content: center;
   border: 1px solid var(--color-ui-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Mobile Project Card Polish */

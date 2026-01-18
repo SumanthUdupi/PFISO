@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react'
-import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, DepthOfField, ChromaticAberration } from '@react-three/postprocessing'
-import { useDeviceDetect } from '../../hooks/useDeviceDetect'
-import { useFrame, useThree } from '@react-three/fiber'
+import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration } from '@react-three/postprocessing'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
@@ -19,18 +18,18 @@ const HealthVignette = () => {
     })
 
     // Calculate darkness
-    let darkness = 0.2
+    let darkness = 0.45 // Standard cinematic vignette
 
     if (isLowHealth) {
         // Pulse between 0.4 and 0.6
         const pulse = (Math.sin(time.current * 5) + 1) * 0.5 // 0..1
-        darkness = 0.4 + pulse * 0.2
+        darkness = 0.5 + pulse * 0.2
     }
 
     return (
         <Vignette
             eskil={false}
-            offset={0.1}
+            offset={0.3} // Softer transition
             darkness={darkness}
         />
     )
@@ -74,29 +73,32 @@ const ImpactAberration = () => {
 }
 
 export const PostProcessingEffects: React.FC = () => {
-    const { isMobile } = useDeviceDetect()
+    // const { isMobile } = useDeviceDetect() // Removed for cleanup
 
     return (
         <EffectComposer disableNormalPass>
-            {/* Soft Bloom - Reduced for clarity */}
+            {/* Soft, Dreamy Bloom */}
             <Bloom
-                luminanceThreshold={0.95}
-                mipmapBlur={!isMobile}
-                intensity={0.2}
-                radius={0.2}
+                luminanceThreshold={0.8} // Lower threshold to catch more highlights
+                mipmapBlur={true} // Always on for soft look
+                intensity={0.4} // Subtle glow
+                radius={0.6} // Spread out the glow
             />
 
-            {/* REQ-034: Vignette - Dynamic based on Health */}
+            {/* Cinematic Vignette */}
             <HealthVignette />
 
-            {/* REQ-035: Impact FX */}
+            {/* Chromatic Aberration for Impact */}
             <ImpactAberration />
 
-            {/* Bright & Cozy Adjustment */}
+            {/* Cozy Warm Color Grading */}
             <BrightnessContrast
-                brightness={0.05}
-                contrast={0.1}
+                brightness={0.02}
+                contrast={0.15}
             />
+
+            {/* Subtle Film Grain for Texture */}
+            <Noise opacity={0.02} />
         </EffectComposer>
     )
 }

@@ -1,8 +1,9 @@
 import React from 'react'
 import { useFrame } from '@react-three/fiber'
-import { PerspectiveCamera, OrbitControls } from '@react-three/drei'
+import { PerspectiveCamera } from '@react-three/drei'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
 import Player, { PlayerHandle } from '../components/game/Player'
+import { SoundBankProvider } from '../components/audio/SoundBank'
 import { PhysicsProp } from '../components/game/Environment/PhysicsProp'
 import { Succulent } from '../components/game/Environment/Succulent'
 import TapGround from '../components/game/TapGround'
@@ -12,8 +13,11 @@ import useGameStore from '../store'
 import '../systems/InputManager'
 import { PostProcessingEffects } from '../components/effects/PostProcessingEffects'
 import { CozyEnvironment } from '../components/World/CozyEnvironment'
+import CameraSystem from '../systems/CameraSystem'
 import { Zones } from '../components/World/Zones'
 import { NavigationManager } from '../components/game/NavigationManager'
+import { CrowdManager } from '../components/game/AI/CrowdManager'
+import { PatrolPath } from '../components/game/AI/PatrolPath'
 import { GridOverlay } from '../components/ui/GridOverlay'
 import PerformanceMonitor from '../systems/PerformanceMonitor'
 import { ArtAssetsIntegration } from '../components/World/ArtAssetsIntegration'
@@ -42,44 +46,24 @@ export default function Level_01() {
     }, [])
 
     return (
-        <>
+        <SoundBankProvider>
             <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={75} />
 
             {/* Cozy Office Environment Setup */}
             <Physics gravity={[0, -20, 0]} debug={debugFlags.showPhysics}>
                 <PerformanceMonitor />
-                {/* <CameraSystem /> */}
-                <OrbitControls makeDefault />
+                <CameraSystem />
                 <GameLoop />
                 <GlobalAudio />
                 <CozyEnvironment />
                 <NavigationManager debug={debugFlags.showNavMesh} />
                 <GridOverlay />
-                {/* <CrowdManager /> */}
-                {/* <PatrolPath id="path_01" /> */}
+                <CrowdManager />
+                <PatrolPath id="path_01" />
 
-                {/* DEBUG BOXES - VISIBILITY TEST */}
-                <mesh position={[0, 3, 0]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial color="blue" />
-                </mesh>
-
-                <RigidBody position={[2, 3, 0]} colliders={false}>
-                    <CuboidCollider args={[0.5, 0.5, 0.5]} />
-                    <mesh>
-                        <boxGeometry args={[1, 1, 1]} />
-                        <meshStandardMaterial color="orange" />
-                    </mesh>
-                </RigidBody>
-
-                {/* EMERGENCY LIGHT: Additional light to ensure visibility */}
-                <ambientLight intensity={1} color="white" />
-
-                {/* Ground Collision - Fixed for Visibility */}
-                {/* FIXED: Adjusted position to [0, -0.5, 0] so the top of the collider (0.5 height) is at y=0, matching the visual floor at y=-0.01 */}
-                <RigidBody type="fixed" friction={2} restitution={0} position={[0, -0.5, 0]} colliders={false}>
-                    <CuboidCollider args={[50, 0.5, 50]} />
-                    {/* Visual Floor is in CozyEnvironment, but collision is here. */}
+                {/* Ground Collision - Using Cuboid for robustness */}
+                <RigidBody type="fixed" friction={2} restitution={0} position={[0, -1, 0]}>
+                    <CuboidCollider args={[100, 1, 100]} />
                 </RigidBody>
 
                 <Zones />
@@ -87,18 +71,17 @@ export default function Level_01() {
                 <Player ref={playerRef} initialPosition={[0, 2, 5]} />
                 <TapGround playerRef={playerRef} />
 
-                {/* Props - Restored */}
+                {/* Props */}
                 <PhysicsProp id="prop_box_1" position={[0, 1, 3]} type="box" />
                 <PhysicsProp id="prop_ball_1" position={[1, 1, 3]} type="ball" />
-
                 <Succulent id="artreq_026" position={[0.5, 1, 2.5]} />
 
-                {/* Integration of Art Assets - Restored */}
+                {/* Integration of all 50 Art Assets */}
                 <ArtAssetsIntegration />
 
             </Physics>
 
-            <PostProcessingEffects />
-        </>
+            {/* <PostProcessingEffects /> */}
+        </SoundBankProvider>
     )
 }

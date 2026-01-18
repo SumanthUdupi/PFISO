@@ -3,6 +3,8 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall } from "../game/Environment/OfficeAssets";
 
+import { Environment } from "@react-three/drei";
+
 export const CozyEnvironment: React.FC = () => {
     const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
     const ambientRef = useRef<THREE.AmbientLight>(null);
@@ -37,26 +39,26 @@ export const CozyEnvironment: React.FC = () => {
             const saverMultiplier = batterySaver ? 0.5 : 1;
 
             // Warm Golden Sun
-            dirLightRef.current.intensity = 2.5 * saverMultiplier;
-            dirLightRef.current.color.setHSL(0.08, 0.6, 0.8); // Warm Orange-Yellow
+            dirLightRef.current.intensity = 2.0 * saverMultiplier;
+            dirLightRef.current.color.setHSL(0.08, 0.6, 0.9); // Warm Orange-Yellow
         }
 
         // Ambient Light
         if (ambientRef.current) {
             const saverMultiplier = batterySaver ? 0.5 : 1;
             // Warm ambient to fill shadows
-            ambientRef.current.intensity = 0.6 * saverMultiplier;
-            ambientRef.current.color.setHex(0xffeebb); // Warm cream
+            ambientRef.current.intensity = 0.8 * saverMultiplier;
+            ambientRef.current.color.setHex(0xffe0b2); // Warm peach/cream
         }
     });
 
     return (
         <>
-            <ambientLight ref={ambientRef} intensity={0.6} />
+            <ambientLight ref={ambientRef} intensity={0.8} />
             <directionalLight
                 ref={dirLightRef}
                 position={[60, 40, 40]}
-                intensity={2.5}
+                intensity={2.0}
                 castShadow
                 shadow-mapSize-width={2048}
                 shadow-mapSize-height={2048}
@@ -65,13 +67,17 @@ export const CozyEnvironment: React.FC = () => {
                 <orthographicCamera attach="shadow-camera" args={[-50, 50, 50, -50]} />
             </directionalLight>
 
-            {/* Nice Office Floor - Warm Wood */}
+            {/* HDRI Environment for Reflections & GI */}
+            <Environment preset="apartment" background={false} blur={0.8} />
+
+            {/* Nice Office Floor - Warm Wood with Reflection */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
                 <planeGeometry args={[100, 100]} />
                 <meshStandardMaterial
                     color="#8d6e63" // Warm brown
-                    roughness={0.6}
-                    metalness={0.0}
+                    roughness={0.1} // More reflective/polished
+                    metalness={0.1}
+                    envMapIntensity={0.8}
                 />
             </mesh>
 
