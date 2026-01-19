@@ -1,5 +1,5 @@
 import React from 'react'
-import useGameStore from '../../stores/gameStore'
+import useGameStore from '../../store'
 import useAudioStore from '../../audioStore'
 
 const PauseMenu: React.FC = () => {
@@ -22,7 +22,8 @@ const PauseMenu: React.FC = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 100,
+            justifyContent: 'center',
+            zIndex: 200,
             color: 'white',
             fontFamily: 'Inter, sans-serif'
         }}>

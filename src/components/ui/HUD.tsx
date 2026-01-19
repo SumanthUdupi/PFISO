@@ -2,13 +2,18 @@ import React from 'react'
 import { useUIStore } from '../../stores/uiStore'
 
 import Journal from './Journal'
+import StaminaBar from './StaminaBar'
+import { motion } from 'framer-motion'
+import SubtitleOverlay from './SubtitleOverlay'
 
 import { useDeviceDetect } from '../../hooks/useDeviceDetect'
-import useGameStore from '../../store'
+import { useTranslation } from '../../hooks/useTranslation'
+import { useGameStore } from '../../store'
 
 export const HUD: React.FC = () => {
     const { toggleSkillsMenu, toggleSystemMenu, isJournalOpen, toggleJournal } = useUIStore()
     const { isMobile } = useDeviceDetect()
+    const { t } = useTranslation()
     // Local state removed in favor of global store
     const { currentObjective } = useGameStore()
 
@@ -27,7 +32,9 @@ export const HUD: React.FC = () => {
         <>
             {isJournalOpen && <Journal onClose={toggleJournal} />}
 
-            <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 flex flex-col justify-between z-40">
+            {isJournalOpen && <Journal onClose={toggleJournal} />}
+
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 flex flex-col justify-between z-[100]">
                 {/* Top Right: Menu & Skills */}
                 <div className="flex justify-end items-start gap-4 pointer-events-auto">
                     {/* Journal Button */}
@@ -73,15 +80,31 @@ export const HUD: React.FC = () => {
                 </div>
 
                 {/* Bottom Left: Guidance / Objective */}
-                <div className="flex items-end">
+                <div className="flex flex-col items-start gap-4">
+                    <StaminaBar />
                     <div className="bg-cozy-bg/90 backdrop-blur-md px-6 py-4 rounded-3xl shadow-sm border border-white/50 max-w-sm transform transition-all hover:scale-[1.02]">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-cozy-text/60 font-bold mb-1">Current Objective</h3>
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-cozy-text/60 font-bold mb-1">{t('hud.objective')}</h3>
                         <p className="text-lg text-cozy-text font-medium leading-tight font-sans" aria-live="polite">
                             {currentObjective}
                         </p>
                     </div>
                 </div>
             </div>
+            {/* SYS-035: Subtitles */}
+            <SubtitleOverlay />
+
+            {/* SYS-047: Tutorial Skip */}
+            {/* Check store for tutorialActive */}
+            {useGameStore(state => state.tutorialActive) && (
+                <div className="absolute top-4 right-4 pointer-events-auto z-50">
+                    <button
+                        onClick={() => useGameStore.getState().skipTutorial()}
+                        className="bg-black/50 text-white px-4 py-2 rounded border border-white/20 hover:bg-white/10 text-sm font-bold backdrop-blur-md transition-colors"
+                    >
+                        {t('hud.skipTutorial')} [P]
+                    </button>
+                </div>
+            )}
         </>
     )
 }

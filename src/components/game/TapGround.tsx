@@ -34,7 +34,7 @@ const TapGround: React.FC<TapGroundProps> = ({ playerRef }) => {
             {clickMarker && (
                 <mesh position={clickMarker} rotation={[-Math.PI / 2, 0, 0]}>
                     <ringGeometry args={[0.2, 0.3, 32]} />
-                    <meshBasicMaterial color="white" opacity={0.5} transparent />
+                    <meshBasicMaterial color="white" opacity={0.5} transparent polygonOffset polygonOffsetFactor={-1} />
                 </mesh>
             )}
 

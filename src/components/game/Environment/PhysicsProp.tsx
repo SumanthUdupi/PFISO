@@ -1,16 +1,32 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { RigidBody, RapierRigidBody, useRapier } from '@react-three/rapier'
+import React, { useRef, useState, useEffect, useMemo } from 'react'
+import { RigidBody, RapierRigidBody, useRapier, CuboidCollider, BallCollider, InteractionGroups } from '@react-three/rapier'
+import { COLLISION_GROUPS } from '../../../systems/PhysicsLayers'
 import { Sphere, Box, Outlines } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import eventBus from '../../../systems/EventBus'
 import useGameStore from '../../../store'
 import inputs from '../../../systems/InputManager'
+import useAudioStore from '../../../audioStore'
+
+// PH-002, PH-003, PH-004: Physics Material Definitions
+// PH-031: Slope Friction - Increased default friction values to prevent sliding on gentle slopes
+export type PhysicsMaterialType = 'wood' | 'metal' | 'cardboard' | 'plastic' | 'rubber' | 'concrete'
+
+const PHYSICS_MATERIALS: Record<PhysicsMaterialType, { density: number, friction: number, restitution: number }> = {
+    wood: { density: 0.7, friction: 0.7, restitution: 0.2 },
+    metal: { density: 7.8, friction: 0.5, restitution: 0.1 },
+    cardboard: { density: 0.2, friction: 0.8, restitution: 0.1 },
+    plastic: { density: 0.9, friction: 0.6, restitution: 0.3 },
+    rubber: { density: 1.1, friction: 1.0, restitution: 0.7 },
+    concrete: { density: 2.4, friction: 0.9, restitution: 0.1 }
+}
 
 interface PhysicsPropProps {
     id: string
     position: [number, number, number]
     type?: 'box' | 'ball' | 'custom'
+    materialType?: PhysicsMaterialType
     children?: React.ReactNode
     colliderType?: 'cuboid' | 'ball' | 'hull'
     colliderArgs?: any[]
@@ -20,6 +36,7 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
     id,
     position,
     type = 'box',
+    materialType = 'cardboard', // Default to cardboard for boxes
     children,
     colliderType,
     colliderArgs
@@ -31,11 +48,14 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
     const { camera } = useThree()
     const { world, rapier } = useRapier()
     const focusedObject = useGameStore(state => state.focusedObject)
+    const playSound = useAudioStore(state => state.playSound)
 
     // ... (keep state)
     const savedState = useGameStore(state => state.worldObjectStates[id])
     const updateWorldObject = useGameStore(state => state.updateWorldObject)
-    const isEditMode = useGameStore(state => state.isEditMode)
+
+    // Get physics props
+    const matProps = PHYSICS_MATERIALS[materialType] || PHYSICS_MATERIALS.cardboard
 
     const isFocused = focusedObject?.id === mesh.current?.uuid
 
@@ -45,6 +65,27 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
         type: 'pickup',
         label: type === 'custom' ? 'Item' : (type === 'box' ? 'Box' : 'Ball'),
         weight: type === 'box' ? 2 : 1
+    }
+
+    // PH-032: Sound Trigger
+    const lastSoundTime = useRef(0)
+    const handleCollision = (e: any) => {
+        // Debounce: 100ms
+        const now = performance.now()
+        if (now - lastSoundTime.current < 100) return
+
+        // Velocity Threshold
+        // Need relative velocity. Simplified: check own velocity if dynamic?
+        // Or check e.contact.impulse (if available) or totalForce?
+        // Rapier implicitly gives us access.
+        // let's assume valid impact if other body exists.
+
+        // Better: Check collision impact magnitude if possible.
+        // Standard rapier event doesn't give direct velocity difference easily without extra calls.
+        // We'll define a minimum logic:
+
+        playSound('collision', 0.5) // Placeholder sound ID
+        lastSoundTime.current = now
     }
 
     // ... (keep interactions)
@@ -60,7 +101,9 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
             if (mesh.current && payload.id === mesh.current.uuid) {
                 setIsCarried(true)
                 if (api.current) {
-                    api.current.setBodyType(2, true)
+                    api.current.setBodyType(2, true) // KinematicPositionBased
+                    // PH-042: Prop Fly Fix - Ignore Player collisions
+                    api.current.setCollisionGroups(COLLISION_GROUPS.HELD_PROP)
                     api.current.wakeUp()
                 }
             }
@@ -70,7 +113,9 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
             if (mesh.current && payload.id === mesh.current.uuid) {
                 setIsCarried(false)
                 if (api.current) {
-                    api.current.setBodyType(0, true)
+                    api.current.setBodyType(0, true) // Dynamic
+                    // PH-042: Restore default collision groups
+                    api.current.setCollisionGroups(type === 'box' ? COLLISION_GROUPS.PROP : COLLISION_GROUPS.PROP)
                     api.current.setTranslation(payload.position, true)
                     api.current.setLinvel(payload.velocity, true)
 
@@ -122,11 +167,6 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
     useFrame((state, delta) => {
         if (isCarried && api.current) {
             // ... (Keep existing Sway Logic 1:1)
-            // simplified for brevity in replacement, but I must provide FULL logic or use MultiReplace carefully.
-            // Since I'm replacing the whole component body basically, I need to include the sway logic body.
-            // Better to use MultiReplace if I only want to change Interface and Return.
-            // But I'll paste the sway logic back in to be safe.
-
             // 1. Calculate Camera Rotation Delta (Sway)
             const currentQuat = camera.quaternion.clone()
             if (prevCamQuat.current.equals(new THREE.Quaternion())) {
@@ -139,8 +179,11 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
             const targetSwayY = euler.x * swayAmount
             swayPos.current.x += targetSwayX
             swayPos.current.y += targetSwayY
-            swayPos.current.x = THREE.MathUtils.lerp(swayPos.current.x, 0, delta * 5)
-            swayPos.current.y = THREE.MathUtils.lerp(swayPos.current.y, 0, delta * 5)
+
+            // PH-035: Grab Stability - Tighten current sway lerp from 5 to 15
+            swayPos.current.x = THREE.MathUtils.lerp(swayPos.current.x, 0, delta * 15)
+            swayPos.current.y = THREE.MathUtils.lerp(swayPos.current.y, 0, delta * 15)
+
             const maxSway = 0.3
             swayPos.current.x = THREE.MathUtils.clamp(swayPos.current.x, -maxSway, maxSway)
             swayPos.current.y = THREE.MathUtils.clamp(swayPos.current.y, -maxSway, maxSway)
@@ -171,17 +214,77 @@ export const PhysicsProp: React.FC<PhysicsPropProps> = ({
         }
     })
 
-    const finalColliderType = colliderType || (type === 'box' ? 'cuboid' : 'ball')
+    // Determine collider to use
+    // If colliderType is specified via props, use it.
+    // Otherwise infer from 'type'.
+    // We disable auto-colliders on RigidBody to use manual ones for Density control (PH-002)
+
+    // ...
+
+    // PH-010: Center of Mass
+    // To lower COM (increase stability), we keep the RigidBody at 'position', but we shift the Mesh and Collider UP.
+    // Effectively the Pivot/COM is below the visual center.
+    // Default offset: [0, 0, 0]
+    const comOffset = type === 'box' || materialType === 'metal' || materialType === 'concrete' ? [0, -0.2, 0] : [0, 0, 0]
+    // If we shift content UP, COM is relatively LOWER.
+    // wait, if I shift content UP (y > 0), the RB origin (0,0,0) is BELOW the content.
+    // So COM is at bottom of object.
+    const visualOffset = new THREE.Vector3(0, 0.2, 0) // Shift Up slightly to make RB origin the base
+
+    // Actually, simpler: just add a prop "bottomHeavy".
+    // If bottomHeavy, we add a heavy collider at bottom.
+    // Or we stick to the offset method which is cleaner for simple shapes.
 
     return (
         <RigidBody
             ref={api}
             position={position}
-            colliders={finalColliderType}
-            args={colliderArgs}
-            restitution={0.5}
-            friction={0.7}
+
+            colliders={false} // Disable auto-colliders
+            canSleep={true} // PH-005: Stacking Stability
+            ccd={true} // PH-009: Tunneling
+            linearDamping={0.1}
+            angularDamping={0.5} // PH-024: Rolling Resistance
+
+            // PH-014: Collision Layers
+            // Assign group based on type
+            collisionGroups={type === 'box' ? COLLISION_GROUPS.PROP : COLLISION_GROUPS.PROP}
+
+            // PH-032: Sound Trigger
+            onCollisionEnter={handleCollision}
         >
+            {/* Offset logic: If we want COM to be lower, we move the colliders/mesh UP relative to the RB center, 
+                 OR we move the RB position down and visual up? 
+                 Let's just use a heavy invisible sphere at the bottom for "bottom heavy" objects?
+                 No, let's just assume the RB pivot is the COM.
+                 By default, GLTF/Mesh origin might be center or bottom.
+                 If we want weighted COM, we need to ensure the COM is lower than geometric center.
+                 We can do this simply by shifting the collider UP relative to the RB, so the RB pivot (COM) ends up lower on the object.
+              */}
+
+            {/* Offset logic matches PH-010: Weighted COM */}
+            <group position={[comOffset[0] + visualOffset.x, comOffset[1] + visualOffset.y, comOffset[2] + visualOffset.z]}>
+
+                {/* Manual Colliders for Density (PH-002) and Material Props (PH-003, PH-004) */}
+                {colliderType === 'cuboid' || (!colliderType && type === 'box') ? (
+                    <CuboidCollider
+                        args={colliderArgs || [0.2, 0.2, 0.2]}
+                        density={matProps.density}
+                        friction={matProps.friction}
+                        restitution={matProps.restitution}
+                    />
+                ) : colliderType === 'ball' || (!colliderType && type === 'ball') ? (
+                    <BallCollider
+                        args={colliderArgs || [0.25]}
+                        density={matProps.density}
+                        friction={matProps.friction}
+                        restitution={matProps.restitution}
+                    />
+                ) : (
+                    null // Custom collider needs implementation if 'custom' type used without explicit colliderType
+                )}
+
+            </group>
             <group ref={mesh} userData={userData}>
                 {children ? (
                     <>

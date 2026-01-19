@@ -6,7 +6,7 @@ import { Html } from '@react-three/drei'
 import GameEntity from '../../components/game/ECS/GameEntity'
 import globalEvents from '../../systems/EventManager'
 import PositionalSound from '../../components/audio/PositionalSound'
-import useInventoryStore from '../../stores/inventoryStore'
+import useGameStore from '../../store'
 
 // CONT-004: Door System
 
@@ -38,7 +38,7 @@ const Door: React.FC<DoorProps> = ({
                 if (locked) {
                     // Check Inventory
                     // In real system: inventory.hasItem(keyId)
-                    const hasKey = useInventoryStore.getState().hasItem(keyId!)
+                    const hasKey = useGameStore.getState().hasItem(keyId!)
 
                     if (hasKey) {
                         setLocked(false)
@@ -93,6 +93,7 @@ const Door: React.FC<DoorProps> = ({
                 position={new THREE.Vector3(...position)}
                 rotation={new THREE.Euler(...rotation)}
                 colliders={false} // Custom collider
+                ccd={true} // CL-007: Ensure door pushes player
             >
                 {/* Visual Door */}
                 {/* Pivot is usually center, so we might need to offset mesh to hinge it. */}

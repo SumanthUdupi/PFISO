@@ -4,7 +4,7 @@ import { Text, Float } from '@react-three/drei'
 import * as THREE from 'three'
 import { RigidBody, CuboidCollider } from '@react-three/rapier'
 import GameEntity from '../../components/game/ECS/GameEntity'
-import useInventoryStore from '../../stores/inventoryStore'
+import useGameStore from '../../store'
 import useAudioStore from '../../audioStore' // Updated to match user's new file
 import globalEvents from '../../systems/EventManager'
 import { SparkleBurst } from '../../components/effects/ParticleEffects'
@@ -18,7 +18,7 @@ interface PickupProps {
 
 const Pickup: React.FC<PickupProps> = ({ id, position, type = 'key', label = 'Key' }) => {
     const [collected, setCollected] = useState(false)
-    const { addItem } = useInventoryStore()
+    const { addItem } = useGameStore()
     const { playSound } = useAudioStore()
 
     const [showEffects, setShowEffects] = useState(false)

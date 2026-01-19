@@ -69,6 +69,31 @@ const KeyboardGuide = () => {
       }}>
         MOVE
       </div>
+
+      {/* SYS-012: Example of a video tooltip trigger (e.g. Space to Jump) */}
+      <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ ...getKeyStyle(['Space']), width: '140px' }}>SPACE</div>
+        <div style={{
+          marginTop: '5px',
+          fontSize: '12px',
+          color: '#5D4037',
+          fontFamily: '"Fredoka", sans-serif',
+          fontWeight: 'bold',
+          opacity: 0.8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px'
+        }}>
+          JUMP
+          {/* Video Icon or Indicator */}
+          <span style={{ fontSize: '10px', background: '#FF7043', color: 'white', padding: '1px 4px', borderRadius: '4px' }}>VID</span>
+        </div>
+        {/* The actual video would be shown in a modal or popover when requested, 
+                but for the requirement "Tutorial tooltips only display text", 
+                we've added video support to InfoModal which serves as the tutorial viewer. 
+                This indicator shows available media. 
+            */}
+      </div>
     </div>
   );
 };

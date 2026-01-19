@@ -1,8 +1,10 @@
 import React from 'react'
-import useGameStore from '../../stores/gameStore'
+import useGameStore from '../../store'
+import { useTranslation } from '../../hooks/useTranslation'
 
 const GameOverScreen: React.FC = () => {
     const { gameState, restartGame } = useGameStore()
+    const { t } = useTranslation()
 
     if (gameState === 'playing') return null
 
@@ -21,7 +23,7 @@ const GameOverScreen: React.FC = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 200, // Above everything
+            zIndex: 300, // Adjusted z-index per SYS-022
             color: 'white',
             fontFamily: 'Inter, sans-serif'
         }}>
@@ -34,7 +36,7 @@ const GameOverScreen: React.FC = () => {
                 textShadow: '0 4px 10px rgba(0,0,0,0.5)',
                 color: isVictory ? '#FFD700' : '#000'
             }}>
-                {isVictory ? 'Victory!' : 'You Died'}
+                {isVictory ? t('game.title') : t('gameover.title')}
             </h1>
 
             <p style={{
@@ -74,7 +76,7 @@ const GameOverScreen: React.FC = () => {
                     onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                     onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                    {isVictory ? 'Play Again' : 'Try Again'}
+                    {t('gameover.respawn')}
                 </button>
             </div>
         </div>

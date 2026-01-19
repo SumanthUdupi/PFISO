@@ -179,11 +179,14 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
         <RigidBody
             ref={rigidBodyRef}
             position={startPosition}
-            colliders="hull"
+            colliders={false} // CL-006: Use explicit collider
             enabledRotations={[false, false, false]}
             friction={0.5}
+            ccd={true} // CL-006: Prevent tunneling/interpenetration
         >
+            <CapsuleCollider args={[0.3, 0.8]} position={[0, 0.8, 0]} /> {/* 0.3 radius, 0.8 half-height */}
             <group ref={groupRef} onClick={handleInteraction}>
+
                 <RobloxCharacter
                     isMoving={state === 'WALK'}
                     speed={speed}

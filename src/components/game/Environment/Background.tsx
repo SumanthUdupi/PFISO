@@ -75,12 +75,14 @@ const Background: React.FC = () => {
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]} scale={[1, 1, 1]}>
-      <sphereGeometry args={[60, 32, 32]} />
+      {/* CL-034: Skybox Clip - Increase size to infinite/max far plane to prevent clipping */}
+      <sphereGeometry args={[900, 32, 32]} />
       <shaderMaterial
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms.current}
         side={THREE.BackSide}
+        depthWrite={false} // Always render behind
       />
     </mesh>
   )

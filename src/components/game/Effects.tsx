@@ -40,7 +40,7 @@ const Effects = () => {
         width={1000}
         visibleEdgeColor={0x4a4a4a} // Dark Gray Outline
         hiddenEdgeColor={0x4a4a4a}
-        xRay={false}
+        xRay={true}
       />
     </EffectComposer>
   )

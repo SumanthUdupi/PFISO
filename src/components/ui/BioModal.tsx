@@ -1,6 +1,6 @@
 import React from 'react';
 import PixelTransition from './PixelTransition';
-import SmoothText from './SmoothText';
+import TypewriterText from './TypewriterText';
 import Modal from './Modal';
 import { resolveAssetPath } from '../../utils/assetUtils';
 
@@ -59,7 +59,7 @@ const BioModal: React.FC<BioModalProps> = ({ isOpen, onClose, bio }) => {
                                 <div style={{ fontFamily: 'var(--font-body)', fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
                                     {bio.summary.map((paragraph, idx) => (
                                         <p key={idx} style={{ marginBottom: '15px' }}>
-                                            <SmoothText text={paragraph} delay={idx * 0.1} />
+                                            <TypewriterText text={paragraph} delay={idx * 1.5} speed={20} />
                                         </p>
                                     ))}
                                 </div>

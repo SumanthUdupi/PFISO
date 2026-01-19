@@ -1,15 +1,12 @@
-import React, { useRef, useEffect } from 'react'
-import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration } from '@react-three/postprocessing'
-import { useFrame } from '@react-three/fiber'
+import React, { useRef, useEffect, useState } from 'react'
+import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline } from '@react-three/postprocessing'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
 
 const HealthVignette = () => {
     const health = useGameStore(state => state.health)
-
-    // REQ-034: Low Health Vignette
-    // Below 30% health, pulse darkness.
     const isLowHealth = health < 30
     const time = useRef(0)
 
@@ -17,22 +14,13 @@ const HealthVignette = () => {
         time.current += dt
     })
 
-    // Calculate darkness
-    let darkness = 0.45 // Standard cinematic vignette
-
+    let darkness = 0.45
     if (isLowHealth) {
-        // Pulse between 0.4 and 0.6
-        const pulse = (Math.sin(time.current * 5) + 1) * 0.5 // 0..1
+        const pulse = (Math.sin(time.current * 5) + 1) * 0.5
         darkness = 0.5 + pulse * 0.2
     }
 
-    return (
-        <Vignette
-            eskil={false}
-            offset={0.3} // Softer transition
-            darkness={darkness}
-        />
-    )
+    return <Vignette eskil={false} offset={0.3} darkness={darkness} />
 }
 
 const ImpactAberration = () => {
@@ -41,10 +29,8 @@ const ImpactAberration = () => {
 
     useEffect(() => {
         const onShake = (payload: any) => {
-            // REQ-035: Chromatic Aberration Spike
             const amount = payload.intensity || 0.5
-            // Add to intensity
-            intensity.current = Math.min(intensity.current + amount * 0.05, 0.1) // Cap at 0.1 offset
+            intensity.current = Math.min(intensity.current + amount * 0.05, 0.1)
         }
         eventBus.on('SCREEN_SHAKE', onShake)
         return () => eventBus.off('SCREEN_SHAKE', onShake)
@@ -54,51 +40,109 @@ const ImpactAberration = () => {
         if (intensity.current > 0) {
             intensity.current = THREE.MathUtils.lerp(intensity.current, 0, dt * 5)
         }
-
         if (abRef.current) {
-            // ChromaticAberrationImpl 'offset' is Vector2
-            abRef.current.offset.x = intensity.current
-            abRef.current.offset.y = intensity.current
+            const baseImperfection = 0.002
+            abRef.current.offset.x = intensity.current + baseImperfection
+            abRef.current.offset.y = intensity.current + baseImperfection
         }
     })
 
-    return (
-        <ChromaticAberration
-            ref={abRef}
-            offset={new THREE.Vector2(0, 0)} // Fix Type
-            radialModulation={false}
-            modulationOffset={0}
-        />
-    )
+    return <ChromaticAberration ref={abRef} offset={new THREE.Vector2(0, 0)} radialModulation={false} modulationOffset={0} />
+}
+
+const AutoFocus = ({ targetRef }: { targetRef: React.MutableRefObject<THREE.Vector3> }) => {
+    const { camera, scene, raycaster } = useThree()
+
+    useFrame((state, dt) => {
+        // Raycast from center of screen
+        raycaster.setFromCamera({ x: 0, y: 0 }, camera)
+
+        const intersects = raycaster.intersectObjects(scene.children, true)
+
+        // Find best hit
+        // CS-022: Dynamic DOF Focus
+        for (let i = 0; i < intersects.length; i++) {
+            const hit = intersects[i]
+            if (hit.distance > 0.5) {
+                targetRef.current.lerp(hit.point, dt * 2) // Smooth transition
+                break
+            }
+        }
+    })
+    return null
+}
+
+const WaterDroplets = () => {
+    // CS-039: Water Droplets (Lens FX)
+    // Simulating "Wet" look via subtle chromatic aberration modulation and noise
+    const intensity = useRef(0)
+    useFrame((state) => {
+        const t = state.clock.elapsedTime
+        intensity.current = (Math.sin(t * 0.5) + 1) * 0.002 // Subtle breathing
+    })
+    return <ChromaticAberration offset={new THREE.Vector2(intensity.current, intensity.current)} radialModulation={false} modulationOffset={0} />
+}
+
+const FOVDistortionFix = () => {
+    // CS-040: FOV Distortion
+    // Mitigating "Fisheye" look at high FOV by masking edges with a stronger vignette
+    return <Vignette eskil={false} offset={0.1} darkness={0.6} />
 }
 
 export const PostProcessingEffects: React.FC = () => {
-    // const { isMobile } = useDeviceDetect() // Removed for cleanup
+    const [sunMesh, setSunMesh] = useState<THREE.Mesh | null>(null)
+    const dofTarget = useRef(new THREE.Vector3(0, 0, 5))
+    const qualityMode = useGameStore(state => state.qualityMode)
+
+    if (qualityMode === 'low') {
+        return (
+            <>
+                {/* Minimal effects for low quality */}
+                <EffectComposer disableNormalPass>
+                    <BrightnessContrast brightness={0.02} contrast={0.1} />
+                    {/* Keep Health Vignette for gameplay feedback */}
+                    <HealthVignette />
+                </EffectComposer>
+            </>
+        )
+    }
 
     return (
-        <EffectComposer disableNormalPass>
-            {/* Soft, Dreamy Bloom */}
-            <Bloom
-                luminanceThreshold={0.8} // Lower threshold to catch more highlights
-                mipmapBlur={true} // Always on for soft look
-                intensity={0.4} // Subtle glow
-                radius={0.6} // Spread out the glow
-            />
+        <>
+            <AutoFocus targetRef={dofTarget} />
 
-            {/* Cinematic Vignette */}
-            <HealthVignette />
+            {/* Sun Mesh for GodRays */}
+            <mesh ref={setSunMesh} position={[60, 40, 40]}>
+                <sphereGeometry args={[5, 16, 16]} />
+                <meshBasicMaterial color="#ffaa00" transparent opacity={1} />
+            </mesh>
 
-            {/* Chromatic Aberration for Impact */}
-            <ImpactAberration />
+            <EffectComposer disableNormalPass>
+                <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} />
 
-            {/* Cozy Warm Color Grading */}
-            <BrightnessContrast
-                brightness={0.02}
-                contrast={0.15}
-            />
+                <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} />
 
-            {/* Subtle Film Grain for Texture */}
-            <Noise opacity={0.02} />
-        </EffectComposer>
+                {sunMesh && (
+                    <GodRays sun={sunMesh} blendFunction={THREE.BlendFunction.SCREEN} samples={30} density={0.95} decay={0.9} weight={0.4} exposure={0.6} clampMax={1} width={THREE.Resizer.AUTO_SIZE} height={THREE.Resizer.AUTO_SIZE} kernelSize={THREE.KernelSize.SMALL} blur={true} />
+                )}
+
+                <HealthVignette />
+                <ImpactAberration />
+
+                {/* CS-039: Water Droplets */}
+                <WaterDroplets />
+
+                {/* CS-040: FOV Distortion Fix */}
+                <FOVDistortionFix />
+
+                <BrightnessContrast brightness={0.02} contrast={0.15} />
+                <Noise opacity={0.03} premultiply />
+
+                <Outline edgeStrength={2.5} edgeGlow={0.0} edgeThickness={1.0} pulseSpeed={0.0} visibleEdgeColor={0xffffff} hiddenEdgeColor={0xffffff} blur={false} xRay={true} />
+
+                {/* CS-022: Dynamic Depth of Field */}
+                <DepthOfField target={dofTarget.current} focalLength={0.02} bokehScale={2} height={480} />
+            </EffectComposer>
+        </>
     )
 }

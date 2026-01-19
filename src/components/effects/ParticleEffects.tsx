@@ -15,7 +15,7 @@ export const SparkleBurst: React.FC<SparkleBurstProps> = ({ position, count = 20
 
     // Create reusable geometry/material
     const geometry = useMemo(() => new THREE.PlaneGeometry(0.1, 0.1), [])
-    const material = useMemo(() => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1, side: THREE.DoubleSide }), [color])
+    const material = useMemo(() => new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false }), [color])
 
     const initialized = useRef(false)
 
@@ -64,6 +64,16 @@ export const SparkleBurst: React.FC<SparkleBurstProps> = ({ position, count = 20
 
             // Move
             p.mesh.position.addScaledVector(p.velocity, delta)
+
+            // CL-045: Explosion Clip - Debris Floor/Wall Check
+            // Simple floor check at y=0
+            if (p.mesh.position.y < 0) {
+                p.mesh.position.y = 0
+                // Bounce
+                p.velocity.y = Math.abs(p.velocity.y) * 0.5
+                p.velocity.x *= 0.5
+                p.velocity.z *= 0.5
+            }
 
             // Drag
             p.velocity.multiplyScalar(0.95)

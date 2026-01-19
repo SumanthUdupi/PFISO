@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall } from "../game/Environment/OfficeAssets";
+import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall, GlassPartition, PaperStack, TrashCan } from "../game/Environment/OfficeAssets";
 
-import { Environment } from "@react-three/drei";
+import { Environment, SoftShadows, Sparkles, MeshReflectorMaterial, ContactShadows } from "@react-three/drei";
 
 export const CozyEnvironment: React.FC = () => {
     const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
-    const ambientRef = useRef<THREE.AmbientLight>(null);
+    // const ambientRef = useRef<THREE.AmbientLight>(null); // Removed unused ref
 
     // Battery Saver Detection
     const [batterySaver, setBatterySaver] = useState(false);
@@ -29,10 +29,11 @@ export const CozyEnvironment: React.FC = () => {
 
 
     // Static Golden Hour Lighting (Digital Hygge)
-    useFrame(() => {
-        // Golden Hour Direction
-        // Low angle sun from the side/window
-        const sunPos = new THREE.Vector3(60, 40, 40);
+    useFrame((state) => {
+        // Golden Hour Direction with Animation - REQ-VIS-025
+        // Low angle sun from the side/window, swaying slowly
+        const t = state.clock.elapsedTime * 0.1;
+        const sunPos = new THREE.Vector3(60 + Math.sin(t) * 5, 40, 40 + Math.cos(t) * 5);
 
         if (dirLightRef.current) {
             dirLightRef.current.position.copy(sunPos);
@@ -42,19 +43,40 @@ export const CozyEnvironment: React.FC = () => {
             dirLightRef.current.intensity = 2.0 * saverMultiplier;
             dirLightRef.current.color.setHSL(0.08, 0.6, 0.9); // Warm Orange-Yellow
         }
-
-        // Ambient Light
-        if (ambientRef.current) {
-            const saverMultiplier = batterySaver ? 0.5 : 1;
-            // Warm ambient to fill shadows
-            ambientRef.current.intensity = 0.8 * saverMultiplier;
-            ambientRef.current.color.setHex(0xffe0b2); // Warm peach/cream
-        }
     });
 
     return (
         <>
-            <ambientLight ref={ambientRef} intensity={0.8} />
+            {/* Soft Shadows - REQ-VIS-010 */}
+            <SoftShadows size={10} samples={10} focus={0.5} />
+
+            {/* Contact Shadows - REQ-VIS-021 */}
+            <ContactShadows
+                opacity={0.4}
+                scale={50}
+                blur={2}
+                far={10}
+                resolution={256}
+                color="#000000"
+            />
+
+            {/* Fog for Atmosphere - REQ-VIS-003 */}
+            {/* CL-030: Fog Outdoor Clip - Reduced far clip to blend better or use FogExp2 for softer falloff? 
+                Actually, to prevent hard clip, we just adjust start/end. 
+                Using standard fog for performance. Adjusted range to [5, 40] from [10, 50] to be denser/softer? 
+                Or larger range [0, 60] for smoother gradient? */}
+            <fog attach="fog" args={['#d7ccc8', 5, 60]} />
+
+            {/* Dust Particles - REQ-VIS-011 */}
+            <Sparkles count={50} scale={12} size={6} speed={0.4} opacity={0.2} color="#ffffff" />
+
+            {/* Ambient Light replaced with HemisphereLight - REQ-VIS-002 */}
+            <hemisphereLight
+                color="#ffe0b2" // Sky color (warm)
+                groundColor="#5d4037" // Ground color (dark warm)
+                intensity={0.6}
+            />
+
             <directionalLight
                 ref={dirLightRef}
                 position={[60, 40, 40]}
@@ -62,36 +84,74 @@ export const CozyEnvironment: React.FC = () => {
                 castShadow
                 shadow-mapSize-width={2048}
                 shadow-mapSize-height={2048}
-                shadow-bias={-0.0005}
+                shadow-bias={-0.00001} // CL-012: Reduced bias to prevent peter-panning (was -0.00005)
+                shadow-normalBias={0.02} // CL-012: Added normalBias to hide acne
             >
-                <orthographicCamera attach="shadow-camera" args={[-50, 50, 50, -50]} />
+                {/* CS-038: Shadow Pop-in - Increase bounds to cover movement */}
+                <orthographicCamera attach="shadow-camera" args={[-100, 100, 100, -100]} />
             </directionalLight>
 
             {/* HDRI Environment for Reflections & GI */}
             <Environment preset="apartment" background={false} blur={0.8} />
 
-            {/* Nice Office Floor - Warm Wood with Reflection */}
+            {/* Nice Office Floor - Warm Wood with Reflection - REQ-VIS-004 & REQ-VIS-014 */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
                 <planeGeometry args={[100, 100]} />
-                <meshStandardMaterial
-                    color="#8d6e63" // Warm brown
-                    roughness={0.1} // More reflective/polished
-                    metalness={0.1}
-                    envMapIntensity={0.8}
+                {/* Realtime Reflections - REQ-VIS-014 */}
+                <MeshReflectorMaterial
+                    blur={[400, 400]}
+                    resolution={1024}
+                    mixBlur={1}
+                    mixStrength={10}
+                    roughness={0.5}
+                    depthScale={1}
+                    minDepthThreshold={0.8}
+                    maxDepthThreshold={1.2}
+                    color="#8d6e63"
+                    metalness={0.2}
+                    mirror={0.5} // Added mirror prop
+                    depthToBlurRatioBias={0.25} // CL-039: Reduce clipping artifacts in blur
                 />
             </mesh>
 
-            {/* Grid Pattern - Very Subtle Warmth */}
-            <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} />
+
+            {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */}
+            {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */}
 
             {/* Office Walls */}
-            <OfficeWall position={[0, 1.5, -10]} width={20} />
-            <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20} />
+            <OfficeWall position={[0, 1.5, -10]} width={20.5} /> {/* REQ-VIS-030: Fix Leaks (Overlap) */}
+            <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20.5} />
 
             {/* Furniture */}
             <OfficeDesk position={[0, 0, -5]} />
             <OfficeChair position={[0, 2, -3]} />
             <OfficePlant position={[3, 1, -8]} />
+            {/* REQ-VIS-048: Trash Can */}
+            <TrashCan position={[0.8, 0.2, -5.5]} />
+
+            {/* REQ-VIS-026: Glass Partition */}
+            <GlassPartition position={[-5, 1.25, -2]} rotation={[0, 0.3, 0]} />
+
+            {/* REQ-VIS-050: Rain on Glass (Outside Window) */}
+            {/* CL-029: Rain Indoor Clip - Ensure position is strictly outside and scale doesn't bleed inside */}
+            {/* Original scale [10, 5, 5] at [-8, 2, -2] (Glass at -5). -8 + 5 = -3 (Clip inside). */}
+            {/* Reduced scale X to 4. Position [-8]. Range [-6, -10]. Safe from -5. */}
+            <Sparkles
+                count={200}
+                scale={[4, 5, 5]}
+                position={[-8, 2, -2]}
+                size={4}
+                speed={2}
+                opacity={0.5}
+                color="#b3e5fc"
+            />
+
+            {/* REQ-VIS-028: Paper Stack (On Desk?) */}
+            {/* Placing near desk, adjusting coords to be on top of desk (y=0.75 is top) */}
+            <PaperStack position={[0.5, 0.8, -5]} />
+
+            {/* REQ-VIS-029: Lens Flares (Simulated via intense sparkle at sun pos) */}
+            <Sparkles count={3} scale={1} size={50} speed={0} opacity={0.8} position={[60, 40, 40]} color="#fff9c4" />
 
         </>
     );

@@ -27,10 +27,18 @@ const getAudioContext = () => {
     return audioCtx;
 };
 
+// SYS-034: Audio Stacking Limit
+const activeVoices = new Map<string, number>();
+const MAX_VOICES = 5; // Global max
+const MAX_PER_TYPE = 2; // Limit per sound type (e.g. 2 footsteps)
+
 const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 'land' | 'open_modal' | 'teleport' | 'success' | 'footstep', volume: number) => {
     if (typeof window === 'undefined') return;
 
     try {
+        const typeCount = activeVoices.get(type) || 0;
+        if (typeCount >= MAX_PER_TYPE) return;
+
         const ctx = getAudioContext();
         if (!ctx || ctx.state !== 'running') return; // Don't play if not ready
 
@@ -41,6 +49,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
         gain.connect(ctx.destination);
 
         const now = ctx.currentTime;
+        let duration = 0.1; // Default
 
         switch (type) {
             case 'hover':
@@ -49,16 +58,14 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
                 gain.gain.setValueAtTime(volume * 0.1, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
+                duration = 0.1;
                 break;
             case 'click':
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(800, now);
                 gain.gain.setValueAtTime(volume * 0.1, now);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                osc.start(now);
-                osc.stop(now + 0.05);
+                duration = 0.05;
                 break;
             case 'unlock':
                 osc.type = 'triangle';
@@ -67,8 +74,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.setValueAtTime(1000, now + 0.2);
                 gain.gain.setValueAtTime(volume * 0.2, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.6);
-                osc.start(now);
-                osc.stop(now + 0.6);
+                duration = 0.6;
                 break;
             case 'error':
                 osc.type = 'sawtooth';
@@ -76,8 +82,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.linearRampToValueAtTime(100, now + 0.2);
                 gain.gain.setValueAtTime(volume * 0.2, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
+                duration = 0.2;
                 break;
             case 'jump':
                 osc.type = 'sine';
@@ -85,8 +90,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.linearRampToValueAtTime(400, now + 0.1);
                 gain.gain.setValueAtTime(volume * 0.2, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
+                duration = 0.2;
                 break;
             case 'land':
                 osc.type = 'triangle';
@@ -94,8 +98,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.linearRampToValueAtTime(50, now + 0.1);
                 gain.gain.setValueAtTime(volume * 0.2, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
+                duration = 0.1;
                 break;
             case 'open_modal':
                 osc.type = 'sine';
@@ -103,8 +106,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.linearRampToValueAtTime(500, now + 0.1);
                 gain.gain.setValueAtTime(volume * 0.15, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.3);
-                osc.start(now);
-                osc.stop(now + 0.3);
+                duration = 0.3;
                 break;
             case 'teleport':
                 osc.type = 'triangle';
@@ -112,8 +114,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
                 gain.gain.setValueAtTime(volume * 0.1, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.4);
-                osc.start(now);
-                osc.stop(now + 0.4);
+                duration = 0.4;
                 break;
             case 'success':
                 osc.type = 'sine';
@@ -121,8 +122,7 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.setValueAtTime(554, now + 0.1); // C#5
                 gain.gain.setValueAtTime(volume * 0.2, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.5);
-                osc.start(now);
-                osc.stop(now + 0.5);
+                duration = 0.5;
                 break;
             case 'footstep':
                 // Short, low thud/click
@@ -131,10 +131,20 @@ const playSynthSound = (type: 'hover' | 'click' | 'unlock' | 'error' | 'jump' | 
                 osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
                 gain.gain.setValueAtTime(volume * 0.1, now); // Quiet
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                osc.start(now);
-                osc.stop(now + 0.05);
+                duration = 0.05;
                 break;
         }
+
+        osc.start(now);
+        osc.stop(now + duration);
+
+        // Track voice
+        activeVoices.set(type, (activeVoices.get(type) || 0) + 1);
+        osc.onended = () => {
+            const count = activeVoices.get(type) || 1;
+            activeVoices.set(type, Math.max(0, count - 1));
+        };
+
     } catch (e) {
         console.warn("Audio play failed", e);
     }
@@ -153,7 +163,7 @@ const lastPlayed = new Map<string, number>();
 
 const useAudioStore = create<AudioState>((set, get) => ({
     muted: false,
-    volume: 0.5,
+    volume: parseFloat(localStorage.getItem('setting_masterVolume') || '0.5'),
     audioContextReady: false,
     toggleMute: () => {
         const newMuted = !get().muted;
@@ -163,6 +173,7 @@ const useAudioStore = create<AudioState>((set, get) => ({
     },
     setVolume: (v) => {
         set({ volume: v });
+        localStorage.setItem('setting_masterVolume', v.toString());
         if (ambientGain && audioCtx) ambientGain.gain.setValueAtTime(v * 0.05, audioCtx.currentTime);
     },
     initAudio: async () => {
@@ -225,6 +236,9 @@ const useAudioStore = create<AudioState>((set, get) => ({
 
             ambientOsc.connect(ambientGain);
             ambientGain.connect(ctx.destination);
+
+            // SYS-046: Seamless Loop - Oscillators are naturally continuous. 
+            // If using samples later, we would use AudioBufferSourceNode with loop = true.
             ambientOsc.start();
         } catch (e) {
             console.warn("Failed to start ambient audio", e);

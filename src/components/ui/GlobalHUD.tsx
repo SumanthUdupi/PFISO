@@ -14,6 +14,17 @@ interface GlobalHUDProps {
 const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   const { isMobile } = useDeviceDetect();
   const { playSound } = useAudioStore();
+  // CS-032: UI Parallax
+  const [parallax, setParallax] = useState({ x: 0, y: 0 })
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 20 // 20px range
+      const y = (e.clientY / window.innerHeight - 0.5) * 20
+      setParallax({ x, y })
+    }
+    window.addEventListener('mousemove', handleMove)
+    return () => window.removeEventListener('mousemove', handleMove)
+  }, [])
   const [showControls, setShowControls] = useState(true);
 
   useEffect(() => {
@@ -31,7 +42,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
   ] as const;
 
   return (
-    <>
+    <div style={{ transform: `translate(${-parallax.x}px, ${-parallax.y}px)`, transition: 'transform 0.1s ease-out', width: '100%', height: '100%', position: 'absolute', pointerEvents: 'none' }}>
       <QuestTracker />
 
       {/* Controls Toast */}
@@ -155,7 +166,7 @@ const GlobalHUD: React.FC<GlobalHUDProps> = ({ onNavigate, activeSection }) => {
           <span className="hud-label" style={{ display: 'none' }}>CV</span>
         </motion.a>
       </div>
-    </>
+    </div>
   );
 };
 

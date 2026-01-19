@@ -60,10 +60,11 @@ body {
   /* Match UI BG */
   color: var(--color-ui-text);
   user-select: none;
-  cursor: default;
-  /* Standard cursor for premium feel */
+  /* SYS-033: Custom Cursor */
+  cursor: url('/assets/cursor.svg') 2 2, auto; 
   font-family: var(--font-body);
-  font-size: 16px;
+  /* SYS-032: UI Scaling - Viewport Units */
+  font-size: clamp(14px, 1vw, 24px);
   text-shadow: none;
 }
 

@@ -1,10 +1,8 @@
 import React, { useEffect } from 'react'
-import useInventoryStore from '../../stores/inventoryStore'
-import useGameStore from '../../stores/gameStore'
+import useGameStore from '../../store'
 
 const InventoryUI: React.FC = () => {
-    const { items } = useInventoryStore()
-    const { isInventoryOpen, setPaused } = useGameStore()
+    const { items, isInventoryOpen, setPaused, sortInventory, maxInventorySize } = useGameStore()
 
     // Auto-pause when opening inventory
     useEffect(() => {
@@ -29,18 +27,48 @@ const InventoryUI: React.FC = () => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 50,
+            zIndex: 400,
             color: 'white',
             fontFamily: 'Inter, sans-serif'
         }}>
-            <h2 style={{
-                fontSize: '32px',
-                marginBottom: '40px',
-                borderBottom: '2px solid #4ade80',
-                paddingBottom: '10px'
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px', // Match grid width approx
+                marginBottom: '20px',
+                padding: '0 20px'
             }}>
-                INVENTORY
-            </h2>
+                <h2 style={{
+                    fontSize: '32px',
+                    borderBottom: '2px solid #4ade80',
+                    paddingBottom: '10px',
+                    margin: 0
+                }}>
+                    INVENTORY
+                </h2>
+
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                    <div style={{ fontSize: '18px', color: items.length >= maxInventorySize ? '#ef4444' : '#aaa' }}>
+                        {items.length} / {maxInventorySize}
+                    </div>
+                    <button
+                        onClick={sortInventory}
+                        style={{
+                            padding: '8px 16px',
+                            background: '#4ade80',
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Sort
+                    </button>
+                </div>
+            </div>
 
             <div style={{
                 display: 'grid',
@@ -71,8 +99,8 @@ const InventoryUI: React.FC = () => {
                     </div>
                 ))}
 
-                {/* Fill empty slots to make a grid of 8 */}
-                {Array.from({ length: Math.max(0, 8 - items.length) }).map((_, i) => (
+                {/* Fill empty slots visually up to a minimum grid, or up to maxInventorySize if we want to show capacity */}
+                {Array.from({ length: Math.max(0, maxInventorySize - items.length) }).map((_, i) => (
                     <div key={`empty-${i}`} style={{
                         width: '80px',
                         height: '80px',

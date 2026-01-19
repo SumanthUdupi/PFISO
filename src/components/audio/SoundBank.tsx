@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { AudioListener } from 'three'
-import { useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
+import gameSystemInstance from '../../systems/GameSystem'
 import { generateSoundBuffer, SoundType } from '../../utils/audioGen'
 
 interface SoundBankContextValue {
@@ -17,6 +19,28 @@ const SoundBankContext = createContext<SoundBankContextValue>({
 
 export const useSoundBank = () => useContext(SoundBankContext)
 
+// CS-031: Hybrid Listener Position logic in a component
+const ListenerUpdater = ({ listener }: { listener: AudioListener }) => {
+    const { camera } = useThree()
+
+    useFrame((state, delta) => {
+        const pPos = gameSystemInstance.playerPosition
+        if (pPos) {
+            const playerVec = new THREE.Vector3(pPos.x, pPos.y, pPos.z)
+            // Lerp between camera and player (Hybrid position)
+            const target = new THREE.Vector3().lerpVectors(camera.position, playerVec, 0.5)
+            listener.position.lerp(target, delta * 5)
+            listener.rotation.copy(camera.rotation)
+        } else {
+            // Fallback to camera
+            listener.position.copy(camera.position)
+            listener.rotation.copy(camera.rotation)
+        }
+        listener.updateMatrixWorld()
+    })
+    return null
+}
+
 export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { camera } = useThree()
     const [listener] = useState(() => new AudioListener())
@@ -24,22 +48,12 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [isLoaded, setIsLoaded] = useState(false)
     const initialized = useRef(false)
 
-    // 1. Attach Listener to Camera
-    useEffect(() => {
-        if (camera) {
-            camera.add(listener)
-            return () => {
-                camera.remove(listener)
-            }
-        }
-    }, [camera, listener])
-
     // 2. Generate Buffers on Mount
     useEffect(() => {
         if (initialized.current) return
         initialized.current = true
 
-        // Handle Audio Context Resume (Autoplay Policy)
+        // Handle Audio Context Resume
         const handleUserInteraction = () => {
             if (listener && listener.context.state === 'suspended') {
                 listener.context.resume().then(() => {
@@ -53,7 +67,6 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         window.addEventListener('touchstart', handleUserInteraction)
 
         return () => {
-            // Cleanup (though this runs once usually)
             window.removeEventListener('click', handleUserInteraction)
             window.removeEventListener('keydown', handleUserInteraction)
             window.removeEventListener('touchstart', handleUserInteraction)
@@ -68,7 +81,7 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const types: SoundType[] = ['hover', 'click', 'unlock', 'error', 'jump', 'land', 'open_modal', 'teleport', 'success']
             const newBuffers: Record<string, AudioBuffer> = {}
 
-            // Generate procedural buffers in parallel
+            // Generate procedural buffers
             await Promise.all(types.map(async (type) => {
                 const buffer = await generateSoundBuffer(type)
                 if (buffer) {
@@ -76,15 +89,16 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 }
             }))
 
-            // Load audio files for memory logs
+            // Load audio files
             const memoryIds = ['mem-work-1', 'mem-proj-1', 'mem-skill-1', 'mem-contact-1']
             await Promise.all(memoryIds.map(async (id) => {
                 let buffer: AudioBuffer | null = null;
                 try {
-                    const response = await fetch(`${import.meta.env.BASE_URL}assets/audio/${id}.mp3`)
+                    // Fix: Using relative path if import.meta not working, but sticking to existing pattern
+                    const response = await fetch(`./assets/audio/${id}.mp3`)
                     if (response.ok) {
                         const arrayBuffer = await response.arrayBuffer()
-                        if (arrayBuffer.byteLength > 100) { // arbitrary small size check
+                        if (arrayBuffer.byteLength > 100) {
                             buffer = await listener.context.decodeAudioData(arrayBuffer)
                             newBuffers[id] = buffer
                         }
@@ -94,7 +108,6 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 }
 
                 if (!newBuffers[id]) {
-                    // Fallback to procedural sound
                     const fallback = await generateSoundBuffer('unlock')
                     if (fallback) newBuffers[id] = fallback
                 }
@@ -106,10 +119,12 @@ export const SoundBankProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
 
         loadSounds()
-    }, [listener])
+    }, [listener, isLoaded])
 
     return (
         <SoundBankContext.Provider value={{ listener, buffers, isLoaded }}>
+            {/* ListenerUpdater handles position updates */}
+            <ListenerUpdater listener={listener} />
             {children}
         </SoundBankContext.Provider>
     )

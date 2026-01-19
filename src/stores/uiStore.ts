@@ -7,6 +7,7 @@ export interface ModalContent {
     tags?: string[]
     image?: string
     links?: { label: string, url: string }[]
+    video?: string
     type?: 'PROJECT' | 'EXPERIENCE' | 'GENERIC' | 'CONTACT'
 }
 
@@ -32,6 +33,11 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
     isModalOpen: false,
     modalContent: null,
+    // SYS-035: Init
+    subtitle: null,
+    subtitleDuration: 3000,
+    showSubtitle: (text: string, duration = 3000) => set({ subtitle: text, subtitleDuration: duration }),
+
     openModal: (content) => set({ isModalOpen: true, modalContent: content }),
     closeModal: () => set({ isModalOpen: false, modalContent: null }),
 
@@ -46,4 +52,9 @@ export const useUIStore = create<UIState>((set) => ({
 
     isProjectModalOpen: false,
     toggleProjectModal: () => set((state) => ({ isProjectModalOpen: !state.isProjectModalOpen })),
+
+    // SYS-035: Subtitles
+    subtitle: string | null,
+    subtitleDuration: number,
+    showSubtitle: (text: string, duration?: number) => void,
 }))

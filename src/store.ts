@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { trackEvent } from './utils/analytics';
+import eventBus from './systems/EventBus'
+import { saveManager } from './systems/SaveManager';
+
 
 
 export type SkillTier = 'Locked' | 'Novice' | 'Proficient' | 'Master';
@@ -14,6 +17,15 @@ export interface Buff {
     movementSpeed?: number; // multiplier
     // add more effects as needed
   };
+
+}
+
+export interface Quest {
+  id: string;
+  title: string;
+  description: string;
+  status: 'active' | 'completed' | 'failed';
+  steps: { id: string, description: string, isComplete: boolean }[];
 }
 
 export interface GameState {
@@ -24,8 +36,45 @@ export interface GameState {
   collectedMoteIds: number[]; // Track specific collected motes
 
   // Quest System
-  currentObjective: string;
+  quests: Quest[];
+  currentObjective: string; // Keep for simple display
   isObjectiveComplete: boolean;
+  addQuest: (quest: Quest) => void;
+  updateQuest: (id: string, updates: Partial<Quest>) => void;
+  completeQuest: (id: string) => void;
+
+  // ... imports need to be checked if I need to add one, but I can assume I can do it separately or here if I see the top.
+  // I will just use full replace for sections.
+
+  // SYS-039: Stats
+  stats: {
+    timePlayed: number; // in seconds
+    stepsTaken: number;
+    distanceTraveled: number;
+  };
+  incrementStats: (dt: number, dist: number) => void;
+
+  // SYS-040: NPC State Persistence
+  npcStates: Record<string, { hasTalked: boolean; dialogStage: number }>;
+  updateNpcState: (id: string, updates: Partial<{ hasTalked: boolean; dialogStage: number }>) => void;
+
+  // SYS-043: Boss Health Bar
+  boss: { name: string; health: number; maxHealth: number; visible: boolean } | null;
+  setBoss: (boss: { name: string; health: number; maxHealth: number; visible: boolean } | null) => void;
+  updateBossHealth: (health: number) => void;
+
+  // SYS-045: Sensitivity Settings
+  sensitivityX: number;
+  sensitivityY: number;
+  setSensitivity: (x: number, y: number) => void;
+
+  // SYS-047: Tutorial Skip
+  tutorialActive: boolean;
+  skipTutorial: () => void;
+
+  // SYS-050: Performance Mode
+  qualityMode: 'low' | 'high';
+  setQualityMode: (mode: 'low' | 'high') => void;
 
   // Journal & Gamification
   journalEntries: { id: string; title: string; description: string; date: string; stickers: string[] }[];
@@ -54,9 +103,19 @@ export interface GameState {
 
   // Progression
   experience: number;
-  health: number; // 0-100
+  // SYS-027: Difficulty Modes
+  difficulty: 'easy' | 'normal' | 'hard';
+  setDifficulty: (difficulty: 'easy' | 'normal' | 'hard') => void;
+
   takeDamage: (amount: number) => void;
   heal: (amount: number) => void;
+
+  // Low Health Vignette or similar can trigger from health changes
+
+  // Stamina System
+  stamina: number; // 0-100
+  maxStamina: number;
+  setStamina: (val: number) => void;
 
   // Combat/Hotbar
   activeSlot: number; // 0-3
@@ -102,9 +161,28 @@ export interface GameState {
   updateBuffs: (currentTime: number) => void;
   toggleNavigationSuggestions: () => void;
   setHasShownSurvey: () => void;
-  saveGame: () => void;
-  loadGame: () => void;
+  saveGame: () => Promise<void>;
+  loadGame: () => Promise<void>;
   resetProgress: () => void;
+
+  // Autosave
+  lastAutoSave: number;
+  triggerAutoSave: () => void;
+  isSaving: boolean;
+
+  // SYS-023: Game Over State
+  gameState: 'playing' | 'won' | 'lost';
+  setVictory: () => void;
+  setGameOver: () => void;
+  restartGame: () => void;
+
+  // SYS-024 & SYS-025: Inventory System
+  items: string[];
+  maxInventorySize: number;
+  addItem: (id: string) => boolean; // Returns true if added, false if full
+  removeItem: (id: string) => void;
+  hasItem: (id: string) => boolean;
+  sortInventory: () => void;
 }
 
 const useGameStore = create<GameState>()((set, get) => ({
@@ -112,6 +190,7 @@ const useGameStore = create<GameState>()((set, get) => ({
   unlockedSkills: {},
   motesCollected: 0,
   collectedMoteIds: [],
+  quests: [],
   currentObjective: "Restore your skills by reviewing your past projects.",
   isObjectiveComplete: false,
   journalEntries: [],
@@ -123,10 +202,98 @@ const useGameStore = create<GameState>()((set, get) => ({
   hasShownSurvey: false,
   experience: 0, // Initialize experience
   health: 100,
-  takeDamage: (amount) => set((state) => ({ health: Math.max(0, state.health - amount) })),
-  heal: (amount) => set((state) => ({ health: Math.min(100, state.health + amount) })),
-  // Initialize cursorType
-  cursorType: 'DEFAULT',
+  stamina: 100,
+  maxStamina: 100,
+  // Autosave
+  lastAutoSave: 0,
+  isSaving: false,
+
+  // SYS-039: Stats
+  stats: {
+    timePlayed: 0,
+    stepsTaken: 0,
+    distanceTraveled: 0
+  },
+  incrementStats: (dt, dist) => set((state) => ({
+    stats: {
+      ...state.stats,
+      timePlayed: state.stats.timePlayed + dt,
+      distanceTraveled: state.stats.distanceTraveled + dist,
+      stepsTaken: state.stats.stepsTaken + (dist > 0 ? 1 : 0) // Approximation
+    }
+  })),
+
+  // SYS-040: NPC State
+  npcStates: {},
+  updateNpcState: (id, updates) => set((state) => ({
+    npcStates: {
+      ...state.npcStates,
+      [id]: { ...state.npcStates[id], ...updates }
+    }
+  })),
+
+  // SYS-043: Boss Health
+  boss: null,
+  setBoss: (boss) => set({ boss }),
+  updateBossHealth: (health) => set((state) => state.boss ? { boss: { ...state.boss, health } } : state),
+
+  // SYS-045: Sensitivity Settings
+  sensitivityX: 1.0,
+  sensitivityY: 1.0,
+  setSensitivity: (x, y) => set({ sensitivityX: x, sensitivityY: y }),
+
+  // SYS-047: Tutorial Skip
+  tutorialActive: true,
+  skipTutorial: () => set({ tutorialActive: false }),
+
+  // SYS-050: Performance Mode
+  qualityMode: 'high',
+  setQualityMode: (mode) => set({ qualityMode: mode }),
+
+  // SYS-027: Difficulty Modes
+  difficulty: 'normal',
+  setDifficulty: (difficulty) => set({ difficulty }),
+
+  // SYS-023: Game Over State
+  gameState: 'playing',
+  setVictory: () => set({ gameState: 'won', isPaused: true }),
+  setGameOver: () => set({ gameState: 'lost', isPaused: true }),
+  restartGame: () => set({
+    gameState: 'playing',
+    health: 100,
+    stamina: 100,
+    isPaused: false,
+    isInventoryOpen: false,
+    gameEnded: false,
+    items: [], // Reset inventory
+    activeBuffs: []
+  }),
+
+  // SYS-024 & SYS-025: Inventory System
+  items: [],
+  maxInventorySize: 20, // Cap at 20 items (SYS-024)
+  addItem: (id) => {
+    const state = get();
+    if (state.items.length >= state.maxInventorySize) {
+      // Inventory Full notification could be triggered here or in UI
+      return false;
+    }
+    if (state.items.includes(id)) return true; // Already have it, treat as success or ignore
+
+    set({ items: [...state.items, id] });
+    setTimeout(() => get().triggerAutoSave(), 0);
+    return true;
+  },
+  removeItem: (id) => {
+    set((state) => ({ items: state.items.filter(i => i !== id) }));
+    setTimeout(() => get().triggerAutoSave(), 0);
+  },
+  hasItem: (id) => get().items.includes(id),
+  sortInventory: () => {
+    set((state) => ({
+      items: [...state.items].sort((a, b) => a.localeCompare(b))
+    }));
+  },
 
   // Debug Init
   isConsoleOpen: false,
@@ -157,8 +324,53 @@ const useGameStore = create<GameState>()((set, get) => ({
   // Game System / UI States
   isPaused: false,
   isInventoryOpen: false,
-  togglePause: () => set((state) => ({ isPaused: !state.isPaused })),
-  toggleInventory: () => set((state) => ({ isInventoryOpen: !state.isInventoryOpen })),
+  togglePause: () => {
+    const nextState = !get().isPaused;
+    set({ isPaused: nextState });
+    if (nextState) {
+      document.exitPointerLock();
+      set({ cursorType: 'DEFAULT' });
+    }
+  },
+  toggleInventory: () => {
+    const nextState = !get().isInventoryOpen;
+    set({ isInventoryOpen: nextState });
+    if (nextState) {
+      document.exitPointerLock();
+      set({ cursorType: 'DEFAULT' });
+    }
+  },
+
+  setStamina: (val) => set({ stamina: val }),
+  takeDamage: (amount) => {
+    set((state) => {
+      // Apply difficulty multiplier
+      let multiplier = 1.0;
+      switch (state.difficulty) {
+        case 'easy': multiplier = 0.5; break;
+        case 'hard': multiplier = 1.5; break;
+      }
+      const actualDamage = amount * multiplier;
+
+      const newHealth = Math.max(0, state.health - actualDamage)
+      if (newHealth <= 0 && state.gameState === 'playing') {
+        return { health: newHealth, gameState: 'lost', isPaused: true }
+      }
+      return { health: newHealth }
+    })
+    eventBus.emit('DAMAGE', { amount }) // PM-030
+    eventBus.emit('SCREEN_SHAKE', { intensity: 0.5 })
+
+    // SYS-029: Rumble
+    // Importing dynamically to avoid circular dependency issues if any, or just use imported singleton
+    import('./systems/InputManager').then(({ default: inputs }) => {
+      inputs.vibrate(Math.min(1.0, amount / 20), 300)
+    })
+  },
+  heal: (amount) => {
+    set((state) => ({ health: Math.min(100, state.health + amount) }))
+    eventBus.emit('HEAL', { amount })
+  },
 
   // World Persistence
   worldObjectStates: {},
@@ -221,7 +433,7 @@ const useGameStore = create<GameState>()((set, get) => ({
         detail: { name: skillName, tier }
       }));
 
-      setTimeout(() => get().saveGame(), 0);
+      setTimeout(() => get().triggerAutoSave(), 0);
     }
   },
 
@@ -237,7 +449,7 @@ const useGameStore = create<GameState>()((set, get) => ({
         motesCollected: state.motesCollected + 1,
         collectedMoteIds: [...state.collectedMoteIds, id]
       };
-      setTimeout(() => get().saveGame(), 0); // Save after state update
+      setTimeout(() => get().triggerAutoSave(), 0); // Save after state update
       trackEvent('collect_mote');
       return newState;
     } else if (id === undefined) {
@@ -249,7 +461,33 @@ const useGameStore = create<GameState>()((set, get) => ({
     return state;
   }),
 
-  setObjective: (objective) => set({ currentObjective: objective, isObjectiveComplete: false }),
+  setObjective: (objective) => {
+    set({ currentObjective: objective, isObjectiveComplete: false });
+    setTimeout(() => get().triggerAutoSave(), 0);
+  },
+
+  addQuest: (quest) => set((state) => {
+    if (state.quests.some(q => q.id === quest.id)) return state;
+    const newState = { quests: [...state.quests, quest] };
+    setTimeout(() => get().triggerAutoSave(), 0);
+    return newState;
+  }),
+
+  updateQuest: (id, updates) => set((state) => {
+    const newState = {
+      quests: state.quests.map(q => q.id === id ? { ...q, ...updates } : q)
+    };
+    setTimeout(() => get().triggerAutoSave(), 0);
+    return newState;
+  }),
+
+  completeQuest: (id) => set((state) => {
+    const newState = {
+      quests: state.quests.map(q => q.id === id ? { ...q, status: 'completed' } : q)
+    };
+    setTimeout(() => get().triggerAutoSave(), 0);
+    return newState;
+  }),
 
   addJournalEntry: (entry) => set((state) => {
     if (state.journalEntries.some(e => e.id === entry.id)) return state;
@@ -288,13 +526,24 @@ const useGameStore = create<GameState>()((set, get) => ({
 
   setHasShownSurvey: () => set({ hasShownSurvey: true }),
 
-  saveGame: () => {
+  triggerAutoSave: () => {
+    const now = Date.now();
+    const state = get();
+    // Auto-save if more than 5 seconds since last save
+    if (now - state.lastAutoSave > 5000) {
+      get().saveGame();
+    }
+  },
+
+  saveGame: async () => {
+    set({ isSaving: true });
     const state = get();
     const toSave = {
       viewedProjects: state.viewedProjects,
       unlockedSkills: state.unlockedSkills,
       motesCollected: state.motesCollected,
       collectedMoteIds: state.collectedMoteIds,
+      quests: state.quests,
       currentObjective: state.currentObjective,
       isObjectiveComplete: state.isObjectiveComplete,
       journalEntries: state.journalEntries,
@@ -304,20 +553,33 @@ const useGameStore = create<GameState>()((set, get) => ({
       enableNavigationSuggestions: state.enableNavigationSuggestions,
       hasShownSurvey: state.hasShownSurvey,
       worldObjectStates: state.worldObjectStates,
-      patrolPaths: state.patrolPaths
+      patrolPaths: state.patrolPaths,
+      items: state.items // Save inventory items
     };
-    localStorage.setItem('gameState', JSON.stringify(toSave));
+
+    try {
+      await saveManager.save('gameState', toSave);
+      set({ lastAutoSave: Date.now(), isSaving: false });
+      console.log('Game saved successfully');
+    } catch (e) {
+      console.error('Failed to save game', e);
+      set({ isSaving: false });
+    }
   },
 
-  loadGame: () => {
-    const saved = localStorage.getItem('gameState');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        set(parsed);
-      } catch (e) {
-        console.error('Failed to load game state', e);
+  loadGame: async () => {
+    set({ isSaving: true });
+    try {
+      const saved = await saveManager.load<Partial<GameState>>('gameState');
+      if (saved) {
+        set({ ...saved, isSaving: false });
+        console.log('Game loaded successfully');
+      } else {
+        set({ isSaving: false });
       }
+    } catch (e) {
+      console.error('Failed to load game state', e);
+      set({ isSaving: false });
     }
   },
 
@@ -333,7 +595,8 @@ const useGameStore = create<GameState>()((set, get) => ({
     enableNavigationSuggestions: false,
     hasShownSurvey: false,
     worldObjectStates: {},
-    patrolPaths: {}
+    patrolPaths: {},
+    items: []
   })
 })
 );

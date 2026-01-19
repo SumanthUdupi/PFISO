@@ -1,6 +1,6 @@
 // MECH-044: Input Manager
 
-export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU' | 'INVENTORY' | 'CROUCH' | 'LEAN_LEFT' | 'LEAN_RIGHT' | 'INSPECT' | 'THROW_DROP' | 'PRIMARY_ACTION' | 'SECONDARY_ACTION' | 'TOGGLE_CONSOLE' | 'TOGGLE_PHOTO_MODE' | 'TOGGLE_EDIT_MODE' | 'ROTATE_OBJECT'
+export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU' | 'INVENTORY' | 'CROUCH' | 'LEAN_LEFT' | 'LEAN_RIGHT' | 'INSPECT' | 'THROW_DROP' | 'PRIMARY_ACTION' | 'SECONDARY_ACTION' | 'TOGGLE_CONSOLE' | 'TOGGLE_PHOTO_MODE' | 'TOGGLE_EDIT_MODE' | 'ROTATE_OBJECT' | 'LOOK_BEHIND' | 'QUICK_SAVE'
 export type AxisType = 'MOVE_X' | 'MOVE_Y' | 'LOOK_X' | 'LOOK_Y'
 
 type KeyBinding = string[]
@@ -23,7 +23,9 @@ class InputManager {
         TOGGLE_CONSOLE: ['`', 'f1'],
         TOGGLE_PHOTO_MODE: ['p'],
         TOGGLE_EDIT_MODE: ['b'],
-        ROTATE_OBJECT: ['t']
+        ROTATE_OBJECT: ['t'],
+        LOOK_BEHIND: ['q'], // CS-041
+        QUICK_SAVE: ['f5'] // SYS-021
     }
 
     // State
@@ -32,7 +34,7 @@ class InputManager {
         JUMP: false, DASH: false, INTERACT: false, MENU: false, INVENTORY: false,
         CROUCH: false, LEAN_LEFT: false, LEAN_RIGHT: false, INSPECT: false, THROW_DROP: false,
         PRIMARY_ACTION: false, SECONDARY_ACTION: false, TOGGLE_CONSOLE: false, TOGGLE_PHOTO_MODE: false,
-        TOGGLE_EDIT_MODE: false, ROTATE_OBJECT: false
+        TOGGLE_EDIT_MODE: false, ROTATE_OBJECT: false, LOOK_BEHIND: false, QUICK_SAVE: false
     }
     // Previous frame state for "Just Pressed" detection
     private prevActions: { [key in ActionType]: boolean } = { ...this.actions }
@@ -52,7 +54,21 @@ class InputManager {
     private lastFrameTime: number = 0
 
     constructor() {
+        this.loadBindings()
         this.bindEvents()
+    }
+
+    private loadBindings() {
+        if (typeof window === 'undefined') return
+        const saved = localStorage.getItem('setting_keybindings')
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved)
+                this.bindings = { ...this.bindings, ...parsed }
+            } catch (e) {
+                console.warn('Failed to parse keybindings', e)
+            }
+        }
     }
 
     private bindEvents() {
@@ -92,11 +108,24 @@ class InputManager {
         if (now === this.lastFrameTime) return // Frame already processed
         this.lastFrameTime = now
 
+        // SYS-042: Input Conflict - Check for focused text inputs
+        let isInputFocused = false;
+        if (typeof document !== 'undefined' && document.activeElement) {
+            const tag = document.activeElement.tagName.toLowerCase();
+            isInputFocused = (tag === 'input' || tag === 'textarea');
+        }
+
         // Save previous state
         this.prevActions = { ...this.actions }
 
         // 1. Check Bindings
         for (const action in this.bindings) {
+            // SYS-042: If typing, only allow MENU (Escape) to exit focus
+            if (isInputFocused && action !== 'MENU' && action !== 'TOGGLE_CONSOLE') {
+                this.actions[action as ActionType] = false;
+                continue;
+            }
+
             const bindingKeys = this.bindings[action as ActionType]
             let isPressed = false
             for (const key of bindingKeys) {
@@ -111,10 +140,14 @@ class InputManager {
         // 2. Axes Calculation (Keyboard)
         let kx = 0
         let ky = 0
-        if (this.keys['w'] || this.keys['arrowup']) ky -= 1
-        if (this.keys['s'] || this.keys['arrowdown']) ky += 1
-        if (this.keys['a'] || this.keys['arrowleft']) kx -= 1
-        if (this.keys['d'] || this.keys['arrowright']) kx += 1
+
+        // SYS-042: Disable keyboard movement if input focused
+        if (!isInputFocused) {
+            if (this.keys['w'] || this.keys['arrowup']) ky -= 1
+            if (this.keys['s'] || this.keys['arrowdown']) ky += 1
+            if (this.keys['a'] || this.keys['arrowleft']) kx -= 1
+            if (this.keys['d'] || this.keys['arrowright']) kx += 1
+        }
 
         // 3. Gamepad (Simple Poll)
         const gamepads = navigator.getGamepads ? navigator.getGamepads() : []
@@ -222,6 +255,28 @@ class InputManager {
     // Rebinding API
     rebind(action: ActionType, newKeys: string[]) {
         this.bindings[action] = newKeys
+        localStorage.setItem('setting_keybindings', JSON.stringify(this.bindings))
+    }
+
+    // SYS-029: Rumble Support
+    vibrate(intensity: number, duration: number) {
+        if (typeof navigator === 'undefined') return
+
+        // 1. Gamepad Rumble
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : []
+        if (gamepads[0] && gamepads[0].vibrationActuator) {
+            gamepads[0].vibrationActuator.playEffect('dual-rumble', {
+                startDelay: 0,
+                duration: duration,
+                weakMagnitude: intensity,
+                strongMagnitude: intensity
+            }).catch(e => console.warn("Rumble failed:", e))
+        }
+
+        // 2. Mobile Haptics
+        if (navigator.vibrate) {
+            navigator.vibrate(duration)
+        }
     }
 }
 

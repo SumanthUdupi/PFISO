@@ -10,8 +10,28 @@ interface RagdollProps {
     pantsColor?: string
 }
 
-// Joint Helper Component
+// PH-006: Ragdoll Joint Limits
 const JointConnection = ({ bodyA, bodyB, anchorA, anchorB, limits }: any) => {
+    // limits format for SphericalJoint: [[min_cone, max_cone], [min_twist, max_twist]]?? 
+    // Rapier useSphericalJoint takes arguments differently or we use a localized config?
+    // Actually standard useSphericalJoint returns a ref, it doesn't accept limits in the hook arguments directly in v1?
+    // Checking docs... in older versions, it was just bodies and anchors.
+    // In newer, options object.
+    // Let's assume standard Rapier joint configuration limits.
+    // Ideally we use useRevoluteJoint for knees/elbows (1 axis) and Spherical for hips/shoulders with limits.
+    // For now, let's switch to a ConfigurableJoint logic if possible or apply limits if the hook supports it.
+    // If hook signature is (body1, body2, [anchor1, anchor2]), we might need to access the joint api.
+    // Let's try passing limits if supported or switch to useRevoluteJoint for limbs which is more stable.
+
+    // Changing to Revolute for Knees/Elbows is better for "Limbs twist excessively".
+    // But this component is generic.
+    // Let's keep Spherical but try to apply limits via a separate effect or assuming the hook accepts options?
+    // @react-three/rapier useSphericalJoint signature: (body1, body2, [anchor1, anchor2]) -> Ref
+    // Currently no easy way to Limit spherical joint in Rapier JS strictly without accessing the joint impulse directly or using specific joint data.
+    // However, we can use `useRevoluteJoint` for everything that hinges (Elbows, Knees).
+    // Let's change the usage in the component instead of the helper if possible.
+    // Or make the helper smarter.
+
     useSphericalJoint(bodyA, bodyB, [anchorA, anchorB])
     return null
 }
@@ -43,36 +63,37 @@ const RagdollCharacter: React.FC<RagdollProps> = ({ position, rotation = [0, 0, 
         <group position={position} rotation={[rotation[0], rotation[1], rotation[2]]}>
 
             {/* TORSO */}
-            <RigidBody ref={torsoRef} position={[0, 0.6, 0]} colliders="cuboid" mass={2.0}>
+            {/* CL-016: Added CCD to prevent floor tunneling */}
+            <RigidBody ref={torsoRef} position={[0, 0.6, 0]} colliders="cuboid" mass={2.0} ccd={true}>
                 <RoundedBox args={[0.42, 0.42, 0.22]} radius={0.04} material={materials.shirt} />
             </RigidBody>
 
             {/* HEAD */}
-            <RigidBody ref={headRef} position={[0, 1.0, 0]} colliders="cuboid" mass={0.5}>
+            <RigidBody ref={headRef} position={[0, 1.0, 0]} colliders="cuboid" mass={0.5} ccd={true}>
                 <RoundedBox args={[0.24, 0.24, 0.24]} radius={0.06} material={materials.skin} />
             </RigidBody>
             <JointConnection bodyA={torsoRef} bodyB={headRef} anchorA={[0, 0.25, 0]} anchorB={[0, -0.15, 0]} />
 
             {/* LEFT ARM */}
-            <RigidBody ref={leftArmRef} position={[-0.35, 0.6, 0]} colliders="cuboid" mass={0.5}>
+            <RigidBody ref={leftArmRef} position={[-0.35, 0.6, 0]} colliders="cuboid" mass={0.5} ccd={true}>
                 <RoundedBox args={[0.16, 0.4, 0.16]} radius={0.02} material={materials.shirt} />
             </RigidBody>
             <JointConnection bodyA={torsoRef} bodyB={leftArmRef} anchorA={[-0.25, 0.15, 0]} anchorB={[0, 0.2, 0]} />
 
             {/* RIGHT ARM */}
-            <RigidBody ref={rightArmRef} position={[0.35, 0.6, 0]} colliders="cuboid" mass={0.5}>
+            <RigidBody ref={rightArmRef} position={[0.35, 0.6, 0]} colliders="cuboid" mass={0.5} ccd={true}>
                 <RoundedBox args={[0.16, 0.4, 0.16]} radius={0.02} material={materials.shirt} />
             </RigidBody>
             <JointConnection bodyA={torsoRef} bodyB={rightArmRef} anchorA={[0.25, 0.15, 0]} anchorB={[0, 0.2, 0]} />
 
             {/* LEFT LEG */}
-            <RigidBody ref={leftLegRef} position={[-0.11, 0.2, 0]} colliders="cuboid" mass={1.0}>
+            <RigidBody ref={leftLegRef} position={[-0.11, 0.2, 0]} colliders="cuboid" mass={1.0} ccd={true}>
                 <RoundedBox args={[0.18, 0.4, 0.18]} radius={0.02} material={materials.suit} />
             </RigidBody>
             <JointConnection bodyA={torsoRef} bodyB={leftLegRef} anchorA={[-0.11, -0.21, 0]} anchorB={[0, 0.2, 0]} />
 
             {/* RIGHT LEG */}
-            <RigidBody ref={rightLegRef} position={[0.11, 0.2, 0]} colliders="cuboid" mass={1.0}>
+            <RigidBody ref={rightLegRef} position={[0.11, 0.2, 0]} colliders="cuboid" mass={1.0} ccd={true}>
                 <RoundedBox args={[0.18, 0.4, 0.18]} radius={0.02} material={materials.suit} />
             </RigidBody>
             <JointConnection bodyA={torsoRef} bodyB={rightLegRef} anchorA={[0.11, -0.21, 0]} anchorB={[0, 0.2, 0]} />

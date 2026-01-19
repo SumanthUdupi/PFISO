@@ -11,13 +11,24 @@ export const InfoModal: React.FC = () => {
     const isContact = modalContent.type === 'CONTACT'
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={closeModal}>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={closeModal}>
             <div
                 className="bg-cozy-bg w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl border-2 border-cozy-border transform transition-all scale-100"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header Image */}
-                {modalContent.image && (
+                {/* Header Media */}
+                {modalContent.video ? (
+                    <div className="h-48 w-full overflow-hidden bg-black">
+                        <video
+                            src={modalContent.video}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                        />
+                    </div>
+                ) : modalContent.image && (
                     <div className="h-48 w-full overflow-hidden bg-gray-200">
                         <img src={modalContent.image} alt={modalContent.title} className="w-full h-full object-cover" />
                     </div>

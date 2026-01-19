@@ -1,5 +1,6 @@
 import React from 'react'
 import useGameStore from '../../store'
+import gameSystemInstance from '../../systems/GameSystem'
 
 const Reticle: React.FC = () => {
     const cursorType = useGameStore((state) => state.cursorType)
@@ -53,8 +54,27 @@ const Reticle: React.FC = () => {
         }
     }
 
+    // CS-036: Dynamic Reticle Scale
+    const reticleRef = React.useRef<HTMLDivElement>(null)
+
+    React.useEffect(() => {
+        let frameId: number
+        const loop = () => {
+            if (reticleRef.current) {
+                const vel = gameSystemInstance.playerVelocity
+                const speed = Math.sqrt(vel.x ** 2 + vel.z ** 2)
+                // Base scale 1.0, adds up to 0.5 based on speed
+                const targetScale = 1.0 + Math.min(speed * 0.1, 0.5)
+                reticleRef.current.style.transform = `translate(-50%, -50%) scale(${targetScale})`
+            }
+            frameId = requestAnimationFrame(loop)
+        }
+        loop()
+        return () => cancelAnimationFrame(frameId)
+    }, [])
+
     return (
-        <div className={containerStyle}>
+        <div ref={reticleRef} className={containerStyle} style={{ transformOrigin: 'center' }}>
             {renderIcon()}
         </div>
     )

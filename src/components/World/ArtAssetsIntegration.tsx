@@ -5,7 +5,7 @@ export const ArtAssetsIntegration = () => {
     // Generate a grid of assets
     const assetsList = Object.values(Assets).filter(asset => typeof asset === 'function')
     const gridSize = Math.ceil(Math.sqrt(assetsList.length))
-    const spacing = 3
+    const spacing = 5 // CL-008: Increased spacing (3 -> 5) to prevent overlap of large assets
 
     return (
         <group position={[20, 0, 0]}>

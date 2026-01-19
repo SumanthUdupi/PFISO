@@ -46,10 +46,16 @@ const PhysicsInteractable: React.FC<PhysicsInteractableProps> = ({ id, label = "
         e.stopPropagation()
     }
 
+    // ... (Import defaults)
+
     return (
         <RigidBody
             ref={rbRef}
             colliders="hull"
+            friction={0.5} // PH-003: Default Higher Friction
+            restitution={0.1} // PH-004: Default Lower Restitution
+            canSleep={true} // PH-005: Stacking Stability
+            linearDamping={0.1}
             {...props}
             userData={{ interactableId: id }}
         >

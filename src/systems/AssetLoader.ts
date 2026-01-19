@@ -4,6 +4,10 @@ import { useGLTF } from '@react-three/drei'
 const ASSETS = [
     // '/models/player.glb', // Example if we had a specific player file
     // '/models/env_core.glb', 
+    '/models/prop_box.glb',
+    '/models/prop_ball.glb',
+    '/models/office_chair.glb',
+    '/models/office_plant.glb'
 ]
 
 export const preloadAssets = () => {
@@ -17,5 +21,5 @@ export const preloadAssets = () => {
 
 // Function to clear cache if needed
 export const clearAssetCache = () => {
-    // ASSETS.forEach(asset => useGLTF.clear(asset))
+    ASSETS.forEach(asset => useGLTF.clear(asset))
 }

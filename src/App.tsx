@@ -28,6 +28,9 @@ const PhotoOverlay = lazy(() => import('./components/ui/PhotoOverlay'))
 const BuffHUD = lazy(() => import('./components/ui/BuffHUD').then(module => ({ default: module.BuffHUD })))
 const ProjectModal = lazy(() => import('./components/ui/ProjectModal'))
 import PortraitWarning from './components/ui/PortraitWarning'
+import { SubtitleOverlay } from './components/ui/SubtitleOverlay'
+const AchievementToast = lazy(() => import('./components/ui/AchievementToast'))
+const BossHealthBar = lazy(() => import('./components/ui/BossHealthBar')) // SYS-043
 const PerformanceMonitor = lazy(() => import('./components/debug/PerformanceMonitor'))
 import { useUIStore } from './stores/uiStore'
 import { TelemetryManager } from './systems/TelemetryManager'
@@ -74,11 +77,45 @@ function App() {
             window.removeEventListener('touchstart', initAudio);
         };
 
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                useGameStore.getState().togglePause(); // Force pause
+                // Ensure we set to paused specifically if toggle isn't idempotent, 
+                // but existing togglePause might just flip it. 
+                // Better: useGameStore.setState({ isPaused: true }) if accessing directly is cleaner.
+                // Checking store implementation: togglePause sets isPaused = !isPaused.
+                // We want to force PAUSE. 
+                const isPaused = useGameStore.getState().isPaused;
+                if (!isPaused) useGameStore.getState().togglePause();
+            }
+        };
+
+        const handleBlur = () => {
+            const isPaused = useGameStore.getState().isPaused;
+            if (!isPaused) useGameStore.getState().togglePause();
+        }
+
+        const handleControllerDisconnect = () => {
+            // SYS-020: Pause on controller disconnect
+            const isPaused = useGameStore.getState().isPaused;
+            if (!isPaused) useGameStore.getState().togglePause();
+            console.log("Controller disconnected - Game Paused");
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleBlur);
+        window.addEventListener('gamepaddisconnected', handleControllerDisconnect);
+
+        // We don't necessarily want to auto-UNPAUSE on focus, as that can be annoying.
+
         window.addEventListener('click', initAudio);
         window.addEventListener('keydown', initAudio);
         window.addEventListener('touchstart', initAudio);
 
         return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleBlur);
+            window.removeEventListener('gamepaddisconnected', handleControllerDisconnect);
             window.removeEventListener('click', initAudio);
             window.removeEventListener('keydown', initAudio);
             window.removeEventListener('touchstart', initAudio);
@@ -151,6 +188,7 @@ function App() {
                             <Reticle />
                             <SkillsMenu />
                             <SystemMenu />
+                            <SubtitleOverlay />
                             <InfoModal />
                             <ProjectModal isOpen={isProjectModalOpen} onClose={toggleProjectModal} projects={projectsData} />
                             <EndingScreen />
@@ -159,6 +197,9 @@ function App() {
                             <GameOverScreen />
                             <NavigationSuggestions />
                             <PortraitWarning />
+                            <AchievementToast />
+                            {/* SYS-043: Boss Health Bar */}
+                            <BossHealthBar />
                             {motesCollected >= 5 && !hasShownSurvey && <FeedbackSurvey onClose={() => useGameStore.getState().setHasShownSurvey()} />}
                         </>
                     )
