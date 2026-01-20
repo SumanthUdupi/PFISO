@@ -128,23 +128,15 @@ const useAudioStore = create<AudioState>()(
             activeDialogueCount: 0,
             isLoaded: false,
 
-            setLoaded: (loaded) => set({ isLoaded: loaded }),
+            setloaded: (loaded) => set({ isLoaded: loaded }),
 
             addActiveVoice: () => set(state => ({ activeDialogueCount: state.activeDialogueCount + 1 })),
             removeActiveVoice: () => set(state => ({ activeDialogueCount: Math.max(0, state.activeDialogueCount - 1) })),
 
-            toggleMute: () => {
-                const newMuted = !get().muted;
-                set({ muted: newMuted });
-                if (newMuted) get().stopAmbient();
-                else get().startAmbient();
-            },
             setVolume: (v) => {
                 set({ volume: v });
                 if (ambientGain && audioCtx) ambientGain.gain.setValueAtTime(v * 0.05, audioCtx.currentTime);
             },
-
-            activeDialogueCount: 0,
 
             bassBoost: false, // Default off
             muteOnFocusLoss: true, // Default on per standard practice
