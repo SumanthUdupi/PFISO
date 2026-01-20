@@ -374,4 +374,3 @@ export const SystemMenu: React.FC = () => {
     )
 }
 
-```
