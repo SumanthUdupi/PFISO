@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import { Box, Cylinder, Sphere, Text } from '@react-three/drei'
+import { Box, Cylinder, Sphere, Text, useTexture } from '@react-three/drei'
 import { RigidBody, CuboidCollider, CylinderCollider } from '@react-three/rapier'
 
 export const OfficeDesk = (props: any) => {
@@ -11,22 +11,43 @@ export const OfficeDesk = (props: any) => {
             <Box args={[2, 0.1, 1]} position={[0, 0.75, 0]}><meshStandardMaterial color="#8d6e63" metalness={0.1} roughness={0.8} /></Box>
             <Box args={[0.1, 0.7, 0.9]} position={[-0.9, 0.35, 0]}><meshStandardMaterial color="#4e342e" /></Box>
             <Box args={[0.1, 0.7, 0.9]} position={[0.9, 0.35, 0]}><meshStandardMaterial color="#4e342e" /></Box>
-            <Box args={[0.8, 0.5, 0.05]} position={[0, 1.05, -0.3]}><meshPhysicalMaterial color="#050505" roughness={0.2} metalness={0.5} clearcoat={1} /></Box>
+            {/* VIS-045: Emissive Screens */}
+            <Box args={[0.8, 0.5, 0.05]} position={[0, 1.05, -0.3]}><meshPhysicalMaterial color="#050505" roughness={0.2} metalness={0.5} clearcoat={1} emissive="#2196f3" emissiveIntensity={2} /></Box>
             <Box args={[0.1, 0.2, 0.05]} position={[0, 0.85, -0.3]}><meshStandardMaterial color="#424242" /></Box>
             <Box args={[0.5, 0.02, 0.2]} position={[0, 0.81, 0.2]}><meshStandardMaterial color="#212121" /></Box>
-            <Box args={[0.45, 0.01, 0.15]} position={[0, 0.825, 0.2]}><meshStandardMaterial color="#424242" roughness={0.8} /></Box>
+            {/* VIS-039: Keyboard Details */}
+            <KeyboardMesh />
         </RigidBody>
     )
 }
 
+const KeyboardMesh = () => {
+    const normalMap = useTexture('assets/keyboard_normal.png')
+    return (
+        <Box args={[0.45, 0.01, 0.15]} position={[0, 0.825, 0.2]}>
+            <meshStandardMaterial color="#424242" roughness={0.8} normalMap={normalMap} />
+        </Box>
+    )
+}
+
 export const OfficeChair = (props: any) => {
+    // VIS-032: Fabric Shader
+    const normalMap = useTexture('assets/fabric_normal.png')
+    normalMap.wrapS = normalMap.wrapT = 1000
+    normalMap.repeat.set(2, 2)
+
     return (
         <RigidBody type="dynamic" colliders={false} {...props} linearDamping={2} angularDamping={2}>
             <CuboidCollider args={[0.3, 0.5, 0.3]} position={[0, 0.5, 0]} />
-            <Box args={[0.6, 0.1, 0.6]} position={[0, 0.5, 0]}><meshStandardMaterial color="#455a64" roughness={1.0} /></Box>
-            <Box args={[0.6, 0.6, 0.1]} position={[0, 0.8, -0.25]}><meshStandardMaterial color="#455a64" roughness={1.0} /></Box>
-            <Cylinder args={[0.3, 0.3, 0.1]} position={[0, 0.1, 0]}><meshStandardMaterial color="#ffffff" metalness={1.0} roughness={0.1} /></Cylinder>
-            <Cylinder args={[0.05, 0.4, 0.05]} position={[0, 0.3, 0]}><meshStandardMaterial color="#ffffff" metalness={1.0} roughness={0.1} /></Cylinder>
+            <Box args={[0.6, 0.1, 0.6]} position={[0, 0.5, 0]}>
+                <meshStandardMaterial color="#455a64" roughness={0.8} normalMap={normalMap} />
+            </Box>
+            <Box args={[0.6, 0.6, 0.1]} position={[0, 0.8, -0.25]}>
+                <meshStandardMaterial color="#455a64" roughness={0.8} normalMap={normalMap} />
+            </Box>
+            {/* VIS-016: Chrome Metalness - Chair Legs */}
+            <Cylinder args={[0.3, 0.3, 0.1]} position={[0, 0.1, 0]}><meshStandardMaterial color="#ffffff" metalness={1.0} roughness={0.0} /></Cylinder>
+            <Cylinder args={[0.05, 0.4, 0.05]} position={[0, 0.3, 0]}><meshStandardMaterial color="#ffffff" metalness={1.0} roughness={0.0} /></Cylinder>
         </RigidBody>
     )
 }
@@ -35,7 +56,7 @@ export const OfficePlant = (props: any) => {
     return (
         <RigidBody type="dynamic" colliders={false} {...props} density={0.5}>
             <CylinderCollider args={[0.5, 0.3]} position={[0, 0.5, 0]} />
-            <Cylinder args={[0.3, 0.2, 0.4, 32]} position={[0, 0.2, 0]}><meshStandardMaterial color="#d84315" /></Cylinder>
+            <Cylinder args={[0.3, 0.2, 0.4, 64]} position={[0, 0.2, 0]}><meshStandardMaterial color="#d84315" /></Cylinder>
             <Cylinder args={[0.05, 0.05, 0.6]} position={[0, 0.5, 0]}><meshStandardMaterial color="#2e7d32" /></Cylinder>
             <Sphere args={[0.4]} position={[0, 0.9, 0]}><meshPhysicalMaterial color="#4caf50" roughness={0.3} transmission={0.1} thickness={0.5} /></Sphere>
         </RigidBody>
@@ -46,7 +67,8 @@ export const GlassPartition = (props: any) => {
     return (
         <RigidBody type="fixed" colliders="hull" {...props}>
             <Box args={[4, 2.5, 0.1]}>
-                <meshPhysicalMaterial color="#e0f7fa" transmission={0.95} roughness={0.05} thickness={0.1} ior={1.5} transparent />
+                {/* VIS-050: Rain on Glass - Wet look via clearcoat */}
+                <meshPhysicalMaterial color="#e0f7fa" transmission={0.95} roughness={0.2} thickness={0.1} ior={1.5} transparent clearcoat={1} clearcoatRoughness={0} />
             </Box>
         </RigidBody>
     )
@@ -64,8 +86,10 @@ export const TrashCan = (props: any) => {
     return (
         <RigidBody type="dynamic" colliders="hull" {...props}>
             <Cylinder args={[0.2, 0.15, 0.4, 16]} position={[0, 0.2, 0]}><meshStandardMaterial color="#546e7a" metalness={0.5} /></Cylinder>
+            {/* VIS-048: Trash Cans - Fill them */}
             <Sphere args={[0.08]} position={[0, 0.3, 0]}><meshStandardMaterial color="#eceff1" /></Sphere>
             <Sphere args={[0.07]} position={[0.05, 0.25, -0.05]}><meshStandardMaterial color="#cfd8dc" /></Sphere>
+            <Box args={[0.1, 0.1, 0.1]} position={[-0.05, 0.35, 0.05]} rotation={[0.5, 0.5, 0]}><meshStandardMaterial color="#ffccbc" /></Box>
         </RigidBody>
     )
 }
@@ -81,10 +105,15 @@ export const OfficeCable = (props: any) => {
 export const OfficeWall = (props: any) => {
     const w = props.width || 1
     const h = props.height || 3
+    // VIS-005: Add texture to prevent flatness
+    const texture = useTexture('assets/paper-texture.png')
+    texture.wrapS = texture.wrapT = 1000 // Repeat
+    texture.repeat.set(w, h)
+
     return (
         <RigidBody type="fixed" colliders={false} {...props}>
             <CuboidCollider args={[w / 2, h / 2, 0.1]} />
-            <Box args={[w, h, 0.2]}><meshStandardMaterial color="#eceff1" /></Box>
+            <Box args={[w, h, 0.2]}><meshStandardMaterial color="#eceff1" roughness={0.8} map={texture} /></Box>
         </RigidBody>
     )
 }
@@ -103,7 +132,10 @@ export const Whiteboard = (props: any) => {
     return (
         <RigidBody type="fixed" colliders="cuboid" {...props}>
             <Box args={[3, 1.5, 0.05]}><meshStandardMaterial color="#cfd8dc" metalness={0.5} /></Box>
+            {/* VIS-049: Whiteboard Marks - Add residue/writing */}
             <Box args={[2.9, 1.4, 0.02]} position={[0, 0, 0.02]}><meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.05} /></Box>
+            <Text fontSize={0.2} color="#000000" position={[-0.5, 0.2, 0.04]} rotation={[0, 0, 0.1]}>Brainstorming...</Text>
+            <Text fontSize={0.15} color="#d32f2f" position={[0.5, -0.2, 0.04]}>To Do: VIS-050</Text>
             <Box args={[2, 0.05, 0.1]} position={[0, -0.75, 0.05]}><meshStandardMaterial color="#cfd8dc" /></Box>
         </RigidBody>
     )
@@ -225,7 +257,7 @@ export const Bookshelf = (props: any) => {
     )
 }
 
-export const CeilingLight = (props: any) => { return <group {...props}><mesh position={[0, 0.05, 0]}><boxGeometry args={[1.2, 0.1, 0.6]} /><meshStandardMaterial color="#eeeeee" /></mesh><mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[1.15, 0.55]} /><meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} toneMapped={false} /></mesh><pointLight intensity={0.5} distance={5} decay={2} position={[0, -0.5, 0]} /></group> }
+export const CeilingLight = (props: any) => { return <group {...props}><mesh position={[0, 0.05, 0]}><boxGeometry args={[1.2, 0.1, 0.6]} /><meshStandardMaterial color="#eeeeee" /></mesh><mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}><planeGeometry args={[1.15, 0.55]} /><meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1} toneMapped={false} /></mesh><rectAreaLight width={1.2} height={0.6} intensity={5} color="#ffffff" position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} /></group> }
 export const ExitSign = (props: any) => { return <group {...props}><mesh position={[0, 0, 0]}><boxGeometry args={[0.4, 0.2, 0.05]} /><meshStandardMaterial color="#eeeeee" /></mesh><mesh position={[0, 0, 0.03]}><boxGeometry args={[0.35, 0.15, 0.01]} /><meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.5} /></mesh></group> }
 export const FireExtinguisher = (props: any) => { return <RigidBody type="fixed" colliders="hull" {...props}><Cylinder args={[0.1, 0.1, 0.6]} position={[0, 0.3, 0]}><meshStandardMaterial color="#d32f2f" metalness={0.6} roughness={0.3} /></Cylinder></RigidBody> }
 export const CopyMachine = (props: any) => { return <RigidBody type="fixed" {...props}><Box args={[1.2, 1.1, 1]} position={[0, 0.55, 0]}><meshStandardMaterial color="#eeeeee" /></Box></RigidBody> }

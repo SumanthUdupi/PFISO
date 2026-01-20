@@ -1,11 +1,16 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall, GlassPartition, PaperStack, TrashCan } from "../game/Environment/OfficeAssets";
+import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall, GlassPartition, PaperStack, TrashCan, OfficeCable } from "../game/Environment/OfficeAssets";
 
-import { Environment, SoftShadows, Sparkles, MeshReflectorMaterial, ContactShadows } from "@react-three/drei";
+import { Environment, SoftShadows, Sparkles, MeshReflectorMaterial, ContactShadows, useTexture } from "@react-three/drei";
+import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib";
 
 export const CozyEnvironment: React.FC = () => {
+    // VIS-034: Area Lights
+    useEffect(() => {
+        RectAreaLightUniformsLib.init();
+    }, []);
     const dirLightRef = useRef<THREE.DirectionalLight | null>(null);
     // const ambientRef = useRef<THREE.AmbientLight>(null); // Removed unused ref
 
@@ -65,7 +70,8 @@ export const CozyEnvironment: React.FC = () => {
                 Actually, to prevent hard clip, we just adjust start/end. 
                 Using standard fog for performance. Adjusted range to [5, 40] from [10, 50] to be denser/softer? 
                 Or larger range [0, 60] for smoother gradient? */}
-            <fog attach="fog" args={['#d7ccc8', 5, 60]} />
+            {/* Fog for Atmosphere - REQ-VIS-003: Volumetric-like FogExp2 */}
+            <fogExp2 attach="fog" args={['#d7ccc8', 0.02]} />
 
             {/* Dust Particles - REQ-VIS-011 */}
             <Sparkles count={50} scale={12} size={6} speed={0.4} opacity={0.2} color="#ffffff" />
@@ -82,9 +88,9 @@ export const CozyEnvironment: React.FC = () => {
                 position={[60, 40, 40]}
                 intensity={2.0}
                 castShadow
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-                shadow-bias={-0.00001} // CL-012: Reduced bias to prevent peter-panning (was -0.00005)
+                shadow-mapSize-width={4096}
+                shadow-mapSize-height={4096}
+                shadow-bias={-0.0001} // REQ-VIS-001: Tuned shadow bias to -0.0001 to prevent peter-panning
                 shadow-normalBias={0.02} // CL-012: Added normalBias to hide acne
             >
                 {/* CS-038: Shadow Pop-in - Increase bounds to cover movement */}
@@ -92,67 +98,106 @@ export const CozyEnvironment: React.FC = () => {
             </directionalLight>
 
             {/* HDRI Environment for Reflections & GI */}
-            <Environment preset="apartment" background={false} blur={0.8} frames={1} />
+            {/* VIS-040: Skybox - Enable background for window view */}
+            <Environment preset="city" background={true} blur={0.8} frames={1} />
 
             {/* Nice Office Floor - Warm Wood with Reflection - REQ-VIS-004 & REQ-VIS-014 */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+            <FloorWithTexture />
+
+            {/* VIS-033: Ceiling - Closed Environment */}
+            <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 4, 0]} receiveShadow>
                 <planeGeometry args={[100, 100]} />
-                {/* Realtime Reflections - REQ-VIS-014 */}
-                <MeshReflectorMaterial
-                    blur={[400, 400]}
-                    resolution={1024}
-                    mixBlur={1}
-                    mixStrength={10}
-                    roughness={0.5}
-                    depthScale={1}
-                    minDepthThreshold={0.8}
-                    maxDepthThreshold={1.2}
-                    color="#8d6e63"
-                    metalness={0.2}
-                    mirror={0.5} // Added mirror prop
-                    depthToBlurRatioBias={0.25} // CL-039: Reduce clipping artifacts in blur
-                />
+                <meshStandardMaterial color="#eceff1" side={THREE.DoubleSide} />
             </mesh>
 
+            {/* VIS-042: Cables/Wires - Add visual clutter */}
+            <group position={[0.5, 0.05, 0.5]} rotation={[0, 0.5, 0]}>
+                <OfficeCable position={[0, 0, 0]} rotation={[0, 0, Math.PI / 2]} />
+                <OfficeCable position={[0.5, 0, 0.5]} rotation={[0, 1, Math.PI / 2]} />
+            </group>
 
-            {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */}
-            {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */}
+            {/* VIS-046: Decals/Papers - Scattered clutter */}
+            <PaperStack position={[2, 0.1, 2]} rotation={[0, 0.5, 0]} />
+            <PaperStack position={[-2, 0.1, -2]} rotation={[0, -0.2, 0]} />
 
-            {/* Office Walls */}
-            <OfficeWall position={[0, 1.5, -10]} width={20.5} /> {/* REQ-VIS-030: Fix Leaks (Overlap) */}
-            <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20.5} />
+            {/* VIS-043: Wear & Tear - Simple grunge decal on floor */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2, 0.02, 2]}>
+                <planeGeometry args={[1, 1]} />
+                <meshStandardMaterial color="#5d4037" transparent opacity={0.3} roughness={1} blending={THREE.MultiplyBlending} />
+            </mesh>
 
-            {/* Furniture */}
+            {/* 
+               We extract floor to component to use Texture hook safely/cleanly
+               if we wanted, but since we are in a component, we can just use hooks at top.
+             */}
+        </mesh >
+
+
+            {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */ }
+    {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */ }
+
+    {/* Office Walls */ }
+    <OfficeWall position={[0, 1.5, -10]} width={20.5} /> {/* REQ-VIS-030: Fix Leaks (Overlap) */ }
+    <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20.5} />
+
+    {/* Furniture */ }
             <OfficeDesk position={[0, 0, -5]} />
             <OfficeChair position={[0, 2, -3]} />
             <OfficePlant position={[3, 1, -8]} />
-            {/* REQ-VIS-048: Trash Can */}
-            <TrashCan position={[0.8, 0.2, -5.5]} />
+    {/* REQ-VIS-048: Trash Can */ }
+    <TrashCan position={[0.8, 0.2, -5.5]} />
 
-            {/* REQ-VIS-026: Glass Partition */}
-            <GlassPartition position={[-5, 1.25, -2]} rotation={[0, 0.3, 0]} />
+    {/* REQ-VIS-026: Glass Partition */ }
+    <GlassPartition position={[-5, 1.25, -2]} rotation={[0, 0.3, 0]} />
 
-            {/* REQ-VIS-050: Rain on Glass (Outside Window) */}
-            {/* CL-029: Rain Indoor Clip - Ensure position is strictly outside and scale doesn't bleed inside */}
-            {/* Original scale [10, 5, 5] at [-8, 2, -2] (Glass at -5). -8 + 5 = -3 (Clip inside). */}
-            {/* Reduced scale X to 4. Position [-8]. Range [-6, -10]. Safe from -5. */}
-            <Sparkles
-                count={200}
-                scale={[4, 5, 5]}
-                position={[-8, 2, -2]}
-                size={4}
-                speed={2}
-                opacity={0.5}
-                color="#b3e5fc"
-            />
+    {/* REQ-VIS-050: Rain on Glass (Outside Window) */ }
+    {/* CL-029: Rain Indoor Clip - Ensure position is strictly outside and scale doesn't bleed inside */ }
+    {/* Original scale [10, 5, 5] at [-8, 2, -2] (Glass at -5). -8 + 5 = -3 (Clip inside). */ }
+    {/* Reduced scale X to 4. Position [-8]. Range [-6, -10]. Safe from -5. */ }
+    <Sparkles
+        count={200}
+        scale={[4, 5, 5]}
+        position={[-8, 2, -2]}
+        size={4}
+        speed={2}
+        opacity={0.5}
+        color="#b3e5fc"
+    />
 
-            {/* REQ-VIS-028: Paper Stack (On Desk?) */}
-            {/* Placing near desk, adjusting coords to be on top of desk (y=0.75 is top) */}
-            <PaperStack position={[0.5, 0.8, -5]} />
+    {/* REQ-VIS-028: Paper Stack (On Desk?) */ }
+    {/* Placing near desk, adjusting coords to be on top of desk (y=0.75 is top) */ }
+    <PaperStack position={[0.5, 0.8, -5]} />
 
-            {/* REQ-VIS-029: Lens Flares (Simulated via intense sparkle at sun pos) */}
-            <Sparkles count={3} scale={1} size={50} speed={0} opacity={0.8} position={[60, 40, 40]} color="#fff9c4" />
+    {/* REQ-VIS-029: Lens Flares (Simulated via intense sparkle at sun pos) */ }
+    <Sparkles count={3} scale={1} size={50} speed={0} opacity={0.8} position={[60, 40, 40]} color="#fff9c4" />
 
         </>
     );
 };
+
+const FloorWithTexture = () => {
+    const texture = useTexture('assets/paper-texture.png')
+    texture.wrapS = texture.wrapT = 1000
+    texture.repeat.set(100, 100)
+
+    return (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+            <planeGeometry args={[100, 100]} />
+            <MeshReflectorMaterial
+                blur={[400, 400]}
+                resolution={1024}
+                mixBlur={1}
+                mixStrength={10}
+                roughness={0.5}
+                depthScale={1}
+                minDepthThreshold={0.8}
+                maxDepthThreshold={1.2}
+                color="#8d6e63"
+                metalness={0.2}
+                mirror={0.5}
+                depthToBlurRatioBias={0.25}
+                roughnessMap={texture}
+            />
+        </mesh>
+    )
+}

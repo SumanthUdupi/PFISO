@@ -102,8 +102,6 @@ export interface GameState {
     position?: any;
     distance?: number;
     locked?: boolean; // UX-048
-    position?: any;
-    distance?: number;
   } | null) => void;
 
   // World Persistence
@@ -264,7 +262,6 @@ const useGameStore = create<GameState>()((set, get) => ({
     timePlayed: 0,
     stepsTaken: 0,
     distanceTraveled: 0
-    distanceTraveled: 0
   },
   lastDamageSource: null,
   lastDamageTime: 0,
@@ -395,7 +392,6 @@ const useGameStore = create<GameState>()((set, get) => ({
     }
   },
 
-  setStamina: (val) => set({ stamina: val }),
   setStamina: (val) => set({ stamina: val }),
   takeDamage: (amount, sourcePosition) => {
     set((state) => {

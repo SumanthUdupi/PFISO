@@ -58,7 +58,8 @@ export default function Level_01() {
 
     return (
         <>
-            <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={75} near={0.05} />
+            {/* VIS-044: Near Clip - Adjust to prevent face clipping */}
+            <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={75} near={0.01} />
 
             {/* CL-036: Physics Prop Intersect - Increase solver iterations/substeps */}
             {/* PH-001: Gravity -9.81, PH-050: Timestep 1/50 (0.02s) */}

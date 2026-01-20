@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline } from '@react-three/postprocessing'
-import { useFrame, useThree, extend } from '@react-three/fiber'
+import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline, MotionBlur, SMAA } from '@react-three/postprocessing'
+import { useFrame, useThree, extend, useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
 import { ColorBlindnessEffect, BlendFunction } from 'postprocessing'
 import useGameStore from '../../store'
@@ -183,7 +183,16 @@ export const PostProcessingEffects: React.FC = () => {
                 <HealthVignette />
                 <ImpactAberration />
                 <GlitchEffect />
+                <HealthVignette />
+                <ImpactAberration />
+                <GlitchEffect />
                 <ColorBlindModeWrapper />
+
+                {/* VIS-009: LUT Color Grading */}
+                <LUT lut={useLoader(THREE.TextureLoader, 'assets/lut.png')} />
+
+                {/* VIS-012: Lens Imperfections - Subtle CA */}
+                <ChromaticAberration offset={new THREE.Vector2(0.002, 0.002)} radialModulation={false} modulationOffset={0} />
 
                 {/* CS-039: Water Droplets */}
                 <WaterDroplets />
@@ -194,10 +203,22 @@ export const PostProcessingEffects: React.FC = () => {
                 <BrightnessContrast brightness={0.02} contrast={0.15} />
                 <Noise opacity={0.03} premultiply />
 
-                <Outline edgeStrength={2.5} edgeGlow={0.0} edgeThickness={1.0} pulseSpeed={0.0} visibleEdgeColor={0xffffff} hiddenEdgeColor={0xffffff} blur={false} xRay={true} />
+                {/* VIS-047: Outline Disconnects - Fix bias/quality */}
+                <Outline edgeStrength={3.0} edgeGlow={0.0} edgeThickness={1.2} pulseSpeed={0.0} visibleEdgeColor={0xffffff} hiddenEdgeColor={0xffffff} blur={false} xRay={true} kernelSize={3} />
+
+                {/* CS-022: Dynamic Depth of Field */}
 
                 {/* CS-022: Dynamic Depth of Field */}
                 <DepthOfField target={dofTarget.current} focalLength={0.02} bokehScale={2} height={480} />
+
+                {/* VIS-034: SMAA Anti-Aliasing */}
+                <SMAA />
+
+                {/* VIS-035: Dithering via subtle Noise to prevent banding */}
+                <Noise opacity={0.02} />
+
+                {/* VIS-037: Hover Outline - selection layer */}
+                <Outline blur edgeStrength={2.5} width={500} />
             </EffectComposer>
         </>
     )
