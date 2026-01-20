@@ -6,11 +6,18 @@ import { WindZone } from '../components/game/Environment/WindZone'
 import { Magnet } from '../components/game/Environment/Magnet'
 import { PhysicsSafety } from '../systems/PhysicsSafety'
 import { PhysicsDoor } from '../components/game/PhysicsDoor'
-import { BallisticProjectile } from '../components/game/BallisticProjectile'
 import { PaperSheet } from '../components/game/PaperSheet'
 import { OfficeChair } from '../components/game/OfficeChair'
 import { PhysicsChain } from '../components/game/PhysicsChain'
 import { InteractiveGrass } from '../components/game/InteractiveGrass'
+import { ConferenceRoom } from '../components/game/Environment/ConferenceRoom'
+import { ReceptionArea } from '../components/game/Environment/ReceptionArea'
+import { BreakRoom } from '../components/game/Environment/BreakRoom'
+import { CubicleCluster } from '../components/game/Environment/CubicleCluster'
+import { PrivateOffice } from '../components/game/Environment/PrivateOffice'
+import { HallwaySegment } from '../components/game/Environment/HallwaySegment'
+import { UtilityArea } from '../components/game/Environment/UtilityArea'
+import { Bathroom } from '../components/game/Environment/Bathroom'
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
@@ -37,6 +44,12 @@ import { Succulent } from '../components/game/Succulent'
 import { ArtAssetsIntegration } from '../components/World/ArtAssetsIntegration'
 import { PostProcessingEffects } from '../components/effects/PostProcessingEffects'
 import { OfficePlant } from '../components/game/OfficePlant'
+import AmbientZone from '../components/audio/AmbientZone'
+import ReverbZone from '../components/audio/ReverbZone'
+import WindSystem from '../components/audio/WindSystem'
+import MusicSystem from '../components/audio/MusicSystem'
+import { VisibilityZone } from '../components/game/Environment/VisibilityZone'
+import { CompassUpdater } from '../components/ui/Compass'
 
 // ... (existing imports)
 
@@ -54,10 +67,14 @@ export default function Level_01() {
             <Physics
                 gravity={[0, -9.81, 0]}
                 debug={debugFlags.showPhysics}
-                timeStep={1 / 50}
+                timeStep={1 / 60} // PERF-034: Standard 60Hz (Sub-step via maxSubSteps)
                 paused={useGameStore((state) => state.isPaused)}
-                maxSubSteps={5}
+                maxSubSteps={4} // Reduced slightly as 60Hz is faster than 50Hz
                 numSolverIterations={8}
+            // PERF-031: Job System (Worker Thread)
+            // Note: If this breaks interactions, revert "worker"
+            // worker // Commented out for now as it requires careful testing of specific event handlers
+
             >
                 {/* PH-014: Static Environment Layers */}
                 <RigidBody type="fixed" colliders="cuboid" collisionGroups={COLLISION_GROUPS.DEFAULT}>
@@ -90,6 +107,7 @@ export default function Level_01() {
                 <CozyEnvironment />
                 <NavigationManager debug={debugFlags.showNavMesh} />
                 <GridOverlay />
+                <ProjectileSystem />
 
                 {/* PH-017: Vehicle Physics */}
                 <Vehicle position={[10, 2, 5]} />
@@ -159,9 +177,88 @@ export default function Level_01() {
 
                 <Succulent id="artreq_026" position={[0.5, 1, 2.5]} />
 
+
                 <ArtAssetsIntegration />
 
+
+                {/* ENV-001: Conference Room */}
+                <VisibilityZone position={[-15, 0, 0]} range={25}>
+                    <ConferenceRoom position={[-15, 0, 0]} rotation={[0, 0.5, 0]} />
+                </VisibilityZone>
+
+
+                {/* ENV-002: Reception Area */}
+                <VisibilityZone position={[0, 5, 15]} range={25}>
+                    <ReceptionArea position={[0, 0, 15]} />
+                </VisibilityZone>
+
+                {/* ENV-004: Break Room */}
+                <VisibilityZone position={[15, 0, 0]} range={25}>
+                    <BreakRoom position={[15, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
+                </VisibilityZone>
+
+                {/* ENV-003, ENV-008: Open Office Area */}
+                <VisibilityZone position={[0, 0, -10]} range={30}>
+                    <CubicleCluster position={[0, 0, -10]} />
+
+                    <CubicleCluster position={[8, 0, -10]} />
+                    <CubicleCluster position={[-8, 0, -10]} />
+                </VisibilityZone>
+
+                {/* ENV-007: Private Office */}
+                <VisibilityZone position={[-10, 0, 10]} range={15}>
+                    <PrivateOffice position={[-10, 0, 10]} />
+                </VisibilityZone>
+
+                <VisibilityZone position={[10, 0, 10]} range={15}>
+                    <PrivateOffice position={[10, 0, 10]} rotation={[0, Math.PI, 0]} />
+                </VisibilityZone>
+
+                {/* ENV-006: Hallways */}
+                {/* Main Spine (Z-Axis) connecting Reception to Cubicles */}
+                <HallwaySegment position={[0, 0, 5]} length={10} width={4} />
+
+                {/* Cross Hallway (X-Axis) connecting BreakRoom and Conference */}
+                <HallwaySegment position={[5, 0, 0]} length={10} width={4} rotation={[0, Math.PI / 2, 0]} />
+                <HallwaySegment position={[-5, 0, 0]} length={10} width={4} rotation={[0, Math.PI / 2, 0]} />
+
+
+                {/* ENV-050, ENV-028: Utility Area */}
+                <VisibilityZone position={[5, 0, 10]} range={15}>
+                    <UtilityArea position={[5, 0, 10]} />
+                </VisibilityZone>
+
+                {/* ENV-Bathroom */}
+                <VisibilityZone position={[-5, 0, 10]} range={15}>
+                    <Bathroom position={[-5, 0, 10]} />
+                </VisibilityZone>
+
+
+
+
+
+
             </Physics>
+
+            {/* AUD-002: Ambient Audio Zones */}
+            <AmbientZone position={[5, 4, 10]} type="ambient_hvac" volume={0.4} distance={20} />
+            <AmbientZone position={[0, 1, -10]} type="ambient_computer" volume={0.2} distance={10} />
+            <AmbientZone position={[8, 1, -10]} type="ambient_computer" volume={0.2} distance={10} />
+            <AmbientZone position={[-8, 1, -10]} type="ambient_computer" volume={0.2} distance={10} />
+            <AmbientZone position={[0, 5, 0]} type="ambient_office" volume={0.3} distance={50} />
+
+            {/* AUD-004: Hallway Reverb Zones */}
+            <ReverbZone position={[0, 2, 5]} size={[4, 5, 10]} />
+            <ReverbZone position={[0, 2, 0]} size={[20, 5, 4]} />
+
+            {/* AUD-007: Wind System */}
+            <WindSystem />
+
+            {/* AUD-009: Dynamic Music */}
+            <MusicSystem />
+
+            {/* UX-019: Compass Updater */}
+            <CompassUpdater />
 
             <PostProcessingEffects />
         </>

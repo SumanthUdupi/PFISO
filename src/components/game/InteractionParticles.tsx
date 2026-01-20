@@ -8,7 +8,7 @@ interface InteractionParticlesProps {
   color?: string;
 }
 
-const InteractionParticles: React.FC<InteractionParticlesProps> = ({ active, count = 20, color = '#ffa726' }) => {
+const InteractionParticles: React.FC<InteractionParticlesProps> = ({ active, count = 8, color = '#ffa726' }) => { // PERF-025: Reduced count (20 -> 8)
   const mesh = useRef<THREE.InstancedMesh>(null);
   const particles = useMemo(() => {
     const temp = [];
@@ -28,8 +28,8 @@ const InteractionParticles: React.FC<InteractionParticlesProps> = ({ active, cou
 
   useFrame((state, delta) => {
     if (!active) {
-        if (mesh.current) mesh.current.visible = false;
-        return;
+      if (mesh.current) mesh.current.visible = false;
+      return;
     }
 
     if (mesh.current) mesh.current.visible = true;

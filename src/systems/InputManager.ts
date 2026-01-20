@@ -100,6 +100,35 @@ class InputManager {
 
         // Disable context menu for right click gameplay
         window.addEventListener('contextmenu', (e) => e.preventDefault())
+
+        // UX-016: Pointer Lock
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement) {
+                // Locked
+            } else {
+                // Unlocked - perhaps pause if in game?
+                // dispatch event or use store? 
+                // InputManager is a class, hard to access store directly without circular deps sometimes.
+                // We'll expose a property.
+            }
+        })
+    }
+
+    public requestPointerLock() {
+        if (typeof document !== 'undefined') {
+            document.body.requestPointerLock()
+        }
+    }
+
+    public exitPointerLock() {
+        if (typeof document !== 'undefined') {
+            document.exitPointerLock()
+        }
+    }
+
+    public isPointerLocked(): boolean {
+        if (typeof document === 'undefined') return false
+        return !!document.pointerLockElement
     }
 
     // Call this ONCE per frame

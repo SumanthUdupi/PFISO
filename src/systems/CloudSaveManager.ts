@@ -12,8 +12,13 @@ export class CloudSaveManager {
             // "Upload": Get local save and put in "cloud" storage
             const localData = await saveManager.load('gameState'); // Assuming we sync 'gameState'
             if (localData) {
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(localData));
-                console.log('Cloud sync complete: Uploaded local save.');
+                // PERF-027: Save File Size (Simple Compression: Remove nulls/undefined)
+                const compressed = JSON.stringify(localData, (key, value) => {
+                    if (value === null || value === undefined) return undefined;
+                    return value;
+                });
+                localStorage.setItem(this.STORAGE_KEY, compressed);
+                // console.log('Cloud sync complete: Uploaded local save.'); // PERF-019
                 return true;
             }
             return false;

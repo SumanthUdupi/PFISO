@@ -48,7 +48,7 @@ export const CozyEnvironment: React.FC = () => {
     return (
         <>
             {/* Soft Shadows - REQ-VIS-010 */}
-            <SoftShadows size={10} samples={10} focus={0.5} />
+            <SoftShadows size={10} samples={6} focus={0.5} />
 
             {/* Contact Shadows - REQ-VIS-021 */}
             <ContactShadows
@@ -56,7 +56,7 @@ export const CozyEnvironment: React.FC = () => {
                 scale={50}
                 blur={2}
                 far={10}
-                resolution={256}
+                resolution={128}
                 color="#000000"
             />
 
@@ -92,7 +92,7 @@ export const CozyEnvironment: React.FC = () => {
             </directionalLight>
 
             {/* HDRI Environment for Reflections & GI */}
-            <Environment preset="apartment" background={false} blur={0.8} />
+            <Environment preset="apartment" background={false} blur={0.8} frames={1} />
 
             {/* Nice Office Floor - Warm Wood with Reflection - REQ-VIS-004 & REQ-VIS-014 */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>

@@ -14,6 +14,11 @@ class NavigationSystem {
      * Initializes the navigation mesh from a Three.js Mesh
      */
     init(mesh: THREE.Mesh) {
+        if (this.isReady) {
+            console.warn("NavigationSystem already initialized. Skipping runtime rebake."); // PERF-024
+            return;
+        }
+
         console.log("Adding navigation mesh...");
         if (!mesh.geometry) {
             console.warn("NavMesh initialization failed: Mesh has no geometry.");
@@ -25,7 +30,16 @@ class NavigationSystem {
         const zone = Pathfinding.createZone(mesh.geometry);
         this.pathfinding.setZoneData(this.ZONE, zone);
         this.isReady = true;
-        console.log("Navigation mesh initialized.");
+        console.log("Navigation mesh initialized (Runtime Baked).");
+    }
+
+    // PERF-024: Support for pre-baked NavMesh
+    // Call this with JSON data from offline baking
+    loadBakedZone(zoneData: any) {
+        if (this.isReady) return;
+        this.pathfinding.setZoneData(this.ZONE, zoneData);
+        this.isReady = true;
+        console.log("Navigation mesh initialized (Pre-baked).");
     }
 
     /**

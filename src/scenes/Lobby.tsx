@@ -37,6 +37,7 @@ import InspirationMote from '../components/game/Environment/InspirationMote'
 import FlashOverlay from '../components/ui/FlashOverlay'
 import UnlockEffect from '../components/ui/UnlockEffect'
 import useAudioStore from '../audioStore'
+import MusicSystem from '../components/audio/MusicSystem'
 import useCursorStore from '../stores/CursorStore'
 import useGameStore from '../store' // SYS-040
 
@@ -414,6 +415,15 @@ return (
 }
 
 const Lobby = () => {
+    const { device } = useDeviceDetect()
+    const { setCurProject, activeModal, setActiveModal } = useGameStore()
+    const playSound = useAudioStore(state => state.playSound)
+
+    // Refs
+    const playerRef = useRef<PlayerHandle>(null)
+    const [targetPos, setTargetPos] = useState<THREE.Vector3 | null>(null)
+    const [closestObject, setClosestObject] = useState<string | null>(null)
+    const [flashTrigger, setFlashTrigger] = useState(false) // Trigger for FlashOverlay
     // ASSET GALLERY DEBUG
     const [showAssetGallery, setShowAssetGallery] = useState(false)
 
@@ -430,7 +440,10 @@ const Lobby = () => {
     return (
         <Physics gravity={[0, -9.81, 0]} timeStep={1 / 50}>
             {!showAssetGallery ? (
-                <LobbyContent />
+                <group>
+                    <MusicSystem />
+                    <LobbyContent />
+                </group>
             ) : (
                 <group>
                     <ambientLight intensity={0.5} />

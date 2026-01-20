@@ -23,6 +23,33 @@ const PerformanceMonitor = () => {
         if (time.current >= 1.0) {
             const fps = frames.current / time.current
 
+            // PERF-023: Profiler (Simple Graphy)
+            const canvas = document.getElementById('perf-graph') as HTMLCanvasElement;
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, 60, 30);
+                    ctx.fillStyle = fps < 30 ? 'red' : 'green';
+                    const height = Math.min(30, (fps / 60) * 30);
+                    ctx.fillRect(0, 30 - height, 60, height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(Math.round(fps) + ' FPS', 2, 10);
+                }
+            } else {
+                const c = document.createElement('canvas');
+                c.id = 'perf-graph';
+                c.width = 60;
+                c.height = 30;
+                c.style.position = 'fixed';
+                c.style.top = '5px';
+                c.style.left = '5px';
+                c.style.zIndex = '9999';
+                c.style.opacity = '0.7';
+                document.body.appendChild(c);
+            }
+
             // Logic: Drop DPR if FPS < 30. Raise if FPS > 55 stable.
             // Hysteresis needed to avoid flickering resolution.
 
@@ -35,7 +62,6 @@ const PerformanceMonitor = () => {
                 // Upgrade
                 // currentDpr.current = Math.min(isMobile ? 2 : 3, currentDpr.current + 0.1)
                 // setDpr(currentDpr.current)
-                // Upgrading is risky during gameplay, maybe only downgrade?
             }
 
             // Reset

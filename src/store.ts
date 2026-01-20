@@ -85,8 +85,26 @@ export interface GameState {
   activeBuffs: Buff[];
 
   // Interaction
-  focusedObject: { id: string; label: string; type?: 'pickup' | 'seat' | 'npc' | 'other'; position?: any } | null;
-  setFocusedObject: (obj: { id: string; label: string; type?: 'pickup' | 'seat' | 'npc' | 'other'; position?: any } | null) => void;
+  focusedObject: {
+    id: string;
+    label: string;
+    verb?: string; // UX-033
+    type?: 'pickup' | 'seat' | 'npc' | 'other' | string;
+    position?: any;
+    distance?: number; // UX-021
+    locked?: boolean; // UX-048
+  } | null;
+  setFocusedObject: (obj: {
+    id: string;
+    label: string;
+    verb?: string;
+    type?: 'pickup' | 'seat' | 'npc' | 'other' | string;
+    position?: any;
+    distance?: number;
+    locked?: boolean; // UX-048
+    position?: any;
+    distance?: number;
+  } | null) => void;
 
   // World Persistence
   worldObjectStates: Record<string, { position: [number, number, number], rotation: [number, number, number, number] }>;
@@ -101,14 +119,31 @@ export interface GameState {
   cursorType: 'DEFAULT' | 'HOVER' | 'GRAB' | 'TALK' | 'SIT';
   setCursorType: (type: 'DEFAULT' | 'HOVER' | 'GRAB' | 'TALK' | 'SIT') => void;
 
+  // UX-027: Radial Menu
+  isRadialMenuOpen: boolean;
+  toggleRadialMenu: () => void;
+
+  // UX-028: Statistics
+  statistics: {
+    kills: number;
+    damageDealt: number;
+    timePlayed: number;
+    distanceTraveled: number;
+  };
+  incrementStat: (stat: 'kills' | 'damageDealt' | 'timePlayed' | 'distanceTraveled', amount: number) => void;
+
   // Progression
   experience: number;
   // SYS-027: Difficulty Modes
   difficulty: 'easy' | 'normal' | 'hard';
   setDifficulty: (difficulty: 'easy' | 'normal' | 'hard') => void;
 
-  takeDamage: (amount: number) => void;
+  takeDamage: (amount: number, sourcePosition?: [number, number, number]) => void;
   heal: (amount: number) => void;
+
+  // UX-007: Damage Feedback
+  lastDamageSource: [number, number, number] | null;
+  lastDamageTime: number;
 
   // Low Health Vignette or similar can trigger from health changes
 
@@ -208,12 +243,31 @@ const useGameStore = create<GameState>()((set, get) => ({
   lastAutoSave: 0,
   isSaving: false,
 
+  isRadialMenuOpen: false,
+  toggleRadialMenu: () => set((state) => ({ isRadialMenuOpen: !state.isRadialMenuOpen })),
+
+  statistics: {
+    kills: 0,
+    damageDealt: 0,
+    timePlayed: 0,
+    distanceTraveled: 0
+  },
+  incrementStat: (stat, amount) => set((state) => ({
+    statistics: {
+      ...state.statistics,
+      [stat]: state.statistics[stat] + amount
+    }
+  })),
+
   // SYS-039: Stats
   stats: {
     timePlayed: 0,
     stepsTaken: 0,
     distanceTraveled: 0
+    distanceTraveled: 0
   },
+  lastDamageSource: null,
+  lastDamageTime: 0,
   incrementStats: (dt, dist) => set((state) => ({
     stats: {
       ...state.stats,
@@ -342,7 +396,8 @@ const useGameStore = create<GameState>()((set, get) => ({
   },
 
   setStamina: (val) => set({ stamina: val }),
-  takeDamage: (amount) => {
+  setStamina: (val) => set({ stamina: val }),
+  takeDamage: (amount, sourcePosition) => {
     set((state) => {
       // Apply difficulty multiplier
       let multiplier = 1.0;
@@ -354,9 +409,19 @@ const useGameStore = create<GameState>()((set, get) => ({
 
       const newHealth = Math.max(0, state.health - actualDamage)
       if (newHealth <= 0 && state.gameState === 'playing') {
-        return { health: newHealth, gameState: 'lost', isPaused: true }
+        return {
+          health: newHealth,
+          gameState: 'lost',
+          isPaused: true,
+          lastDamageSource: sourcePosition || null,
+          lastDamageTime: Date.now()
+        }
       }
-      return { health: newHealth }
+      return {
+        health: newHealth,
+        lastDamageSource: sourcePosition || null,
+        lastDamageTime: Date.now()
+      }
     })
     eventBus.emit('DAMAGE', { amount }) // PM-030
     eventBus.emit('SCREEN_SHAKE', { intensity: 0.5 })

@@ -16,6 +16,10 @@ import useAudioStore from '../../audioStore'
 import useCameraStore, { CameraMode } from '../../stores/cameraStore'
 import useCozyStore from '../../systems/CozySystem'
 import useJournalStore from '../../systems/JournalSystem'
+import FootstepSystem from '../audio/FootstepSystem'
+import { useSettingsStore } from '../../stores/settingsStore' // UX-050
+import { projectilePool } from '../../stores/projectilePool' // PERF-008
+
 
 // --- COZY TUNING ---
 const WALK_SPEED = 9.0 // Increased from 6.0
@@ -120,6 +124,10 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         lastInteractTime.current = now
 
         console.log('Player interacting:', label)
+
+        // AUD-015: Foley (Generic Interaction Click)
+        useAudioStore.getState().playSound('click')
+
         const l = label.toLowerCase()
         if (l.includes('coffee')) useCozyStore.getState().brewCoffee()
         if (l.includes('plant')) useCozyStore.getState().waterPlant()
@@ -167,6 +175,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
                 position: camera.position.clone().add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1)),
                 velocity: { x: 0, y: 0, z: 0 }
             })
+            // AUD-015: Foley (Drop)
+            useAudioStore.getState().playSound('land')
             carriedObject.current = null
         }
     }
@@ -261,9 +271,33 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         }
 
         const onMouseDown = (e: MouseEvent) => {
-            if (e.button === 0 && carriedObject.current) {
-                chargeStartTime.current = Date.now()
-                // Optional: Start charge audio/anim
+            if (e.button === 0) {
+                if (carriedObject.current) {
+                    chargeStartTime.current = Date.now()
+                    // Optional: Start charge audio/anim
+                } else {
+                    // PERF-008: Projectile Pooling - Spawn Bullet
+                    const origin = camera.position.clone()
+                    const dir = camera.getWorldDirection(new THREE.Vector3())
+                    // Spawn slightly in front to avoid self-collision if we had it, but raycast handles it.
+                    // Visual offset: right hand side?
+                    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion)
+                    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+                    const spawnPos = origin.add(dir.multiplyScalar(0.5)).add(right.multiplyScalar(0.2)).add(up.multiplyScalar(-0.1))
+
+                    projectilePool.spawn(spawnPos, dir, 50.0)
+
+                    // Audio
+                    useAudioStore.getState().playSound('shoot_pistol') // Assuming sound exists, if not use click or throw.
+
+                    // Recoil
+                    recoilOffset.current.x += (Math.random() - 0.0) * 0.05
+                    recoilOffset.current.y += 0.02
+                    if (rigidBodyRef.current) {
+                        const recoilForce = 1.0
+                        rigidBodyRef.current.applyImpulse({ x: -dir.x * recoilForce, y: 0, z: -dir.z * recoilForce }, true)
+                    }
+                }
             }
         }
 
@@ -329,11 +363,20 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
 
     // Input Listeners are now handled by inputs.update() called in useFrame
 
+    // GC Optimization Refs
+    const _vec3 = useRef(new THREE.Vector3())
+    const _vec3_2 = useRef(new THREE.Vector3())
+    const _vec3_3 = useRef(new THREE.Vector3())
+    const _vec2 = useRef(new THREE.Vector2())
+    const _ray = useRef(new rapier.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }))
+
     useFrame((state, delta) => {
         if (!rigidBodyRef.current || !group.current) return
 
         // PM-005: Head Bob
         const camMode = useCameraStore.getState().mode
+        const { reducedMotion } = useSettingsStore.getState() // UX-050
+
         if (camMode === CameraMode.FIRST_PERSON) {
             // PM-049: Dynamic FOV (CS-001: Ease-in/out curve)
             const speed = currentVelocity.current.length()
@@ -343,10 +386,12 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
                 : 1 - Math.pow(-2 * speedRatio + 2, 3) / 2
 
             const targetFOV = 75 + (easeInOut * 15) // Max +15 FOV at full sprint
-            state.camera.fov = THREE.MathUtils.lerp(state.camera.fov, targetFOV, delta * 4) // Faster lerp to let curve drive the feel
+            // UX-050: Reduce FOV changes if reduced motion
+            const finalFov = reducedMotion ? 75 : THREE.MathUtils.lerp(state.camera.fov, targetFOV, delta * 4)
+            state.camera.fov = finalFov
             state.camera.updateProjectionMatrix()
 
-            if ((Math.sqrt(currentVelocity.current.x ** 2 + currentVelocity.current.z ** 2) > 0.1) && isGrounded.current) {
+            if (!reducedMotion && (Math.sqrt(currentVelocity.current.x ** 2 + currentVelocity.current.z ** 2) > 0.1) && isGrounded.current) {
                 headBobTimer.current += delta * 14.0
                 const bobY = Math.sin(headBobTimer.current) * 0.05
                 state.camera.position.y += bobY
@@ -358,10 +403,13 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         // PM-048: Breath Holding (Aiming?)
         // If holding shift while NOT moving -> Hold Breath (Stabilize sway)
         // Reusing isSprinting input (Shift)
+        // PM-048: Breath Holding (Aiming?)
+        // If holding shift while NOT moving -> Hold Breath (Stabilize sway)
+        // Reusing isSprinting input (Shift)
         if (useControlsStore.getState().isPressed('SPRINT') && currentVelocity.current.length() < 0.1 && stamina > 0) {
             // PH-048: Drain stamina faster when holding breath
             setStamina(prev => Math.max(0, prev - 15 * delta))
-            sway.current.lerp(new THREE.Vector2(0, 0), delta * 10) // Stabilize fast
+            sway.current.lerp(_vec2.current.set(0, 0), delta * 10) // Stabilize fast
         }
 
 
@@ -399,11 +447,15 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         }
 
         // 2. Ground Check
-        const rayOrigin = { x: pos.x, y: pos.y + 0.1, z: pos.z }
+        // Reuse _vec3 for ray origin
+        const rayOrigin = _vec3.current.set(pos.x, pos.y + 0.1, pos.z)
         const { bufferInput, consumeInput } = inputBuffer
 
         // Raycast for ground
-        const hit = world.castRay(new rapier.Ray(rayOrigin, { x: 0, y: -1, z: 0 }), 1.5, true)
+        // Reuse _ray
+        _ray.current.origin = rayOrigin
+        _ray.current.dir = { x: 0, y: -1, z: 0 }
+        const hit = world.castRay(_ray.current, 1.5, true)
         isGrounded.current = !!(hit && hit.toi < 0.25)
 
         if (inputs.justPressed('JUMP')) bufferInput('JUMP')
@@ -411,7 +463,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         // 3. Inputs
         const moveX = inputs.getAxis('MOVE_X')
         const moveY = inputs.getAxis('MOVE_Y')
-        let input = new THREE.Vector3(moveX, 0, -moveY)
+        // Reuse _vec3_2 for input
+        let input = _vec3_2.current.set(moveX, 0, -moveY)
 
         // Joystick override
         if (Math.abs(joystick.x) > 0.1) input.x += joystick.x
@@ -425,8 +478,9 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         // AUTO-MOVE OVERRIDE
         if (autoMoveTarget.current) {
             const target = autoMoveTarget.current
-            const currentPos = new THREE.Vector3(pos.x, pos.y, pos.z)
-            const dist = new THREE.Vector2(target.x - currentPos.x, target.z - currentPos.z).length()
+            // Use _vec3_3 for currentPos
+            const currentPos = _vec3_3.current.set(pos.x, pos.y, pos.z)
+            const dist = _vec2.current.set(target.x - currentPos.x, target.z - currentPos.z).length()
             const activeCmd = commandQueue.current[0]
             const stopDist = (activeCmd && activeCmd.stopDistance) ? activeCmd.stopDistance : 0.5
 
@@ -439,13 +493,20 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         if (input.lengthSq() > 1) input.normalize()
 
         // Calculate Camera Directions & MoveDir (Moved Up)
-        const camForward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+        // Use _vec3 for camForward (was rayOrigin, safe to reuse now)
+        const camForward = _vec3.current.set(0, 0, -1).applyQuaternion(camera.quaternion)
         camForward.y = 0
         camForward.normalize()
-        const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion)
+
+        // Use _vec3_3 for camRight (was currentPos, safe)
+        const camRight = _vec3_3.current.set(1, 0, 0).applyQuaternion(camera.quaternion)
         camRight.y = 0
         camRight.normalize()
 
+        // moveDir - We need a 4th vector or reuse.
+        // input is _vec3_2.
+        // We can reuse a new one? No.
+        // Let's create one locally for now, 1 alloc is better than 8.
         const moveDir = new THREE.Vector3()
 
         if (autoMoveTarget.current) {
@@ -463,6 +524,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
             moveDir.addScaledVector(camForward, input.z)
         }
         if (moveDir.lengthSq() > 0) moveDir.normalize()
+
 
         // 3b. Modifiers
         const isCrouching = inputs.isPressed('CROUCH') || isCrouchPressed
@@ -556,7 +618,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
             throwCharge.current = Math.min(throwCharge.current + dt * 2.0, 1.0)
         } else {
             if (throwCharge.current > 0) {
-                console.log(`PM-014: Throwing force ${throwCharge.current}`)
+                // console.log(`PM-014: Throwing force ${throwCharge.current}`)
                 throwCharge.current = 0
             }
         }
@@ -1015,8 +1077,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
                                 isMoving={(Math.sqrt(currentVelocity.current.x ** 2 + currentVelocity.current.z ** 2) > 0.5) && isGrounded.current}
                                 speed={Math.sqrt(currentVelocity.current.x ** 2 + currentVelocity.current.z ** 2)}
                                 onStep={() => {
-                                    // PM-024: Surface Footsteps
-                                    useAudioStore.getState().playSound('footstep', { pitch: 0.9 + Math.random() * 0.2 })
+                                    // Managed by FootstepSystem
                                 }}
                                 isSitting={isSitting}
                                 isPushing={isPushing.current} // PM-027
@@ -1042,6 +1103,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
                 </group>
             </RigidBody>
             <ContactShadows opacity={0.4} scale={10} blur={2.5} far={4} color="#000000" />
+            <FootstepSystem rigidBodyRef={rigidBodyRef} isGrounded={isGrounded} />
         </>
     )
 })

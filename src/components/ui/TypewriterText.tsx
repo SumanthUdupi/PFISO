@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useAudioStore from '../../audioStore';
 
 interface TypewriterTextProps {
     text: string;
@@ -37,6 +38,14 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 30, delay
                 return;
             }
             setDisplayedText(text.substring(0, i + 1));
+
+            // AUD-013: Typewriter Sound
+            // Play a soft click on every character
+            // We use 'hover' type as it is short and soft, or 'click'
+            // Using direct store access to avoid re-renders of valid hook usage inside interval
+            // unless we ref it.
+            useAudioStore.getState().playSound('click');
+
             i++;
         }, speed);
 

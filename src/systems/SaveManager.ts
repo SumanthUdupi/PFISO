@@ -35,6 +35,7 @@ class SaveManager {
     const CURRENT_SAVE_VERSION = 2; // SYS-036: Versioning
 
     public async save(key: string, data: any): Promise<void> {
+        window.dispatchEvent(new Event('SAVE_START')); // UX-040
         try {
             const db = await this.dbPromise;
             return new Promise((resolve, reject) => {
@@ -50,10 +51,19 @@ class SaveManager {
 
                 const request = store.put(versionedData, key);
 
-                request.onsuccess = () => resolve();
-                request.onerror = (e) => reject((e.target as IDBRequest).error);
+                const request = store.put(versionedData, key);
+
+                request.onsuccess = () => {
+                    window.dispatchEvent(new Event('SAVE_END')); // UX-040
+                    resolve();
+                };
+                request.onerror = (e) => {
+                    window.dispatchEvent(new Event('SAVE_END')); // UX-040
+                    reject((e.target as IDBRequest).error);
+                };
             });
         } catch (error) {
+            window.dispatchEvent(new Event('SAVE_END')); // UX-040
             console.error('SaveManager: Save failed', error);
             throw error;
         }

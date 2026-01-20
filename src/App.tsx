@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect, lazy } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { Preload, BakeShadows, AdaptiveDpr, AdaptiveEvents } from '@react-three/drei'
 const Level_01 = lazy(() => import('./scenes/Level_01'))
 // import HUD from './components/ui/HUD' // Removed default import to fix conflict
 const InventoryUI = lazy(() => import('./components/ui/InventoryUI'))
@@ -46,10 +46,14 @@ import ErrorBoundary from './components/ui/ErrorBoundary'
 // ...
 
 // Helper for Debug Mode (could be state or env)
+import { useSettingsStore } from './stores/settingsStore' // UX-029
+
+// Helper for Debug Mode (could be state or env)
 const DEBUG_MODE = false;
 
 function App() {
     const { isMobile, isLandscape } = useDeviceDetect()
+    const settings = useSettingsStore() // UX-029
     // Determine if we are in portrait mobile mode
     const isPortraitMobile = isMobile && !isLandscape
 
@@ -127,6 +131,17 @@ function App() {
         useGameStore.getState().loadGame();
     }, []);
 
+    // PERF-033: Quality Settings Sync
+    useEffect(() => {
+        const quality = settings.qualityPreset
+        let scale = 1.0
+        if (quality === 'LOW') scale = 0.5 // Scale down for perf
+        if (quality === 'MEDIUM') scale = 0.8
+        if (quality === 'HIGH') scale = 1.0 // Native
+        // Can go higher if High means supersampling
+        useSettingsStore.getState().setResolutionScale(scale)
+    }, [settings.qualityPreset])
+
     // Flatten skills for mobile display
     const flattenedSkills = bioData.skills.flatMap((cat: any) => cat.items)
 
@@ -139,7 +154,7 @@ function App() {
                 <Canvas
                     shadows={false}
                     gl={{ antialias: true }}
-                    dpr={[1, 2]} // Clamp pixel ratio for consistent performance
+                    dpr={settings.resolutionScale} // UX-029: Dynamic Resolution Scale
                 >
                     <FPSLimiter limit={30} />
 
@@ -165,6 +180,8 @@ function App() {
                             <InteractionManager />
                             <TelemetryManager />
                             <CameraShake />
+                            {/* PERF-048: Pre-warm Shaders */}
+                            <Preload all />
                         </Suspense>
                     </ErrorBoundary>
                 </Canvas >

@@ -1,5 +1,6 @@
 import React from 'react'
-import { useTexture } from '@react-three/drei'
+import { useSmartTexture } from '../../../utils/useSmartTexture'
+
 
 interface ProjectEaselProps {
     position: [number, number, number]
@@ -58,7 +59,7 @@ const ProjectEasel: React.FC<ProjectEaselProps> = ({ position, image }) => {
 
 
 const EaselImage = ({ url }: { url: string }) => {
-    const texture = useTexture(url)
+    const texture = useSmartTexture(url) as THREE.Texture
     return (
         <mesh position={[0, 1.5, 0.1]}>
             <planeGeometry args={[2.6, 1.6]} />

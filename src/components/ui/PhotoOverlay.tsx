@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import useGameStore from '../../store'
+import { useGameStore } from '../../store' // Fix default export if needed, or named
 import inputs from '../../systems/InputManager'
+import { usePhotoStore } from '../../stores/photoStore'
 
 const PHOTO_FILTERS = [
     { name: 'None', filter: 'none' },
@@ -12,6 +13,7 @@ const PHOTO_FILTERS = [
 
 export default function PhotoOverlay() {
     const { togglePhotoMode, isPhotoMode } = useGameStore()
+    const { addPhoto } = usePhotoStore()
     const [currentFilterIndex, setCurrentFilterIndex] = useState(0)
     const [flashOpacity, setFlashOpacity] = useState(0)
 
@@ -19,37 +21,12 @@ export default function PhotoOverlay() {
         if (!isPhotoMode) return
 
         const handleInput = () => {
-            // Exit
-            if (inputs.justPressed('MENU') || inputs.justPressed('TOGGLE_PHOTO_MODE')) {
-                togglePhotoMode()
-                // Reset filter on exit? Maybe keep it.
-            }
-            // Filter Cycle (Tab - mapped to INVENTORY in input manager, but we can check key directly or add dedicated input)
-            // Inputs doesn't have CYCLE_FILTER. Let's use 'Tab' directly via event listener or add to InputManager.
-            // Using logic associated with 'INVENTORY' binding which is Tab.
-            if (inputs.justPressed('INVENTORY')) {
-                setCurrentFilterIndex((prev) => (prev + 1) % PHOTO_FILTERS.length)
-            }
-            // Snap (Enter - mapped to INTERACT. Or Left Click)
-            if (inputs.justPressed('INTERACT') || inputs.justPressed('PRIMARY_ACTION')) {
-                // Flash
-                setFlashOpacity(1)
-                // Sound effect could go here
-
-                // Screenshot logic would go here (requires canvas access usually)
-            }
+            // ... existing inputs ...
         }
-
-        // We need to poll inputs here or listen. 
-        // InputManager updates in Player loop. UI might not loop.
-        // Let's attach a simple interval or useFrame if this was in Canvas. 
-        // Since this is HTML UI, we can use requestAnimationFrame loop or just KeyDown for Tab/P.
-        // InputManager 'justPressed' relies on 'update' being called.
-        // So we might prefer direct listeners for UI specific shortcuts.
 
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'p' || e.key === 'Escape') {
-                // handled by Store toggle
+                togglePhotoMode()
             }
             if (e.key === 'Tab') {
                 e.preventDefault()
@@ -57,17 +34,23 @@ export default function PhotoOverlay() {
             }
             if (e.key === 'Enter') {
                 setFlashOpacity(1)
+
+                // Screenshot Capture
+                // Wait for flash frame? Or instant.
+                // We need access to the canvas. 
+                const canvas = document.querySelector('canvas')
+                if (canvas) {
+                    // Warning: toDataURL is sync and slow for large canvas
+                    const data = canvas.toDataURL('image/jpeg', 0.8)
+                    addPhoto(data, PHOTO_FILTERS[currentFilterIndex].name)
+                }
             }
         }
-
-        // Actually, InputManager is updated by the Game Loop (Player/App). 
-        // So we CAN read from it in a loop, but React UI doesn't loop by default.
-        // Let's use direct listeners for UI responsiveness.
 
         window.addEventListener('keydown', onKeyDown)
         return () => window.removeEventListener('keydown', onKeyDown)
 
-    }, [isPhotoMode, togglePhotoMode])
+    }, [isPhotoMode, togglePhotoMode, currentFilterIndex, addPhoto])
 
     // Flash Fade
     useEffect(() => {

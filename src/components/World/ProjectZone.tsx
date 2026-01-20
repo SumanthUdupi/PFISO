@@ -2,10 +2,10 @@ import React, { Suspense } from 'react'
 import { Text } from '@react-three/drei'
 import { InteractableItem } from '../game/InteractableItem'
 import ProjectEasel from '../game/Environment/ProjectEasel'
-import { useTexture } from '@react-three/drei'
 import projectsData from '../../assets/data/projects.json'
 import { useUIStore } from '../../stores/uiStore'
 import { resolveAssetPath } from '../../utils/assetUtils'
+import { useSmartTexture } from '../../utils/useSmartTexture'
 
 interface ProjectData {
     id: string
@@ -23,7 +23,7 @@ export const ProjectZone: React.FC<{ position: [number, number, number] }> = ({ 
     // Preload textures to avoid render-phase updates
     React.useEffect(() => {
         projects.forEach(project => {
-            if (project.heroImage) useTexture.preload(resolveAssetPath(project.heroImage))
+            if (project.heroImage) useSmartTexture.preload(resolveAssetPath(project.heroImage))
         })
     }, [])
 

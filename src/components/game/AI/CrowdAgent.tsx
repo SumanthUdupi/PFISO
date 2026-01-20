@@ -31,8 +31,11 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
 
     // Movement vars
     const speed = 2.0
-    const currentVelocity = useRef(new THREE.Vector3())
-    const groupRef = useRef<THREE.Group>(null)
+    // PERF-046: Memory Fragmentation - Pre-allocate vectors
+    const currentPos = useRef(new THREE.Vector3())
+    const targetVec = useRef(new THREE.Vector3())
+    const dir = useRef(new THREE.Vector3())
+    const vel = useRef(new THREE.Vector3())
 
     // Keep track of position for death location
     const lastPos = useRef<THREE.Vector3>(new THREE.Vector3(...startPosition))
@@ -43,23 +46,26 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
         if (rigidBodyRef.current && !isDead) {
             const t = rigidBodyRef.current.translation()
             lastPos.current.set(t.x, t.y, t.z)
+            currentPos.current.set(t.x, t.y, t.z)
         }
 
         timer.current -= delta
 
-        const pos = rigidBodyRef.current.translation()
-        const currentPos = new THREE.Vector3(pos.x, pos.y, pos.z)
-
         // HEAD TRACKING logic
         const playerPos = gameSystemInstance.playerPosition
         const distToPlayer = Math.sqrt(
-            Math.pow(pos.x - playerPos.x, 2) +
-            Math.pow(pos.z - playerPos.z, 2)
+            Math.pow(currentPos.current.x - playerPos.x, 2) +
+            Math.pow(currentPos.current.z - playerPos.z, 2)
         )
         if (distToPlayer < 8.0) {
+            // New Vector3 here is okay as it's passed to prop? Ideally prop handles it or we pass x,y,z
+            // But look at logic: setLookTarget state update. State updates trigger re-render anyway.
+            // We can compare before setting to avoid unnecessary state updates if strictly equal?
+            // Vector3 equality check?
+            // For now, let's just leave state update as is, but optimize the calculation vectors above.
             setLookTarget(new THREE.Vector3(playerPos.x, playerPos.y + 1.5, playerPos.z))
         } else {
-            setLookTarget(undefined)
+            if (lookTarget !== undefined) setLookTarget(undefined)
         }
 
         if (state === 'IDLE') {
@@ -75,18 +81,19 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
                     if (patrolPath && patrolPath.points.length > 0) {
                         // Get next point
                         const p = patrolPath.points[patrolPointIndex.current % patrolPath.points.length]
-                        target = new THREE.Vector3(p[0], p[1], p[2])
+                        target = targetVec.current.set(p[0], p[1], p[2])
                         patrolPointIndex.current++
                     }
                 }
 
                 if (!target) {
                     // Fallback to random wander
-                    target = navigationSystem.getRandomPoint()
+                    const rnd = navigationSystem.getRandomPoint()
+                    if (rnd) target = targetVec.current.copy(rnd)
                 }
 
                 if (target) {
-                    const newPath = navigationSystem.findPath(currentPos, target)
+                    const newPath = navigationSystem.findPath(currentPos.current, target)
                     if (newPath && newPath.length > 0) {
                         setPath(newPath)
                         targetNodeIndex.current = 0
@@ -108,9 +115,9 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
             }
 
             const targetParams = path[targetNodeIndex.current]
-            const target = new THREE.Vector3(targetParams.x, targetParams.y, targetParams.z)
+            targetVec.current.set(targetParams.x, targetParams.y, targetParams.z)
 
-            const dist = new THREE.Vector2(target.x - currentPos.x, target.z - currentPos.z).length()
+            const dist = new THREE.Vector2(targetVec.current.x - currentPos.current.x, targetVec.current.z - currentPos.current.z).length()
 
             if (dist < 0.5) {
                 // Reached node
@@ -118,16 +125,16 @@ export const CrowdAgent: React.FC<CrowdAgentProps> = ({ id, startPosition, color
             }
 
             // Move towards target
-            const dir = target.clone().sub(currentPos).normalize()
-            const vel = dir.multiplyScalar(speed)
+            dir.current.copy(targetVec.current).sub(currentPos.current).normalize()
+            vel.current.copy(dir.current).multiplyScalar(speed)
 
             // Apply velocity
-            rigidBodyRef.current.setLinvel({ x: vel.x, y: -1, z: vel.z }, true) // -1 gravity
-            currentVelocity.current.copy(vel)
+            rigidBodyRef.current.setLinvel({ x: vel.current.x, y: -1, z: vel.current.z }, true) // -1 gravity
+            currentVelocity.current.copy(vel.current)
 
             // Rotate
             if (groupRef.current) {
-                const angle = Math.atan2(dir.x, dir.z)
+                const angle = Math.atan2(dir.current.x, dir.current.z)
                 // Smooth rotation
                 const rot = groupRef.current.rotation.y
                 // Simple lerp angle

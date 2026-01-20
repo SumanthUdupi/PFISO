@@ -1,9 +1,15 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline } from '@react-three/postprocessing'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame, useThree, extend } from '@react-three/fiber'
 import * as THREE from 'three'
+import { ColorBlindnessEffect, BlendFunction } from 'postprocessing'
 import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
+import { useSettingsStore } from '../../stores/settingsStore'
+import useAudioStore from '../../audioStore'
+
+// Register external effects
+extend({ ColorBlindnessEffect })
 
 const HealthVignette = () => {
     const health = useGameStore(state => state.health)
@@ -89,6 +95,54 @@ const FOVDistortionFix = () => {
     return <Vignette eskil={false} offset={0.1} darkness={0.6} />
 }
 
+const GlitchEffect = () => {
+    // AUD-014: High Freq Noise (Glitch)
+    // Listens for GLITCH event to trigger visual and audio glitch
+    const [active, setActive] = useState(false)
+    const timeoutRef = useRef<any>(null)
+
+    useEffect(() => {
+        const onGlitch = (payload: any) => {
+            setActive(true)
+            useAudioStore.getState().playSound('error') // High freq noise/glitch sound
+
+            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+            timeoutRef.current = setTimeout(() => {
+                setActive(false)
+            }, payload.duration || 300)
+        }
+        eventBus.on('GLITCH', onGlitch)
+        return () => {
+            eventBus.off('GLITCH', onGlitch)
+            if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        }
+    }, [])
+
+    return (
+        <ChromaticAberration
+            offset={new THREE.Vector2(0.05, 0.05)} // Strong aberration 
+            radialModulation={false}
+            modulationOffset={0}
+        />
+    )
+}
+
+const ColorBlindModeWrapper = () => {
+    const mode = useSettingsStore(state => state.colorBlindMode)
+    const { ColorBlindnessMode } = require('postprocessing')
+
+    // Map our modes to postprocessing modes safely
+    // 0: Normal, 1: Protanopia, 2: Deuteranopia, 3: Tritanopia, 4: Achromatopsia/Monochromacy
+    let effectMode = 0
+    if (mode === 'PROTANOPIA') effectMode = 1
+    if (mode === 'DEUTERANOPIA') effectMode = 2
+    if (mode === 'TRITANOPIA') effectMode = 3
+
+    if (effectMode === 0) return null
+
+    return <primitive object={new ColorBlindnessEffect({ mode: effectMode, opacity: 1.0 })} />
+}
+
 export const PostProcessingEffects: React.FC = () => {
     const [sunMesh, setSunMesh] = useState<THREE.Mesh | null>(null)
     const dofTarget = useRef(new THREE.Vector3(0, 0, 5))
@@ -97,11 +151,11 @@ export const PostProcessingEffects: React.FC = () => {
     if (qualityMode === 'low') {
         return (
             <>
-                {/* Minimal effects for low quality */}
                 <EffectComposer disableNormalPass>
                     <BrightnessContrast brightness={0.02} contrast={0.1} />
                     {/* Keep Health Vignette for gameplay feedback */}
                     <HealthVignette />
+                    <ColorBlindModeWrapper />
                 </EffectComposer>
             </>
         )
@@ -118,9 +172,9 @@ export const PostProcessingEffects: React.FC = () => {
             </mesh>
 
             <EffectComposer disableNormalPass>
-                <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} />
+                <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} resolutionScale={0.5} />
 
-                <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} />
+                <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} resolutionScale={0.5} />
 
                 {sunMesh && (
                     <GodRays sun={sunMesh} blendFunction={THREE.BlendFunction.SCREEN} samples={30} density={0.95} decay={0.9} weight={0.4} exposure={0.6} clampMax={1} width={THREE.Resizer.AUTO_SIZE} height={THREE.Resizer.AUTO_SIZE} kernelSize={THREE.KernelSize.SMALL} blur={true} />
@@ -128,6 +182,8 @@ export const PostProcessingEffects: React.FC = () => {
 
                 <HealthVignette />
                 <ImpactAberration />
+                <GlitchEffect />
+                <ColorBlindModeWrapper />
 
                 {/* CS-039: Water Droplets */}
                 <WaterDroplets />

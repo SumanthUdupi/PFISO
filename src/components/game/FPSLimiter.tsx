@@ -13,10 +13,10 @@ export const FPSLimiter = ({ limit = 30 }: { limit?: number }) => {
     const currentDpr = useRef(gl.getPixelRatio())
 
     useEffect(() => {
-        if (!isMobile) {
-            set({ frameloop: 'always' })
-            return
-        }
+        // PERF-009: Enable globally for GPU savings
+        // PERF-009: Enable globally for GPU savings
+        // Check removed to apply to all devices
+
 
         // Add event listeners to detect user interaction
         const handleInput = () => {
@@ -60,8 +60,12 @@ export const FPSLimiter = ({ limit = 30 }: { limit?: number }) => {
 
             // If active input (within 3s), target 60fps
             // If idle, target 30fps
+            // PERF-009: Cap at 60fps to save GPU
+            // If active input (within 3s), target 60fps
+            // If idle, target 30fps
             const isIdle = timeSinceInput > 3000
-            const targetInterval = isIdle ? 1000 / 30 : 0 // 0 means as fast as possible
+            const targetFps = isIdle ? 30 : 60
+            const targetInterval = 1000 / targetFps
 
             if (now - lastRenderTime >= targetInterval) {
                 lastRenderTime = now

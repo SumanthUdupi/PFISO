@@ -2,18 +2,20 @@ import React, { useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore from '../store'
+import { useSettingsStore } from '../stores/settingsStore' // UX-042
 import inputs from './InputManager'
 import eventBus from './EventBus'
 
 const InteractionManager: React.FC = () => {
     const { camera, scene } = useThree()
     const { setFocusedObject, focusedObject } = useGameStore()
+    const lootVisibility = useSettingsStore(state => state.lootVisibility) // UX-042
     const raycaster = useRef(new THREE.Raycaster())
 
     // Throttle interaction checks to avoid performance hit
     const lastCheckTime = useRef(0)
     const lastInteractTime = useRef(0)
-    const CHECK_INTERVAL = 0.0 // PM-030: Instant (No Lag)
+    const CHECK_INTERVAL = 0.1 // PERF-014: Intervals (10Hz) to save CPU
 
     useFrame((state) => {
         const time = state.clock.elapsedTime
@@ -40,11 +42,27 @@ const InteractionManager: React.FC = () => {
 
                 while (obj) {
                     if (obj.userData && obj.userData.interactable) {
+                        // UX-033: Contextual Interaction Verbs
+                        let verb = "Interact"
+                        const type = obj.userData.type?.toLowerCase() || ''
+
+                        if (type.includes('seat') || type.includes('chair')) verb = "Sit"
+                        else if (type.includes('npc')) verb = "Talk"
+                        else if (type.includes('door')) verb = "Open"
+                        else if (type.includes('item') || type.includes('pickup')) verb = "Pick Up"
+                        else if (type.includes('monitor') || type.includes('computer')) verb = "Use"
+
+                        // Retrieve Bound Key for HUD
+                        // We can't easily get it async here without lag, so we pass the verb
+                        // and let HUD handle the key display from InputManager
+
                         foundInteractable = {
                             id: obj.uuid,
-                            label: obj.userData.label || "Interact",
+                            label: obj.userData.label || verb, // Use custom label if present, else verb
+                            verb: verb, // Explicit verb for HUD to use: "[E] Verb"
                             position: obj.getWorldPosition(new THREE.Vector3()), // Store position
-                            type: obj.userData.type // Store type if needed (e.g., SIT)
+                            type: obj.userData.type, // Store type if needed (e.g., SIT)
+                            distance: hit.distance // UX-021: Prompt Clarity (Fade)
                         }
                         break
                     }
@@ -70,41 +88,61 @@ const InteractionManager: React.FC = () => {
             }
         }
 
-        // 2. Handle Input
-        if (inputs.justPressed('INTERACT') && focusedObject) {
+        // 2. Handle Input (UX-013: Hold to Interact)
+        const isInteracting = inputs.isPressed('INTERACT')
+        const { setInteractionProgress } = useUIStore.getState()
+
+        if (isInteracting && focusedObject) {
+            // Increment timer
             const now = performance.now()
-            // SYS-006: Debounce interaction (500ms) to prevent double-trigger/duplication
-            if (now - lastInteractTime.current < 500) return
-            lastInteractTime.current = now
+            if (lastInteractTime.current === 0) {
+                lastInteractTime.current = now // Start holding
+            }
 
-            // We have a target.
+            const holdDuration = now - lastInteractTime.current
+            const REQUIRED_HOLD_MS = 100 // Short hold for responsiveness, or 500 for "heavy" interaction?
+            // Let's stick to a very short hold or instant for now, OR make it true "hold"
+            // Requirement says "Hold to Interact" to avoid accidental.
+            // Let's make it 300ms.
+            const TARGET_MS = 300
 
-            // Access Player Controller via GameSystem (We need to ensure Player registers itself!)
-            // Assuming GameSystem has a 'playerRef' or similar. 
-            const data = focusedObject as any
-            if (data.position && data.type) {
-                if (data.type === 'pickup') {
-                    // direct pickup command? or move then pickup?
-                    // Let's do move then pickup to be consistent
-                    eventBus.emit('PLAYER_COMMAND', {
-                        type: 'MOVE_AND_INTERACT',
-                        target: data.position,
-                        label: focusedObject.label,
-                        stopDistance: 1.5, // Get closer for pickup
-                        interactionType: 'pickup',
-                        interactionData: { ...data, id: focusedObject.id } // Pass ID to know what to pickup
-                    })
-                } else {
-                    // Generic
+            // Update UI
+            setInteractionProgress(Math.min(1, holdDuration / TARGET_MS))
+
+            if (holdDuration >= TARGET_MS) {
+                // Trigger!
+                // SYS-006: Debounce handled by state check usually, but here we reset
+                const data = focusedObject as any
+                if (data.position && data.type) {
                     eventBus.emit('PLAYER_COMMAND', {
                         type: 'MOVE_AND_INTERACT',
                         target: data.position,
                         label: focusedObject.label,
                         stopDistance: data.type === 'seat' ? 1.0 : 1.5,
-                        interactionType: data.type,
-                        interactionData: data
+                        interactionType: data.type === 'pickup' ? 'pickup' : data.type,
+                        interactionData: data.type === 'pickup' ? { ...data, id: focusedObject.id } : data
                     })
                 }
+
+                // Reset to avoid looping (user must release key)
+                // We need a flag to say "actions dispatched, wait for release"?
+                // For now, let's just reset timer and rely on the fact that action changes state
+                // Actually, if we don't block, it will spam. 
+                // Simple hack: set timer to future? Or ignore until release.
+                lastInteractTime.current = now + 999999 // Lock it
+                setInteractionProgress(0)
+            }
+
+        } else {
+            // Reset
+            if (lastInteractTime.current < 999999) { // Only reset if not locked
+                lastInteractTime.current = 0
+                setInteractionProgress(0)
+            }
+            if (!isInteracting) {
+                // Released
+                lastInteractTime.current = 0
+                setInteractionProgress(0)
             }
         }
     })
