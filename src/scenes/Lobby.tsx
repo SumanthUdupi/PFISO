@@ -42,7 +42,26 @@ import useCursorStore from '../stores/CursorStore'
 import useGameStore from '../store' // SYS-040
 
 import { useDeviceDetect } from '../hooks/useDeviceDetect'
+import { ASSET_LIST } from '../components/game/AssetPlaceholder'
+import AssetPlaceholder from '../components/game/AssetPlaceholder'
+import { Text } from '@react-three/drei'
+import CameraController from '../components/game/CameraController' // Camera Logic
 // ...
+
+const LobbyContent = () => {
+    const { isMobile } = useDeviceDetect()
+    const { activeModal, setActiveModal, setCursor } = useGameStore()
+    const playSound = useAudioStore(state => state.playSound)
+
+    // Refs
+    const playerRef = useRef<PlayerHandle>(null)
+    const playerPosition = useRef(new THREE.Vector3(0, 0, 0))
+    const [clickTarget, setClickTarget] = useState<THREE.Vector3 | null>(null)
+    const [closestObject, setClosestObject] = useState<'projects' | 'about' | 'contact' | null>(null)
+    const [flashTrigger, setFlashTrigger] = useState(false) // Trigger for FlashOverlay
+
+    const handleInteraction = useCallback((type: 'projects' | 'about' | 'contact', label: string, targetPos?: THREE.Vector3) => {
+        if (activeModal) return // Already open
 
 // 1. Define interaction execution
 const executeInteraction = () => {

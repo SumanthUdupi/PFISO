@@ -1,16 +1,13 @@
 import { useTexture, useKTX2 } from '@react-three/drei'
-if (hasKTX2) {
-    return useKTX2(url)
-} else {
-    return useTexture(url)
-}
-    } else {
+
+export function useSmartTexture(url: string) {
+    const isKTX2 = (path: string) => path.toLowerCase().endsWith('.ktx2')
+
     if (isKTX2(url)) {
         return useKTX2(url)
     } else {
         return useTexture(url)
     }
-}
 }
 
 // Preload method

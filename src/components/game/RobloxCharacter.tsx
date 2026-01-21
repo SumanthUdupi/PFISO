@@ -19,6 +19,13 @@ interface RobloxCharacterProps {
   boots?: string // CL-048
 }
 
+// PERF-030: Shared Materials (Constants)
+const matSkin = new THREE.MeshStandardMaterial({ color: '#ffdbac', roughness: 0.3 })
+const matTie = new THREE.MeshStandardMaterial({ color: '#e67e22', roughness: 0.4 })
+const matShoe = new THREE.MeshStandardMaterial({ color: '#3e2723', roughness: 0.2 })
+const matHair = new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.9 })
+const matEyes = new THREE.MeshStandardMaterial({ color: '#000000', roughness: 0.1, emissive: '#000000' })
+
 const RobloxCharacter: React.FC<RobloxCharacterProps> = (props) => {
   const { isMoving, speed = 0, lookTarget, onStep, isSitting, hat, boots } = props;
 
@@ -48,18 +55,6 @@ const RobloxCharacter: React.FC<RobloxCharacterProps> = (props) => {
   // --- VISUAL CONFIGURATION ---
   const bevel = 0.02
   const segment = 4
-
-  // PERF-030: Shared Materials (Constants)
-  const matSkin = new THREE.MeshStandardMaterial({ color: '#ffdbac', roughness: 0.3 })
-  const matTie = new THREE.MeshStandardMaterial({ color: '#e67e22', roughness: 0.4 })
-  const matShoe = new THREE.MeshStandardMaterial({ color: '#3e2723', roughness: 0.2 })
-  const matHair = new THREE.MeshStandardMaterial({ color: '#2d2424', roughness: 0.9 })
-  const matEyes = new THREE.MeshStandardMaterial({ color: '#000000', roughness: 0.1, emissive: '#000000' })
-
-  const RobloxCharacter: React.FC<RobloxCharacterProps> = (props) => {
-    const { isMoving, speed = 0, lookTarget, onStep, isSitting, hat, boots } = props;
-
-    // ... refs ...
 
     // PERF-030: Dynamic Materials Only
     const materials = useMemo(() => {

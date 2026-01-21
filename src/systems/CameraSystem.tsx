@@ -5,7 +5,7 @@ import { useRapier } from '@react-three/rapier'
 import inputs from '../systems/InputManager'
 import gameSystemInstance from './GameSystem'
 import useCameraStore, { CameraMode } from '../stores/cameraStore'
-import useGameStore from '../stores/gameStore'
+import useGameStore from '../store'
 import { useSettingsStore } from '../stores/settingsStore' // UX-018
 import { SpeedLines } from '../components/effects/SpeedLines'
 
@@ -76,7 +76,6 @@ const CameraSystem = () => {
                 }
             }
         }
-    }
         window.addEventListener('keydown', handleKey)
 
         // UX-018: Scroll Speed

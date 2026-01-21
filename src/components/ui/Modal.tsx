@@ -36,7 +36,6 @@ const Modal: React.FC<ModalProps> = ({ title, isOpen, onClose, children, maxWidt
     display: 'flex',
     flexDirection: 'column',
     padding: 0,
-    padding: 0,
     backgroundColor: 'var(--color-ui-bg)',
     color: 'var(--color-ui-text)',
     boxShadow: '0 -4px 10px rgba(0,0,0,0.5)',

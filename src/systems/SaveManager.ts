@@ -2,6 +2,7 @@
 const DB_NAME = 'PFISO_DB';
 const DB_VERSION = 1;
 const STORE_NAME = 'save_data';
+const CURRENT_SAVE_VERSION = 2; // SYS-036: Versioning
 
 class SaveManager {
     private dbPromise: Promise<IDBDatabase>;
@@ -32,8 +33,6 @@ class SaveManager {
         });
     }
 
-    const CURRENT_SAVE_VERSION = 2; // SYS-036: Versioning
-
     public async save(key: string, data: any): Promise<void> {
         window.dispatchEvent(new Event('SAVE_START')); // UX-040
         try {
@@ -48,8 +47,6 @@ class SaveManager {
                     timestamp: Date.now(),
                     content: data
                 };
-
-                const request = store.put(versionedData, key);
 
                 const request = store.put(versionedData, key);
 

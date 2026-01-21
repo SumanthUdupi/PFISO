@@ -82,6 +82,10 @@ interface SettingsState {
     // UX-050: Reduced Motion
     reducedMotion: boolean
     setReducedMotion: (val: boolean) => void
+
+    // Camera Scroll Sensitivity
+    scrollSensitivity: number
+    setScrollSensitivity: (val: number) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -146,6 +150,9 @@ export const useSettingsStore = create<SettingsState>()(
             setSubtitleBackgroundOpacity: (val) => set({ subtitleBackgroundOpacity: val }),
             reducedMotion: false,
             setReducedMotion: (val) => set({ reducedMotion: val }),
+
+            scrollSensitivity: 1.0,
+            setScrollSensitivity: (val) => set({ scrollSensitivity: val }),
         }),
         {
             name: 'user-settings', // unique name

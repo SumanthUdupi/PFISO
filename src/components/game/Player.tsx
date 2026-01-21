@@ -205,7 +205,6 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
                 velocity: throwDir
             })
             // Shake intensity based on force (0.2 to 0.5)
-            const shake = 0.2 + ((force - 10) / 20) * 0.3
             // Shake intensity based on force (0.2 to 0.5)
             const shake = 0.2 + ((force - 10) / 20) * 0.3
             eventBus.emit('SCREEN_SHAKE', { intensity: shake })
