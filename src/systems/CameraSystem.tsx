@@ -9,7 +9,7 @@ import useGameStore from '../store'
 import { useSettingsStore } from '../stores/settingsStore' // UX-018
 import { SpeedLines } from '../components/effects/SpeedLines'
 
-const CameraSystem = () => {
+export const CameraSystem = () => {
     const { camera } = useThree()
     const { world, rapier } = useRapier()
 
