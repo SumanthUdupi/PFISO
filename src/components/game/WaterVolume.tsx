@@ -96,17 +96,15 @@ const WaterVolume: React.FC<WaterVolumeProps> = ({ position, args }) => {
             </mesh>
 
             <RigidBody type="fixed" colliders={false} sensor onIntersectionEnter={(e) => {
-                // @ts-ignore
-                if (e.other && e.other.rigidBodyObject) {
+                // Fix: Access rigidBody via e.other.rigidBody, not rigidBodyObject (which is Object3D)
+                if (e.other && e.other.rigidBody) {
                     // @ts-ignore
-                    internalSet.current.add(e.other.rigidBodyObject)
+                    internalSet.current.add(e.other.rigidBody)
 
-                    // @ts-ignore
-                    const vel = e.other.linvel()
+                    const vel = e.other.rigidBody.linvel()
                     const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
                     if (speed > 2.0) {
-                        // @ts-ignore
-                        const contactPos = e.other.translation()
+                        const contactPos = e.other.rigidBody.translation()
                         eventBus.emit('PARTICLE_SPAWN', {
                             type: 'WATER_SPLASH',
                             position: { x: contactPos.x, y: position[1] + args[1] / 2, z: contactPos.z }
@@ -115,10 +113,9 @@ const WaterVolume: React.FC<WaterVolumeProps> = ({ position, args }) => {
                     }
                 }
             }} onIntersectionExit={(e) => {
-                // @ts-ignore
-                if (e.other && e.other.rigidBodyObject) {
+                if (e.other && e.other.rigidBody) {
                     // @ts-ignore
-                    internalSet.current.delete(e.other.rigidBodyObject)
+                    internalSet.current.delete(e.other.rigidBody)
                 }
             }}>
                 <CuboidCollider args={[args[0] / 2, args[1] / 2, args[2] / 2]} sensor />

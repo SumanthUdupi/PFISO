@@ -7,6 +7,7 @@ import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
 import { useSettingsStore } from '../../stores/settingsStore'
 import useAudioStore from '../../audioStore'
+import { resolveAssetPath } from '../../utils/assetUtils'
 
 const HealthVignette = () => {
     const health = useGameStore(state => state.health)
@@ -162,13 +163,14 @@ export const PostProcessingEffects: React.FC = () => {
             </mesh>
 
             <EffectComposer>
-                <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} resolutionScale={0.5} />
+                {/* SSAO and GodRays temporarily disabled to fix black screen issues on some devices */}
+                {/* <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} resolutionScale={0.5} /> */}
 
                 <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} resolutionScale={0.5} />
 
-                {sunMesh && (
+                {/* {sunMesh && (
                     <GodRays sun={sunMesh} blendFunction={BlendFunction.SCREEN} samples={30} density={0.95} decay={0.9} weight={0.4} exposure={0.6} clampMax={1} width={Resizer.AUTO_SIZE} height={Resizer.AUTO_SIZE} kernelSize={KernelSize.SMALL} blur={true} />
-                )}
+                )} */}
 
                 <HealthVignette />
                 <ImpactAberration />
@@ -179,7 +181,7 @@ export const PostProcessingEffects: React.FC = () => {
                 <ColorBlindModeWrapper />
 
                 {/* VIS-009: LUT Color Grading */}
-                <LUT lut={useLoader(THREE.TextureLoader, 'assets/lut.png')} />
+                <LUT lut={useLoader(THREE.TextureLoader, resolveAssetPath('assets/lut.png'))} />
 
                 {/* VIS-012: Lens Imperfections - Subtle CA */}
                 <ChromaticAberration offset={new THREE.Vector2(0.002, 0.002)} radialModulation={false} modulationOffset={0} />

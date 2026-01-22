@@ -38,17 +38,17 @@ class ErrorBoundary extends Component<Props, State> {
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: '#1a1a1a',
-            color: '#ff6b6b',
+            background: '#2a0a0a',
+            color: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
             fontFamily: 'monospace',
-            zIndex: 10000
+            zIndex: 99999
         }}>
-          <h1>Something went wrong.</h1>
+          <h1 style={{ color: '#ff6b6b', fontSize: '2em', marginBottom: '1em' }}>Something went wrong.</h1>
           <p>The application encountered a critical error.</p>
           <pre style={{
               background: '#333',
