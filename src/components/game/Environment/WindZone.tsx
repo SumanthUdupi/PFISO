@@ -41,8 +41,12 @@ export const WindZone = ({ position, size = [10, 10, 10], force = [5, 0, 0] }: a
             <RigidBody type="fixed" colliders={false} sensor>
                 <CuboidCollider
                     args={[size[0] / 2, size[1] / 2, size[2] / 2]}
-                    onIntersectionEnter={(e) => objectsInZone.current.add(e.other.rigidBodyObject as unknown as RapierRigidBody)}
-                    onIntersectionExit={(e) => objectsInZone.current.delete(e.other.rigidBodyObject as unknown as RapierRigidBody)}
+                    onIntersectionEnter={(e) => {
+                        if (e.other && e.other.rigidBody) objectsInZone.current.add(e.other.rigidBody)
+                    }}
+                    onIntersectionExit={(e) => {
+                         if (e.other && e.other.rigidBody) objectsInZone.current.delete(e.other.rigidBody)
+                    }}
                 />
             </RigidBody>
         </group>

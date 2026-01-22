@@ -48,8 +48,12 @@ export const Magnet = ({ position, range = 5, strength = 50 }: any) => {
             <RigidBody type="fixed" colliders={false} sensor>
                 <BallCollider
                     args={[range]}
-                    onIntersectionEnter={(e) => objectsInRange.current.add(e.other.rigidBodyObject as unknown as RapierRigidBody)}
-                    onIntersectionExit={(e) => objectsInRange.current.delete(e.other.rigidBodyObject as unknown as RapierRigidBody)}
+                    onIntersectionEnter={(e) => {
+                         if (e.other && e.other.rigidBody) objectsInRange.current.add(e.other.rigidBody)
+                    }}
+                    onIntersectionExit={(e) => {
+                         if (e.other && e.other.rigidBody) objectsInRange.current.delete(e.other.rigidBody)
+                    }}
                 />
             </RigidBody>
         </group>

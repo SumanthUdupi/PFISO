@@ -405,7 +405,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         // PM-048: Breath Holding (Aiming?)
         // If holding shift while NOT moving -> Hold Breath (Stabilize sway)
         // Reusing isSprinting input (Shift)
-        if (useControlsStore.getState().isPressed('SPRINT') && currentVelocity.current.length() < 0.1 && stamina > 0) {
+        // Fix: Use inputs.isPressed('DASH') instead of useControlsStore.isPressed('SPRINT')
+        if (inputs.isPressed('DASH') && currentVelocity.current.length() < 0.1 && stamina > 0) {
             // PH-048: Drain stamina faster when holding breath
             setStamina(prev => Math.max(0, prev - 15 * delta))
             sway.current.lerp(_vec2.current.set(0, 0), delta * 10) // Stabilize fast
@@ -613,7 +614,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         }
 
         // PM-014: Throw Charge Logic
-        if (useControlsStore.getState().isMouseLeftPressed) { // Assuming this prop exists or we check inputs
+        // Fix: Use inputs.isPressed('PRIMARY_ACTION') instead of isMouseLeftPressed
+        if (inputs.isPressed('PRIMARY_ACTION')) {
             throwCharge.current = Math.min(throwCharge.current + dt * 2.0, 1.0)
         } else {
             if (throwCharge.current > 0) {

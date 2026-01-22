@@ -3,6 +3,7 @@ import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import useGameStore from '../store'
 import { useSettingsStore } from '../stores/settingsStore' // UX-042
+import { useUIStore } from '../stores/uiStore'
 import inputs from './InputManager'
 import eventBus from './EventBus'
 

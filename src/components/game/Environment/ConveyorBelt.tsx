@@ -61,10 +61,10 @@ export const ConveyorBelt = ({ position, size = [2, 0.2, 5], speed = 2, directio
                     position={[0, size[1] / 2 + 0.05, 0]}
                     sensor
                     onIntersectionEnter={(payload) => {
-                        objectsOnBelt.current.add(payload.other.rigidBodyObject as unknown as RapierRigidBody)
+                        if (payload.other && payload.other.rigidBody) objectsOnBelt.current.add(payload.other.rigidBody)
                     }}
                     onIntersectionExit={(payload) => {
-                        objectsOnBelt.current.delete(payload.other.rigidBodyObject as unknown as RapierRigidBody)
+                        if (payload.other && payload.other.rigidBody) objectsOnBelt.current.delete(payload.other.rigidBody)
                     }}
                 />
             </RigidBody>
