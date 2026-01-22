@@ -475,6 +475,14 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
             input.set(0, 0, 0)
         }
 
+        // MECH-048: Cancel auto-move if manual input detected
+        if (input.lengthSq() > 0.1 && autoMoveTarget.current) {
+            autoMoveTarget.current = null
+            commandQueue.current = []
+            onMoveComplete.current = null
+        }
+
+
         // AUTO-MOVE OVERRIDE
         if (autoMoveTarget.current) {
             const target = autoMoveTarget.current
@@ -572,8 +580,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         }
 
         // PM-036: Ceiling Bump
-        // Raycast Up
-        const ceilOrigin = { x: pos.x, y: pos.y + 0.8, z: pos.z }
+        // Raycast Up - Start from top of capsule (approx 1.35m) to avoid self-collision
+        const ceilOrigin = { x: pos.x, y: pos.y + 1.35, z: pos.z }
         const ceilHit = world.castRay(new rapier.Ray(ceilOrigin, { x: 0, y: 1, z: 0 }), 0.5, true)
         if (ceilHit && ceilHit.toi < 0.3) {
             targetSpeed *= 0.5
@@ -816,9 +824,11 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ initialPosition = [0, 0,
         // PM-027: Push Detection
         isPushing.current = false
         if (isMoving && moveDir.lengthSq() > 0.1) {
-            const pushRay = new rapier.Ray({ x: pos.x, y: pos.y + 0.5, z: pos.z }, { x: moveDir.x, y: 0, z: moveDir.z })
-            const pushHit = world.castRay(pushRay, 0.4, true) // 0.4m check
-            if (pushHit && pushHit.toi < 0.4) {
+            // Start ray outside capsule radius (0.25)
+            const startOffset = moveDir.clone().multiplyScalar(0.3)
+            const pushRay = new rapier.Ray({ x: pos.x + startOffset.x, y: pos.y + 0.5, z: pos.z + startOffset.z }, { x: moveDir.x, y: 0, z: moveDir.z })
+            const pushHit = world.castRay(pushRay, 0.2, true) // Check 0.2m further (total 0.5m)
+            if (pushHit && pushHit.toi < 0.2) {
                 isPushing.current = true
             }
         }

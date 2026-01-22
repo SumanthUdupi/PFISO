@@ -106,10 +106,7 @@ class InputManager {
             if (document.pointerLockElement) {
                 // Locked
             } else {
-                // Unlocked - perhaps pause if in game?
-                // dispatch event or use store? 
-                // InputManager is a class, hard to access store directly without circular deps sometimes.
-                // We'll expose a property.
+                // Unlocked
             }
         })
     }
