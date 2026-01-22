@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import * as THREE from 'three'
 import { Box, Text, Cylinder, Detailed } from '@react-three/drei'
 import { RigidBody, CuboidCollider, CylinderCollider, RigidBodyProps } from '@react-three/rapier'
-import { createMergedGeometry, createBoxGeometry, createCylinderGeometry } from '../../utils/geometryUtils'
+import { createMergedGeometry, createBoxGeometry, createCylinderGeometry } from '../../../utils/geometryUtils'
 
 // --- Type Definitions ---
 interface OfficeAssetProps extends RigidBodyProps {

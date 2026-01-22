@@ -130,8 +130,6 @@ export const CozyEnvironment: React.FC = () => {
                We extract floor to component to use Texture hook safely/cleanly
                if we wanted, but since we are in a component, we can just use hooks at top.
              */}
-        </mesh >
-
 
             {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */ }
     {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */ }

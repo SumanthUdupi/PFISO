@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export function createMergedGeometry(geometries: THREE.BufferGeometry[]): THREE.BufferGeometry {
     if (geometries.length === 0) return new THREE.BufferGeometry();

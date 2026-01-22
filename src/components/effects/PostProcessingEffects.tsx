@@ -2,14 +2,10 @@ import React, { useRef, useEffect, useState } from 'react'
 import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline, MotionBlur, SMAA } from '@react-three/postprocessing'
 import { useFrame, useThree, extend, useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
-import { ColorBlindnessEffect, BlendFunction } from 'postprocessing'
 import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
 import { useSettingsStore } from '../../stores/settingsStore'
 import useAudioStore from '../../audioStore'
-
-// Register external effects
-extend({ ColorBlindnessEffect })
 
 const HealthVignette = () => {
     const health = useGameStore(state => state.health)
@@ -129,18 +125,11 @@ const GlitchEffect = () => {
 
 const ColorBlindModeWrapper = () => {
     const mode = useSettingsStore(state => state.colorBlindMode)
-    const { ColorBlindnessMode } = require('postprocessing')
 
-    // Map our modes to postprocessing modes safely
-    // 0: Normal, 1: Protanopia, 2: Deuteranopia, 3: Tritanopia, 4: Achromatopsia/Monochromacy
-    let effectMode = 0
-    if (mode === 'PROTANOPIA') effectMode = 1
-    if (mode === 'DEUTERANOPIA') effectMode = 2
-    if (mode === 'TRITANOPIA') effectMode = 3
+    // ColorBlindnessEffect temporarily disabled due to import issues
+    if (mode === 'NONE') return null
 
-    if (effectMode === 0) return null
-
-    return <primitive object={new ColorBlindnessEffect({ mode: effectMode, opacity: 1.0 })} />
+    return null
 }
 
 export const PostProcessingEffects: React.FC = () => {
