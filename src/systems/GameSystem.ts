@@ -16,6 +16,9 @@ class GameSystem {
     playerPosition = { x: 0, y: 0, z: 0 }
     playerVelocity = { x: 0, y: 0, z: 0 }
 
+    // SYS-039: Tracking previous data
+    lastData: { position: [number, number, number] } = { position: [0, 0, 0] }
+
     constructor() {
         this.reset()
     }
@@ -24,8 +27,8 @@ class GameSystem {
         this.lastTime = performance.now()
         this.accumulator = 0
         this.timeScale = 1.0
-        this.timeScale = 1.0
         this.isRunning = true
+        this.lastData = { position: [0, 0, 0] }
 
         // SYS-037: Fast Travel Listener
         gameEventBus.on('TELEPORT', (pos: { x: number, y: number, z: number }) => {
@@ -99,6 +102,9 @@ class GameSystem {
         if (dt > 0) {
             useGameStore.getState().incrementStats(dt / 1000, dist > 0.01 ? dist : 0);
         }
+
+        // Update lastData for next frame
+        this.lastData.position = [this.playerPosition.x, this.playerPosition.y, this.playerPosition.z]
 
         // Check for pickups
         // We no longer drive physics here, Rapier handles it in <Physics> component (which uses useFrame internally).
