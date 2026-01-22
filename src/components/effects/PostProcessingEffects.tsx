@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { EffectComposer, Bloom, Vignette, Noise, BrightnessContrast, ChromaticAberration, SSAO, LUT, GodRays, DepthOfField, Outline, MotionBlur, SMAA } from '@react-three/postprocessing'
 import { useFrame, useThree, extend, useLoader } from '@react-three/fiber'
 import * as THREE from 'three'
+import { BlendFunction, Resizer, KernelSize } from 'postprocessing'
 import useGameStore from '../../store'
 import eventBus from '../../systems/EventBus'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -166,7 +167,7 @@ export const PostProcessingEffects: React.FC = () => {
                 <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} resolutionScale={0.5} />
 
                 {sunMesh && (
-                    <GodRays sun={sunMesh} blendFunction={THREE.BlendFunction.SCREEN} samples={30} density={0.95} decay={0.9} weight={0.4} exposure={0.6} clampMax={1} width={THREE.Resizer.AUTO_SIZE} height={THREE.Resizer.AUTO_SIZE} kernelSize={THREE.KernelSize.SMALL} blur={true} />
+                    <GodRays sun={sunMesh} blendFunction={BlendFunction.SCREEN} samples={30} density={0.95} decay={0.9} weight={0.4} exposure={0.6} clampMax={1} width={Resizer.AUTO_SIZE} height={Resizer.AUTO_SIZE} kernelSize={KernelSize.SMALL} blur={true} />
                 )}
 
                 <HealthVignette />
