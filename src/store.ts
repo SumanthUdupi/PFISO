@@ -218,7 +218,7 @@ export interface GameState {
   sortInventory: () => void;
 }
 
-const useGameStore = create<GameState>()((set, get) => ({
+export const useGameStore = create<GameState>()((set, get) => ({
   viewedProjects: [],
   unlockedSkills: {},
   motesCollected: 0,
