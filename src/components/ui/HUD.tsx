@@ -6,7 +6,7 @@ import { shallow } from 'zustand/shallow'
 
 import Journal from './Journal'
 import StaminaBar from './StaminaBar'
-import SubtitleOverlay from './SubtitleOverlay'
+import { SubtitleOverlay } from './SubtitleOverlay'
 import { TutorialOverlay } from './TutorialOverlay'
 import { QuestList } from './QuestList'
 import { Hitmarker } from './Hitmarker'
