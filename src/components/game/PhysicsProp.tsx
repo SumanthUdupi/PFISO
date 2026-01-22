@@ -7,7 +7,7 @@ interface PhysicsPropProps extends RigidBodyProps {
     soundType?: 'land' | 'click' | 'footstep'
 }
 
-export const PhysicsProp: React.FC<PhysicsPropProps> = ({ children, soundType = 'land', ...props }) => {
+export const PhysicsProp: React.FC<PhysicsPropProps> = ({ children, soundType = 'land', id, ...props }) => {
     const playSound = useAudioStore(state => state.playSound)
     const lastCollisionTime = useRef(0)
 

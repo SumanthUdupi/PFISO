@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useRapier, RigidBody, RopeJoint } from '@react-three/rapier'
+import { useRapier, RigidBody, RopeJoint, useRevoluteJoint } from '@react-three/rapier'
+import { Box } from '@react-three/drei'
 import * as THREE from 'three'
 
 // PH-018: Cloth Stiffness - Reduce stiffness by using loose joints and proper mass.

@@ -2,9 +2,10 @@ import React, { useEffect } from 'react'
 import useGameStore from '../../store'
 
 const InventoryUI: React.FC = () => {
-    const { items, isInventoryOpen, setPaused, sortInventory, maxInventorySize } = useGameStore()
+    const { items, isInventoryOpen, sortInventory, maxInventorySize } = useGameStore()
     const [selectedItem, setSelectedItem] = React.useState<string | null>(null)
     const [tooltipItem, setTooltipItem] = React.useState<string | null>(null)
+    const [sortMethod, setSortMethod] = React.useState<'NONE' | 'NAME' | 'TYPE'>('NONE')
     const hoverTimeoutRef = React.useRef<number | null>(null)
 
     // Clear selection/tooltips when inventory closes
@@ -58,11 +59,11 @@ const InventoryUI: React.FC = () => {
     // Auto-pause when opening inventory
     useEffect(() => {
         if (isInventoryOpen) {
-            setPaused(true)
+            useGameStore.setState({ isPaused: true })
         } else {
-            setPaused(false)
+            useGameStore.setState({ isPaused: false })
         }
-    }, [isInventoryOpen, setPaused])
+    }, [isInventoryOpen])
 
     if (!isInventoryOpen) return null
 

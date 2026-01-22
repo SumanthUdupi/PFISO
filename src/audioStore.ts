@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface AudioState {
+    audioCtx: AudioContext | null;
     muted: boolean;
     volume: number;
     audioContextReady: boolean;
@@ -122,6 +123,7 @@ const lastPlayed = new Map<string, number>();
 const useAudioStore = create<AudioState>()(
     persist(
         (set, get) => ({
+            audioCtx: null,
             muted: false,
             volume: 0.5,
             audioContextReady: false,
@@ -166,6 +168,7 @@ const useAudioStore = create<AudioState>()(
             initAudio: async () => {
                 const ctx = getAudioContext();
                 if (ctx) {
+                    set({ audioCtx: ctx });
                     // AUD-024: Master Limiter Logic
                     // Simple Mono enforcement on init
                     ctx.destination.channelCount = get().mono ? 1 : 2;

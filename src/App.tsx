@@ -151,30 +151,28 @@ function App() {
             <div
                 className={`app-container ${isPortraitMobile ? "mobile-portrait-container" : ""}`}
             >
-                <Canvas
-                    shadows={false}
-                    gl={{ antialias: true }}
-                    dpr={settings.resolutionScale} // UX-029: Dynamic Resolution Scale
-                >
-                    <FPSLimiter limit={30} />
+                <ErrorBoundary>
+                    <Canvas
+                        shadows={false}
+                        gl={{ antialias: true }}
+                        dpr={settings.resolutionScale} // UX-029: Dynamic Resolution Scale
+                    >
+                        <FPSLimiter limit={30} />
 
-                    {/* Camera System (Handles View) */}
-                    {/* Camera System moved to Level_01 to access Physics */}
+                        {/* Camera System (Handles View) */}
+                        {/* Camera System moved to Level_01 to access Physics */}
 
-                    {/* Debug Orbit Controls */}
-                    {DEBUG_MODE && <OrbitControls
-                        makeDefault
-                        enableZoom={true}
-                        enableRotate={true}
-                        enablePan={true}
-                        minZoom={10}
-                        maxZoom={100}
-                        maxPolarAngle={Math.PI / 2}
-                    />}
+                        {/* Debug Orbit Controls */}
+                        {DEBUG_MODE && <OrbitControls
+                            makeDefault
+                            enableZoom={true}
+                            enableRotate={true}
+                            enablePan={true}
+                            minZoom={10}
+                            maxZoom={100}
+                            maxPolarAngle={Math.PI / 2}
+                        />}
 
-
-
-                    <ErrorBoundary>
                         <Suspense fallback={<LoadingScreen />}>
                             <Level_01 />
                             <InteractionManager />
@@ -183,8 +181,8 @@ function App() {
                             {/* PERF-048: Pre-warm Shaders */}
                             <Preload all />
                         </Suspense>
-                    </ErrorBoundary>
-                </Canvas >
+                    </Canvas >
+                </ErrorBoundary>
 
                 {isMobile && <Suspense fallback={null}><MobileControls /></Suspense>
                 }

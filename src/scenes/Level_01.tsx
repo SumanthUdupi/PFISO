@@ -50,11 +50,11 @@ import WindSystem from '../components/audio/WindSystem'
 import MusicSystem from '../components/audio/MusicSystem'
 import { VisibilityZone } from '../components/game/Environment/VisibilityZone'
 import { CompassUpdater } from '../components/ui/Compass'
-
-// ... (existing imports)
+import { ProjectileSystem } from '../systems/ProjectileSystem'
 
 export default function Level_01() {
-    // ... (existing refs)
+    const playerRef = useRef(null)
+    const debugFlags = useGameStore(state => state.debugFlags)
 
     return (
         <>
