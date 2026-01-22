@@ -1,12 +1,15 @@
 import { useTexture, useKTX2 } from '@react-three/drei'
 
+import { resolveAssetPath } from './assetUtils'
+
 export function useSmartTexture(url: string) {
     const isKTX2 = (path: string) => path.toLowerCase().endsWith('.ktx2')
+    const finalUrl = resolveAssetPath(url)
 
-    if (isKTX2(url)) {
-        return useKTX2(url)
+    if (isKTX2(finalUrl)) {
+        return useKTX2(finalUrl)
     } else {
-        return useTexture(url)
+        return useTexture(finalUrl)
     }
 }
 
@@ -14,11 +17,13 @@ export function useSmartTexture(url: string) {
 useSmartTexture.preload = (url: string | string[]) => {
     const isKTX2 = (path: string) => path.toLowerCase().endsWith('.ktx2')
     if (Array.isArray(url)) {
-        const hasKTX2 = url.some(u => isKTX2(u))
-        if (hasKTX2) useKTX2.preload(url)
-        else useTexture.preload(url)
+        const fixedUrls = url.map(u => resolveAssetPath(u))
+        const hasKTX2 = fixedUrls.some(u => isKTX2(u))
+        if (hasKTX2) useKTX2.preload(fixedUrls)
+        else useTexture.preload(fixedUrls)
     } else {
-        if (isKTX2(url)) useKTX2.preload(url)
-        else useTexture.preload(url)
+        const finalUrl = resolveAssetPath(url)
+        if (isKTX2(finalUrl)) useKTX2.preload(finalUrl)
+        else useTexture.preload(finalUrl)
     }
 }

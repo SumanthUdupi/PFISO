@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import { Box, Cylinder, Sphere, Text, useTexture } from '@react-three/drei'
 import { RigidBody, CuboidCollider, CylinderCollider } from '@react-three/rapier'
+import { resolveAssetPath } from '../../utils/assetUtils'
 
 export const OfficeDesk = (props: any) => {
     return (
@@ -22,7 +23,7 @@ export const OfficeDesk = (props: any) => {
 }
 
 const KeyboardMesh = () => {
-    const normalMap = useTexture('assets/keyboard_normal.png')
+    const normalMap = useTexture(resolveAssetPath('assets/keyboard_normal.png'))
     return (
         <Box args={[0.45, 0.01, 0.15]} position={[0, 0.825, 0.2]}>
             <meshStandardMaterial color="#424242" roughness={0.8} normalMap={normalMap} />
@@ -32,7 +33,7 @@ const KeyboardMesh = () => {
 
 export const OfficeChair = (props: any) => {
     // VIS-032: Fabric Shader
-    const normalMap = useTexture('assets/fabric_normal.png')
+    const normalMap = useTexture(resolveAssetPath('assets/fabric_normal.png'))
     normalMap.wrapS = normalMap.wrapT = 1000
     normalMap.repeat.set(2, 2)
 
@@ -106,7 +107,7 @@ export const OfficeWall = (props: any) => {
     const w = props.width || 1
     const h = props.height || 3
     // VIS-005: Add texture to prevent flatness
-    const texture = useTexture('assets/paper-texture.png')
+    const texture = useTexture(resolveAssetPath('assets/paper-texture.png'))
     texture.wrapS = texture.wrapT = 1000 // Repeat
     texture.repeat.set(w, h)
 

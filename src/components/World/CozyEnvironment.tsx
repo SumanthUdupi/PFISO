@@ -2,8 +2,16 @@ import React, { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { OfficeDesk, OfficeChair, OfficePlant, OfficeWall, GlassPartition, PaperStack, TrashCan, OfficeCable } from "../game/Environment/OfficeAssets";
+import { resolveAssetPath } from '../../utils/assetUtils';
 
 import { Environment, SoftShadows, Sparkles, MeshReflectorMaterial, ContactShadows, useTexture } from "@react-three/drei";
+// ... (lines 7-176 unchanged logic, just adding import above and modifying useTexture below)
+
+// Since replace_file_content replaces a block, I need to be careful with the implementation.
+// I will split this into two calls or use multi_replace.
+// Actually, CozyEnvironment is small enough to maybe do targeted replaces, but imports are at top.
+// Let's use multi_replace for safety.
+
 import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib";
 
 export const CozyEnvironment: React.FC = () => {
@@ -131,50 +139,50 @@ export const CozyEnvironment: React.FC = () => {
                if we wanted, but since we are in a component, we can just use hooks at top.
              */}
 
-            {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */ }
-    {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */ }
+            {/* Grid Pattern - Very Subtle Warmth - REQ-VIS-020: Hidden */}
+            {/* <gridHelper args={[100, 100, 0xd7ccc8, 0x8d6e63]} position={[0, 0.01, 0]} /> */}
 
-    {/* Office Walls */ }
-    <OfficeWall position={[0, 1.5, -10]} width={20.5} /> {/* REQ-VIS-030: Fix Leaks (Overlap) */ }
-    <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20.5} />
+            {/* Office Walls */}
+            <OfficeWall position={[0, 1.5, -10]} width={20.5} /> {/* REQ-VIS-030: Fix Leaks (Overlap) */}
+            <OfficeWall position={[-10, 1.5, 0]} rotation={[0, Math.PI / 2, 0]} width={20.5} />
 
-    {/* Furniture */ }
+            {/* Furniture */}
             <OfficeDesk position={[0, 0, -5]} />
             <OfficeChair position={[0, 2, -3]} />
             <OfficePlant position={[3, 1, -8]} />
-    {/* REQ-VIS-048: Trash Can */ }
-    <TrashCan position={[0.8, 0.2, -5.5]} />
+            {/* REQ-VIS-048: Trash Can */}
+            <TrashCan position={[0.8, 0.2, -5.5]} />
 
-    {/* REQ-VIS-026: Glass Partition */ }
-    <GlassPartition position={[-5, 1.25, -2]} rotation={[0, 0.3, 0]} />
+            {/* REQ-VIS-026: Glass Partition */}
+            <GlassPartition position={[-5, 1.25, -2]} rotation={[0, 0.3, 0]} />
 
-    {/* REQ-VIS-050: Rain on Glass (Outside Window) */ }
-    {/* CL-029: Rain Indoor Clip - Ensure position is strictly outside and scale doesn't bleed inside */ }
-    {/* Original scale [10, 5, 5] at [-8, 2, -2] (Glass at -5). -8 + 5 = -3 (Clip inside). */ }
-    {/* Reduced scale X to 4. Position [-8]. Range [-6, -10]. Safe from -5. */ }
-    <Sparkles
-        count={200}
-        scale={[4, 5, 5]}
-        position={[-8, 2, -2]}
-        size={4}
-        speed={2}
-        opacity={0.5}
-        color="#b3e5fc"
-    />
+            {/* REQ-VIS-050: Rain on Glass (Outside Window) */}
+            {/* CL-029: Rain Indoor Clip - Ensure position is strictly outside and scale doesn't bleed inside */}
+            {/* Original scale [10, 5, 5] at [-8, 2, -2] (Glass at -5). -8 + 5 = -3 (Clip inside). */}
+            {/* Reduced scale X to 4. Position [-8]. Range [-6, -10]. Safe from -5. */}
+            <Sparkles
+                count={200}
+                scale={[4, 5, 5]}
+                position={[-8, 2, -2]}
+                size={4}
+                speed={2}
+                opacity={0.5}
+                color="#b3e5fc"
+            />
 
-    {/* REQ-VIS-028: Paper Stack (On Desk?) */ }
-    {/* Placing near desk, adjusting coords to be on top of desk (y=0.75 is top) */ }
-    <PaperStack position={[0.5, 0.8, -5]} />
+            {/* REQ-VIS-028: Paper Stack (On Desk?) */}
+            {/* Placing near desk, adjusting coords to be on top of desk (y=0.75 is top) */}
+            <PaperStack position={[0.5, 0.8, -5]} />
 
-    {/* REQ-VIS-029: Lens Flares (Simulated via intense sparkle at sun pos) */ }
-    <Sparkles count={3} scale={1} size={50} speed={0} opacity={0.8} position={[60, 40, 40]} color="#fff9c4" />
+            {/* REQ-VIS-029: Lens Flares (Simulated via intense sparkle at sun pos) */}
+            <Sparkles count={3} scale={1} size={50} speed={0} opacity={0.8} position={[60, 40, 40]} color="#fff9c4" />
 
         </>
     );
 };
 
 const FloorWithTexture = () => {
-    const texture = useTexture('assets/paper-texture.png')
+    const texture = useTexture(resolveAssetPath('assets/paper-texture.png'))
     texture.wrapS = texture.wrapT = 1000
     texture.repeat.set(100, 100)
 

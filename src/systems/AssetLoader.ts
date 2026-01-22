@@ -10,8 +10,10 @@ const ASSETS = [
     '/models/office_plant.glb'
 ]
 
+import { resolveAssetPath } from '../utils/assetUtils'
+
 export const preloadAssets = () => {
-    // ASSETS.forEach(asset => useGLTF.preload(asset))
+    ASSETS.forEach(asset => useGLTF.preload(resolveAssetPath(asset)))
 
     // Hardcoded known paths from codebase analysis if any
     // Currently Player uses primitives? checking Player.tsx...
