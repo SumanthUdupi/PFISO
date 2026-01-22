@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import { Box, Cylinder, Sphere, Text, useTexture } from '@react-three/drei'
 import { RigidBody, CuboidCollider, CylinderCollider } from '@react-three/rapier'
-import { resolveAssetPath } from '../../utils/assetUtils'
+import { resolveAssetPath } from '../../../utils/assetUtils'
 
 export const OfficeDesk = (props: any) => {
     return (
