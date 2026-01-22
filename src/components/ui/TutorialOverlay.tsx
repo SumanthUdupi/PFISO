@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useGameStore from '../../store';
 
 type TutorialStep = {
     id: string;
@@ -36,24 +37,65 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 ];
 
 export const TutorialOverlay: React.FC = () => {
+    const tutorialActive = useGameStore(state => state.tutorialActive);
+    const skipTutorial = useGameStore(state => state.skipTutorial);
+
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
-    const [isVisible, setIsVisible] = useState(true);
+    const advancingRef = useRef(false);
+
+    // Handle completion and reset lock on step change
+    useEffect(() => {
+        advancingRef.current = false;
+
+        // Auto-complete logic for final step
+        if (currentStepIndex >= TUTORIAL_STEPS.length - 1) {
+             const timer = setTimeout(() => {
+                 skipTutorial();
+             }, 3000);
+             return () => clearTimeout(timer);
+        }
+    }, [currentStepIndex, skipTutorial]);
+
+    // Safe advance function
+    const scheduleAdvance = (delay: number = 500) => {
+        if (advancingRef.current) return;
+
+        // Check if we are already at or past the end
+        if (currentStepIndex >= TUTORIAL_STEPS.length - 1) return;
+
+        advancingRef.current = true;
+        setTimeout(() => {
+            setCurrentStepIndex(prev => {
+                if (prev < TUTORIAL_STEPS.length - 1) {
+                    return prev + 1;
+                }
+                return prev;
+            });
+        }, delay);
+    };
 
     useEffect(() => {
+        if (!tutorialActive) return;
+
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (advancingRef.current) return;
+
             if (currentStepIndex === 0 && e.code === 'Space') {
-                advanceStep();
+                scheduleAdvance(100);
             }
-            // Simple movement check logic simulation for tutorial purposes
             if (currentStepIndex === 1 && ['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
-                setTimeout(advanceStep, 1000); // Advance after 1s of movement
+                scheduleAdvance(1000);
+            }
+            // Interaction step trigger
+            if (currentStepIndex === 3 && (e.code === 'KeyE' || e.key.toLowerCase() === 'e')) {
+                scheduleAdvance(100);
             }
         };
 
         const handleMouseMove = () => {
+            if (advancingRef.current) return;
             if (currentStepIndex === 2) {
-                // Simulate camera movement check
-                setTimeout(advanceStep, 1000);
+                scheduleAdvance(1000);
             }
         };
 
@@ -66,19 +108,12 @@ export const TutorialOverlay: React.FC = () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('mousemove', handleMouseMove);
         };
-    }, [currentStepIndex]);
+    }, [currentStepIndex, tutorialActive]); // Re-bind when step changes
 
-    const advanceStep = () => {
-        if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
-            setCurrentStepIndex(prev => prev + 1);
-        } else {
-            setTimeout(() => setIsVisible(false), 2000);
-        }
-    };
-
-    if (!isVisible) return null;
+    if (!tutorialActive) return null;
 
     const currentStep = TUTORIAL_STEPS[currentStepIndex];
+    if (!currentStep) return null; // Safety check to prevent crash
 
     return (
         <div style={{
