@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import { Html } from '@react-three/drei';
+
 const TIPS = [
   "Use headphones for the best audio experience.",
   "Check corners for hidden supplies.",

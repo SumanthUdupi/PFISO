@@ -19,7 +19,7 @@ import { InteractionPrompt } from './InteractionPrompt' // PERF-012
 // Based on typical project structure/previous context:
 import { Minimap } from './Minimap'
 import { Compass } from './Compass'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from '../../hooks/useTranslation'
 import { useDeviceDetect } from '../../hooks/useDeviceDetect'
 import { BootSplash } from './BootSplash'
 

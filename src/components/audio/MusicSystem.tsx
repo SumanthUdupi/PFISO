@@ -20,7 +20,10 @@ const MusicSystem = () => {
 
     // Init Logic
     useEffect(() => {
-        if (!loaded || !musicGain.current && audioCtx) {
+        if (!loaded || !audioCtx) return
+        if (musicGain.current) return
+
+        try {
             const mg = audioCtx.createGain()
             mg.gain.value = 0.5
 
@@ -33,6 +36,8 @@ const MusicSystem = () => {
 
             musicGain.current = mg
             filterNode.current = filter
+        } catch (e) {
+            console.warn("MusicSystem init failed", e)
         }
     }, [loaded, audioCtx])
 
