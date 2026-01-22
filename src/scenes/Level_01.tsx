@@ -51,6 +51,7 @@ import MusicSystem from '../components/audio/MusicSystem'
 import { VisibilityZone } from '../components/game/Environment/VisibilityZone'
 import { CompassUpdater } from '../components/ui/Compass'
 import { ProjectileSystem } from '../systems/ProjectileSystem'
+import { WaypointOverlay } from '../components/ui/WaypointOverlay'
 
 export default function Level_01() {
     const playerRef = useRef(null)
@@ -142,11 +143,6 @@ export default function Level_01() {
                 {/* PH-019: Rope Physics */}
                 <Rope position={[-5, 8, 5]} length={8} />
 
-                {/* CL-010: Clipping fixes audit - Player start pos */}
-                <Player
-                    ref={playerRef}
-                    initialPosition={[0, 2, 0]}
-                />
                 {/* ... existing scene content ... */}
                 <OfficePlant position={[3, 1, -7]} />
                 <mesh position={[0, 3, 0]}>
@@ -260,6 +256,7 @@ export default function Level_01() {
 
             {/* UX-019: Compass Updater */}
             <CompassUpdater />
+            <WaypointOverlay />
 
             <PostProcessingEffects />
         </>

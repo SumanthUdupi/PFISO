@@ -161,7 +161,7 @@ export const PostProcessingEffects: React.FC = () => {
                 <meshBasicMaterial color="#ffaa00" transparent opacity={1} />
             </mesh>
 
-            <EffectComposer disableNormalPass>
+            <EffectComposer>
                 <SSAO radius={0.1} intensity={15} luminanceInfluence={0.5} color={undefined} resolutionScale={0.5} />
 
                 <Bloom luminanceThreshold={1.0} mipmapBlur={true} intensity={0.4} radius={0.6} resolutionScale={0.5} />

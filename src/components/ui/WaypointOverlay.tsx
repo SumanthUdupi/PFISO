@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
+import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import useGameStore from '../../store'
 
@@ -76,9 +77,11 @@ export const WaypointOverlay: React.FC = () => {
     if (!targetPos) return null
 
     return (
-        <div ref={markerRef} className="fixed top-0 left-0 -ml-3 -mt-3 pointer-events-none z-40 flex flex-col items-center">
-            <div className="w-6 h-6 bg-cozy-accent rotate-45 border-2 border-white shadow-md animate-pulse" />
-            <span className="mt-1 bg-black/50 px-1 rounded text-white text-xs font-bold drop-shadow-md whitespace-nowrap">OBJECTIVE</span>
-        </div>
+        <Html fullscreen>
+            <div ref={markerRef} className="fixed top-0 left-0 -ml-3 -mt-3 pointer-events-none z-40 flex flex-col items-center">
+                <div className="w-6 h-6 bg-cozy-accent rotate-45 border-2 border-white shadow-md animate-pulse" />
+                <span className="mt-1 bg-black/50 px-1 rounded text-white text-xs font-bold drop-shadow-md whitespace-nowrap">OBJECTIVE</span>
+            </div>
+        </Html>
     )
 }

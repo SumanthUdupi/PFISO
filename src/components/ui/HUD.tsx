@@ -10,7 +10,6 @@ import { SubtitleOverlay } from './SubtitleOverlay'
 import { TutorialOverlay } from './TutorialOverlay'
 import { QuestList } from './QuestList'
 import { Hitmarker } from './Hitmarker'
-import { WaypointOverlay } from './WaypointOverlay'
 import { HUDClock } from './HUDClock' // PERF-012
 import { InteractionPrompt } from './InteractionPrompt' // PERF-012
 
@@ -65,7 +64,6 @@ export const HUD: React.FC = React.memo(() => {
 
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 flex flex-col justify-between z-[100]">
                 <Hitmarker />
-                <WaypointOverlay />
 
                 {/* Top Right: Menu & Skills */}
                 <div className="flex flex-col items-end gap-2 pointer-events-auto">
