@@ -28,6 +28,14 @@ export interface Quest {
   steps: { id: string, description: string, isComplete: boolean }[];
 }
 
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  duration?: number;
+}
+
 export interface GameState {
   // Core Progression
   viewedProjects: string[]; // List of project IDs
@@ -83,6 +91,9 @@ export interface GameState {
 
   // Cozy Systems
   activeBuffs: Buff[];
+  notifications: Notification[];
+  addNotification: (notification: Notification) => void;
+  removeNotification: (id: number) => void;
 
   // Interaction
   focusedObject: {
@@ -132,6 +143,7 @@ export interface GameState {
 
   // Progression
   experience: number;
+  health: number; // Added missing health
   // SYS-027: Difficulty Modes
   difficulty: 'easy' | 'normal' | 'hard';
   setDifficulty: (difficulty: 'easy' | 'normal' | 'hard') => void;
@@ -204,7 +216,7 @@ export interface GameState {
   isSaving: boolean;
 
   // SYS-023: Game Over State
-  gameState: 'playing' | 'won' | 'lost';
+  gameState: 'menu' | 'playing' | 'won' | 'lost';
   setVictory: () => void;
   setGameOver: () => void;
   restartGame: () => void;
@@ -230,6 +242,21 @@ export const useGameStore = create<GameState>()((set, get) => ({
   unlockedMemories: [],
   gameEnded: false,
   activeBuffs: [],
+  notifications: [],
+  cursorType: 'DEFAULT',
+  addNotification: (notification: Notification) => set((state) => {
+    const newNotification = { ...notification, id: notification.id || Date.now() };
+    // Auto-remove
+    if (notification.duration !== 0) {
+      setTimeout(() => {
+        get().removeNotification(newNotification.id);
+      }, notification.duration || 3000);
+    }
+    return { notifications: [...state.notifications, newNotification] };
+  }),
+  removeNotification: (id) => set((state) => ({
+    notifications: state.notifications.filter(n => n.id !== id)
+  })),
   focusedObject: null,
   enableNavigationSuggestions: false,
   hasShownSurvey: false,
@@ -306,7 +333,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
   setDifficulty: (difficulty) => set({ difficulty }),
 
   // SYS-023: Game Over State
-  gameState: 'playing',
+  gameState: 'menu',
   setVictory: () => set({ gameState: 'won', isPaused: true }),
   setGameOver: () => set({ gameState: 'lost', isPaused: true }),
   restartGame: () => set({
@@ -472,11 +499,11 @@ export const useGameStore = create<GameState>()((set, get) => ({
   },
 
   toggleConsole: () => set((state) => ({ isConsoleOpen: !state.isConsoleOpen })),
-  setDebugFlag: (flag, value) => set((state) => ({
+  setDebugFlag: (flag: keyof GameState['debugFlags'], value: boolean) => set((state) => ({
     debugFlags: { ...state.debugFlags, [flag]: value }
   })),
 
-  setExperience: (exp) => set({ experience: exp }),
+  setExperience: (exp: number) => set({ experience: exp }),
 
   unlockSkill: (skillName, tier) => {
     const currentTier = get().unlockedSkills[skillName] || 'Locked';
@@ -544,7 +571,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
 
   completeQuest: (id) => set((state) => {
     const newState = {
-      quests: state.quests.map(q => q.id === id ? { ...q, status: 'completed' } : q)
+      quests: state.quests.map(q => q.id === id ? { ...q, status: 'completed' as const } : q)
     };
     setTimeout(() => get().triggerAutoSave(), 0);
     return newState;

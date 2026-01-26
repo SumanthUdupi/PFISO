@@ -86,6 +86,15 @@ interface SettingsState {
     // Camera Scroll Sensitivity
     scrollSensitivity: number
     setScrollSensitivity: (val: number) => void
+    // Crosshair Customization
+    crosshairColor: string
+    setCrosshairColor: (val: string) => void
+    crosshairSize: number
+    setCrosshairSize: (val: number) => void
+    crosshairGap: number
+    setCrosshairGap: (val: number) => void
+    crosshairThickness: number
+    setCrosshairThickness: (val: number) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -127,6 +136,7 @@ export const useSettingsStore = create<SettingsState>()(
             hardwareCursor: false,
             setHardwareCursor: (val) => set({ hardwareCursor: val }),
 
+            resolutionScale: 1.0,
             setResolutionScale: (val) => set({ resolutionScale: val }),
 
             // UX-036, UX-037, UX-039 (Existing)
@@ -153,6 +163,14 @@ export const useSettingsStore = create<SettingsState>()(
 
             scrollSensitivity: 1.0,
             setScrollSensitivity: (val) => set({ scrollSensitivity: val }),
+            crosshairColor: 'white',
+            setCrosshairColor: (val) => set({ crosshairColor: val }),
+            crosshairSize: 20,
+            setCrosshairSize: (val) => set({ crosshairSize: val }),
+            crosshairGap: 4,
+            setCrosshairGap: (val) => set({ crosshairGap: val }),
+            crosshairThickness: 2,
+            setCrosshairThickness: (val) => set({ crosshairThickness: val }),
         }),
         {
             name: 'user-settings', // unique name

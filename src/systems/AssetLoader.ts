@@ -1,13 +1,13 @@
 import { useGLTF } from '@react-three/drei'
 
 // Define critical assets here
-const ASSETS = [
+const ASSETS: string[] = [
     // '/models/player.glb', // Example if we had a specific player file
     // '/models/env_core.glb', 
-    '/models/prop_box.glb',
-    '/models/prop_ball.glb',
-    '/models/office_chair.glb',
-    '/models/office_plant.glb'
+    // '/models/prop_box.glb',
+    // '/models/prop_ball.glb',
+    // '/models/office_chair.glb',
+    // '/models/office_plant.glb'
 ]
 
 import { resolveAssetPath } from '../utils/assetUtils'

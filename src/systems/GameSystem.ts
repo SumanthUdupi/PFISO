@@ -1,4 +1,4 @@
-// import physicsInstance from './PhysicsSystem' // Deprecated
+
 import gameEventBus from './EventBus'
 import inputs from './InputManager'
 import useGameStore from '../store'
@@ -67,15 +67,13 @@ class GameSystem {
         }
         if (inputs.justPressed('QUICK_SAVE')) {
             // SYS-021: Quick Save
-            import('../systems/SaveManager').then(({ saveManager }) => {
-                saveManager.saveGame().then(() => {
-                    useGameStore.getState().addNotification({
-                        id: Date.now(),
-                        title: 'Game Saved',
-                        message: 'Quick save successful',
-                        type: 'info',
-                        duration: 2000
-                    })
+            useGameStore.getState().saveGame().then(() => {
+                useGameStore.getState().addNotification({
+                    id: Date.now(),
+                    title: 'Game Saved',
+                    message: 'Quick save successful',
+                    type: 'info',
+                    duration: 2000
                 })
             })
         }

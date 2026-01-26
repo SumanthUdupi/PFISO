@@ -1,83 +1,50 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import useGameStore from '../../store'
 import { useTranslation } from '../../hooks/useTranslation'
 
 const GameOverScreen: React.FC = () => {
     const { gameState, restartGame } = useGameStore()
     const { t } = useTranslation()
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        if (gameState !== 'playing') {
+            const timer = setTimeout(() => setVisible(true), 100)
+            return () => clearTimeout(timer)
+        } else {
+            setVisible(false)
+        }
+    }, [gameState])
 
     if (gameState === 'playing') return null
 
     const isVictory = gameState === 'won'
 
     return (
-        <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: isVictory ? 'rgba(76, 175, 80, 0.8)' : 'rgba(185, 28, 28, 0.9)',
-            backdropFilter: 'blur(5px)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 300, // Adjusted z-index per SYS-022
-            color: 'white',
-            fontFamily: 'Inter, sans-serif'
-        }}>
-            <h1 style={{
-                fontSize: '64px',
-                fontWeight: '900',
-                marginBottom: '20px',
-                letterSpacing: '5px',
-                textTransform: 'uppercase',
-                textShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                color: isVictory ? '#FFD700' : '#000'
-            }}>
-                {isVictory ? t('game.title') : t('gameover.title')}
-            </h1>
+        <div className={`fixed inset-0 z-[300] flex flex-col items-center justify-center transition-all duration-1000 ${visible ? 'bg-black/80 backdrop-blur-md opacity-100' : 'bg-transparent opacity-0 pointer-events-none'}`}>
+            <div className={`transform transition-all duration-700 delay-100 ${visible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                <h1 className={`text-6xl md:text-8xl font-black tracking-widest uppercase mb-6 text-center drop-shadow-lg ${isVictory ? 'text-yellow-400' : 'text-red-600'}`}>
+                    {isVictory ? t('game.title') : t('gameover.title')}
+                </h1>
 
-            <p style={{
-                fontSize: '24px',
-                marginBottom: '50px',
-                maxWidth: '600px',
-                textAlign: 'center',
-                lineHeight: '1.5'
-            }}>
-                {isVictory
-                    ? "Mission Accomplished. You've secured the facility."
-                    : "Critical Systems Failure. The facility has claimed another soul."}
-            </p>
+                <p className="text-xl md:text-2xl text-white/90 text-center max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+                    {isVictory
+                        ? "Mission Accomplished. You've secured the facility."
+                        : "Critical Systems Failure. The facility has claimed another soul."}
+                </p>
 
-            <div style={{ display: 'flex', gap: '20px' }}>
-                <button
-                    onClick={() => {
-                        restartGame()
-                        // Reload page to ensure full reset for now (physics state etc)
-                        // In a more complex app we'd proper reset everything, but reload is safer for jams
-                        window.location.reload()
-                    }}
-                    style={{
-                        padding: '20px 40px',
-                        fontSize: '24px',
-                        fontWeight: 'bold',
-                        background: '#fcf4e8',
-                        color: '#222',
-                        border: 'none',
-                        borderRadius: '12px',
-                        cursor: 'pointer',
-                        textTransform: 'uppercase',
-                        letterSpacing: '2px',
-                        boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
-                        transition: 'transform 0.1s'
-                    }}
-                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                    {t('gameover.respawn')}
-                </button>
+                <div className="flex justify-center gap-6">
+                    <button
+                        onClick={() => {
+                            restartGame()
+                            window.location.reload()
+                        }}
+                        className="group relative px-8 py-4 bg-white text-black font-bold text-xl uppercase tracking-wider rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform"
+                    >
+                        <span className="relative z-10">{t('gameover.respawn')}</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                </div>
             </div>
         </div>
     )

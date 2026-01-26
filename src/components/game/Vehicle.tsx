@@ -1,14 +1,13 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, useRevoluteJoint, RapierRigidBody } from '@react-three/rapier'
-import * as THREE from 'three'
 import { Box, Cylinder } from '@react-three/drei'
 import inputs from '../../systems/InputManager'
 
 // PH-017: Vehicle Physics (Basic 4-wheel implementation using joints)
 // PH-002: Object Mass (Proper mass for car)
 
-const Wheel = ({ position, anchor, bodyRef, setJoint }: any) => {
+const Wheel = ({ position, anchor, bodyRef }: any) => {
     const wheelRef = useRef<RapierRigidBody>(null)
 
     // Create joint
@@ -42,7 +41,7 @@ export const Vehicle = ({ position }: { position: [number, number, number] }) =>
     const height = 0.5
 
     // Drive Logic
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         // Inputs
         const forward = (inputs.isPressed('FORWARD') ? 1 : 0) - (inputs.isPressed('BACKWARD') ? 1 : 0)
         const turn = (inputs.isPressed('LEFT') ? 1 : 0) - (inputs.isPressed('RIGHT') ? 1 : 0)
@@ -52,7 +51,7 @@ export const Vehicle = ({ position }: { position: [number, number, number] }) =>
         // Alternatively, we apply torque directly to wheel rigidbodies.
 
         const speed = 150 * delta
-        const torque = new THREE.Vector3(speed * forward, 0, 0) // Local torque? No, world.
+        // const torque = new THREE.Vector3(speed * forward, 0, 0) // Local torque? No, world.
 
         // Need local axis. 
         // Simplified: Apply torque in wheel local X.
@@ -85,7 +84,7 @@ export const Vehicle = ({ position }: { position: [number, number, number] }) =>
            Yes, see Wheel component above.
        */}
 
-            <Wheel bodyRef={bodyRef} position={[1, -0.5, 1]} anchor={[1, -0.5, 1]} ref={getRef => { /* handle ref? */ }} />
+            <Wheel bodyRef={bodyRef} position={[1, -0.5, 1]} anchor={[1, -0.5, 1]} />
             {/* 
            Wait, Wheel component needs to associate with bodyRef.
            useRevoluteJoint(bodyRef, wheelRef, ...) handles the connection.

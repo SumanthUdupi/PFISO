@@ -4,7 +4,7 @@ import useAudioStore from '../../audioStore'
 
 const PauseMenu: React.FC = () => {
     const { isPaused, isInventoryOpen, togglePause, restartGame } = useGameStore()
-    const { isMuted, toggleMute } = useAudioStore()
+    const { muted, toggleMute } = useAudioStore()
     const [confirmAction, setConfirmAction] = useState<'RESTART' | 'QUIT' | null>(null)
 
     // Don't show if inventory is open (it has its own overlay) or if not paused
@@ -30,64 +30,65 @@ const PauseMenu: React.FC = () => {
     }
 
     return (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 backdrop-blur-md">
-            <div className="bg-cozy-bg p-8 rounded-xl border-4 border-cozy-text shadow-2xl max-w-sm w-full text-center">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-cozy-bg p-8 rounded-2xl border border-white/20 shadow-2xl max-w-md w-full text-center transform transition-all scale-100">
 
                 {confirmAction ? (
                     // UX-009: Confirmation Dialog
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-red-500">Are you sure?</h2>
-                        <p className="text-cozy-text">
-                            {confirmAction === 'RESTART' ? 'Unsaved progress will be lost.' : 'You will leave the game.'}
+                    <div className="space-y-6 animate-in zoom-in-95 duration-200">
+                        <h2 className="text-3xl font-black text-red-500 tracking-tight">CONFIRM ACTION</h2>
+                        <p className="text-cozy-text/80 text-lg">
+                            {confirmAction === 'RESTART' ? 'Lose unsaved progress and restart?' : 'Quit to desktop?'}
                         </p>
-                        <div className="flex gap-4 justify-center">
-                            <button
-                                onClick={confirmSelection}
-                                className="px-6 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-700 hover:scale-105 transition-transform"
-                            >
-                                CONFIRM
-                            </button>
+                        <div className="flex gap-4 justify-center pt-4">
                             <button
                                 onClick={() => setConfirmAction(null)}
-                                className="px-6 py-2 bg-gray-600 text-white font-bold rounded hover:bg-gray-700 hover:scale-105 transition-transform"
+                                className="px-6 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition-colors"
                             >
                                 CANCEL
+                            </button>
+                            <button
+                                onClick={confirmSelection}
+                                className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-lg hover:shadow-red-500/20 transition-all"
+                            >
+                                CONFIRM
                             </button>
                         </div>
                     </div>
                 ) : (
                     // Main Pause Menu
-                    <>
-                        <h1 className="text-4xl font-black text-cozy-text mb-8 tracking-tighter">PAUSED</h1>
+                    <div className="flex flex-col gap-3">
+                        <h1 className="text-5xl font-black text-cozy-text mb-8 tracking-tighter drop-shadow-sm">PAUSED</h1>
 
-                        <div className="space-y-4 flex flex-col items-center">
-                            <button
-                                onClick={togglePause}
-                                className="w-full py-3 bg-cozy-primary text-white font-bold rounded hover:bg-cozy-accent hover:scale-105 transition-transform"
-                            >
-                                RESUME
-                            </button>
-                            <button
-                                onClick={toggleMute}
-                                className="w-full py-3 bg-white text-cozy-text border-2 border-cozy-primary font-bold rounded hover:bg-gray-100 transition-colors"
-                            >
-                                {isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO'}
-                            </button>
-                            <div className="h-4" /> {/* Spacer */}
-                            <button
-                                onClick={handleRestart}
-                                className="w-full py-3 bg-red-500/20 text-red-500 border-2 border-red-500 font-bold rounded hover:bg-red-500 hover:text-white transition-colors"
-                            >
-                                RESTART LEVEL
-                            </button>
-                            <button
-                                onClick={handleQuit}
-                                className="w-full py-3 bg-transparent text-gray-500 font-bold hover:text-gray-300 transition-colors"
-                            >
-                                QUIT GAME
-                            </button>
-                        </div>
-                    </>
+                        <button
+                            onClick={togglePause}
+                            className="w-full py-4 bg-cozy-primary text-white font-bold text-lg rounded-xl hover:bg-cozy-accent hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md"
+                        >
+                            RESUME GAME
+                        </button>
+
+                        <button
+                            onClick={toggleMute}
+                            className="w-full py-3 bg-white/50 text-cozy-text font-bold rounded-xl hover:bg-white transition-colors"
+                        >
+                            {muted ? '🔇 UNMUTE AUDIO' : '🔊 MUTE AUDIO'}
+                        </button>
+
+                        <div className="h-px bg-black/10 my-2" />
+
+                        <button
+                            onClick={handleRestart}
+                            className="w-full py-3 text-red-600 font-bold hover:bg-red-50 rounded-xl transition-colors"
+                        >
+                            RESTART LEVEL
+                        </button>
+                        <button
+                            onClick={handleQuit}
+                            className="w-full py-3 text-gray-500 font-bold hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors"
+                        >
+                            EXIT TO DESKTOP
+                        </button>
+                    </div>
                 )}
             </div>
         </div>

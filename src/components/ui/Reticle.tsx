@@ -8,22 +8,21 @@ const Reticle: React.FC = () => {
     const cursorType = useGameStore((state) => state.cursorType)
     // UX-023: Reticle Visibility
     const { reticleVisibility, hardwareCursor } = useSettingsStore() // UX-026
-    const isAiming = useGameStore((state) => state.isAiming)
 
-    // TODO: Pull these from a store
-    const crosshairSettings = {
-        color: 'white',
-        size: 20,
-        gap: 4,
-        thickness: 2
-    }
+    // Crosshair Settings from Store
+    const {
+        crosshairColor,
+        crosshairSize,
+        crosshairGap,
+        crosshairThickness
+    } = useSettingsStore()
 
     // Tailwind styles for centering and transitions
     const containerStyle = "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-200 z-50 flex items-center justify-center"
 
     // Check visibility
     if (reticleVisibility === 'HIDDEN') return null
-    if (reticleVisibility === 'AIMING' && !isAiming) return null
+    if (reticleVisibility === 'AIMING') return null // Disabled for now until isAiming is implemented
 
     // UX-026: If Hardware Cursor is ON, hide software reticle for non-gameplay cursors (menus)
     if (hardwareCursor && cursorType !== 'DEFAULT') return null
@@ -71,10 +70,10 @@ const Reticle: React.FC = () => {
                 // UX-003: Customizable Crosshair
                 return (
                     <Crosshair
-                        color={crosshairSettings.color}
-                        size={crosshairSettings.size}
-                        gap={crosshairSettings.gap}
-                        thickness={crosshairSettings.thickness}
+                        color={crosshairColor}
+                        size={crosshairSize}
+                        gap={crosshairGap}
+                        thickness={crosshairThickness}
                     />
                 )
         }

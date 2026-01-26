@@ -1,6 +1,6 @@
 // MECH-044: Input Manager
 
-export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU' | 'INVENTORY' | 'CROUCH' | 'LEAN_LEFT' | 'LEAN_RIGHT' | 'INSPECT' | 'THROW_DROP' | 'PRIMARY_ACTION' | 'SECONDARY_ACTION' | 'TOGGLE_CONSOLE' | 'TOGGLE_PHOTO_MODE' | 'TOGGLE_EDIT_MODE' | 'ROTATE_OBJECT' | 'LOOK_BEHIND' | 'QUICK_SAVE'
+export type ActionType = 'JUMP' | 'DASH' | 'INTERACT' | 'MENU' | 'INVENTORY' | 'CROUCH' | 'LEAN_LEFT' | 'LEAN_RIGHT' | 'INSPECT' | 'THROW_DROP' | 'PRIMARY_ACTION' | 'SECONDARY_ACTION' | 'TOGGLE_CONSOLE' | 'TOGGLE_PHOTO_MODE' | 'TOGGLE_EDIT_MODE' | 'ROTATE_OBJECT' | 'LOOK_BEHIND' | 'QUICK_SAVE' | 'FORWARD' | 'BACKWARD' | 'LEFT' | 'RIGHT'
 export type AxisType = 'MOVE_X' | 'MOVE_Y' | 'LOOK_X' | 'LOOK_Y'
 
 type KeyBinding = string[]
@@ -25,7 +25,11 @@ class InputManager {
         TOGGLE_EDIT_MODE: ['b'],
         ROTATE_OBJECT: ['t'],
         LOOK_BEHIND: ['q'], // CS-041
-        QUICK_SAVE: ['f5'] // SYS-021
+        QUICK_SAVE: ['f5'], // SYS-021
+        FORWARD: ['w', 'arrowup'],
+        BACKWARD: ['s', 'arrowdown'],
+        LEFT: ['a', 'arrowleft'],
+        RIGHT: ['d', 'arrowright']
     }
 
     // State
@@ -34,7 +38,8 @@ class InputManager {
         JUMP: false, DASH: false, INTERACT: false, MENU: false, INVENTORY: false,
         CROUCH: false, LEAN_LEFT: false, LEAN_RIGHT: false, INSPECT: false, THROW_DROP: false,
         PRIMARY_ACTION: false, SECONDARY_ACTION: false, TOGGLE_CONSOLE: false, TOGGLE_PHOTO_MODE: false,
-        TOGGLE_EDIT_MODE: false, ROTATE_OBJECT: false, LOOK_BEHIND: false, QUICK_SAVE: false
+        TOGGLE_EDIT_MODE: false, ROTATE_OBJECT: false, LOOK_BEHIND: false, QUICK_SAVE: false,
+        FORWARD: false, BACKWARD: false, LEFT: false, RIGHT: false
     }
     // Previous frame state for "Just Pressed" detection
     private prevActions: { [key in ActionType]: boolean } = { ...this.actions }

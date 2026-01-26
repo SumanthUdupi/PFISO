@@ -13,12 +13,11 @@ import { PrivateOffice } from '../components/game/Environment/PrivateOffice'
 import { HallwaySegment } from '../components/game/Environment/HallwaySegment'
 import { UtilityArea } from '../components/game/Environment/UtilityArea'
 import { Bathroom } from '../components/game/Environment/Bathroom'
+import SecurityBot from '../components/game/SecurityBot'
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
 import { Box, PerspectiveCamera, PerformanceMonitor } from '@react-three/drei'
-import { Suspense, useRef, useEffect, useState } from 'react'
-import * as THREE from 'three'
+import { useRef } from 'react'
 import { useGameStore } from '../store'
 import { COLLISION_GROUPS } from '../systems/PhysicsLayers'
 import { CameraSystem } from '../systems/CameraSystem'
@@ -66,8 +65,6 @@ export default function Level_01() {
                 debug={debugFlags.showPhysics}
                 timeStep={1 / 60} // PERF-034: Standard 60Hz (Sub-step via maxSubSteps)
                 paused={useGameStore((state) => state.isPaused)}
-                maxSubSteps={4} // Reduced slightly as 60Hz is faster than 50Hz
-                numSolverIterations={8}
             // PERF-031: Job System (Worker Thread)
             // Note: If this breaks interactions, revert "worker"
             // worker // Commented out for now as it requires careful testing of specific event handlers
@@ -166,6 +163,9 @@ export default function Level_01() {
 
                 <PhysicsProp id="prop_box_1" position={[0, 1, 3]} type="box" />
                 <PhysicsProp id="prop_ball_1" position={[1, 1, 3]} type="ball" />
+
+                {/* Enemies */}
+                <SecurityBot position={[10, 2, 0]} patrolRadius={6} />
 
                 <Succulent id="artreq_026" position={[0.5, 1, 2.5]} />
 

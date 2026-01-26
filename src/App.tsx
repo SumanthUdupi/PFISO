@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect, lazy } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Preload, BakeShadows, AdaptiveDpr, AdaptiveEvents } from '@react-three/drei'
+import { Preload, BakeShadows, AdaptiveDpr, AdaptiveEvents, OrbitControls } from '@react-three/drei'
 const Level_01 = lazy(() => import('./scenes/Level_01'))
 // import HUD from './components/ui/HUD' // Removed default import to fix conflict
 const InventoryUI = lazy(() => import('./components/ui/InventoryUI'))
@@ -10,6 +10,7 @@ const UIOverlay = lazy(() => import('./components/ui/UIOverlay'))
 const InfoModal = lazy(() => import('./components/ui/InfoModal').then(module => ({ default: module.InfoModal })))
 const EndingScreen = lazy(() => import('./components/ui/EndingScreen'))
 const HUD = lazy(() => import('./components/ui/HUD').then(module => ({ default: module.HUD })))
+const MainMenu = lazy(() => import('./components/ui/MainMenu'))
 const SkillsMenu = lazy(() => import('./components/ui/SkillsMenu').then(module => ({ default: module.SkillsMenu })))
 const SystemMenu = lazy(() => import('./components/ui/SystemMenu').then(module => ({ default: module.SystemMenu })))
 const FPSLimiter = lazy(() => import('./components/game/FPSLimiter').then(module => ({ default: module.FPSLimiter })))
@@ -197,6 +198,7 @@ function App() {
                             <UIOverlay />
                             <PerformanceMonitor />
                             <DebugConsole />
+                            <MainMenu />
                             <HUD />
                             <Hotbar />
                             <BuffHUD />

@@ -45,7 +45,7 @@ export const SystemMenu: React.FC = () => {
                 return
             }
 
-            console.log(`Rebind ${rebindAction} to ${e.key}`)
+            // console.log(`Rebind ${rebindAction} to ${e.key}`)
             import('../../systems/InputManager').then(({ default: inputs }) => {
                 inputs.rebind(rebindAction as any, [e.key.toLowerCase()])
                 setRebindAction(null)
@@ -208,6 +208,68 @@ export const SystemMenu: React.FC = () => {
                                 min="0" max="2" step="0.1"
                                 value={settings.camLookAhead}
                                 onChange={(e) => settings.setCamLookAhead(parseFloat(e.target.value))}
+                                className="w-full accent-cozy-accent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Crosshair Customization */}
+                    <div className="space-y-4 pt-4 border-t border-cozy-primary">
+                        <h3 className="font-bold text-cozy-text">Crosshair</h3>
+
+                        <div className="space-y-2">
+                            <label className="text-sm text-cozy-text block">Color</label>
+                            <div className="flex gap-2 flex-wrap">
+                                {['#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'].map((color) => (
+                                    <button
+                                        key={color}
+                                        onClick={() => settings.setCrosshairColor(color)}
+                                        className={`w-6 h-6 rounded border-2 ${settings.crosshairColor === color ? 'border-cozy-text scale-110' : 'border-transparent hover:border-white/50'}`}
+                                        style={{ backgroundColor: color }}
+                                        title={color}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-sm text-cozy-text flex justify-between">
+                                <span>Size</span>
+                                <span>{settings.crosshairSize}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="4" max="50" step="2"
+                                value={settings.crosshairSize}
+                                onChange={(e) => settings.setCrosshairSize(parseFloat(e.target.value))}
+                                className="w-full accent-cozy-accent"
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-sm text-cozy-text flex justify-between">
+                                <span>Gap</span>
+                                <span>{settings.crosshairGap}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="0" max="20" step="1"
+                                value={settings.crosshairGap}
+                                onChange={(e) => settings.setCrosshairGap(parseFloat(e.target.value))}
+                                className="w-full accent-cozy-accent"
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-sm text-cozy-text flex justify-between">
+                                <span>Thickness</span>
+                                <span>{settings.crosshairThickness}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="1" max="10" step="1"
+                                value={settings.crosshairThickness}
+                                onChange={(e) => settings.setCrosshairThickness(parseFloat(e.target.value))}
                                 className="w-full accent-cozy-accent"
                             />
                         </div>
